@@ -1,0 +1,471 @@
+/* ==============================
+   Patient Page Layout
+============================== */
+
+.patient-page {
+  display: grid;
+  gap: 18px;
+}
+
+
+/* ==============================
+   Patient Header
+============================== */
+
+.patient-header-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px;
+}
+
+.patient-identity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.patient-photo-wrap {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  flex: 0 0 auto;
+}
+
+.patient-photo {
+  display: none;
+  width: 72px;
+  height: 72px;
+  border: 3px solid #fff;
+  border-radius: 22px;
+  object-fit: cover;
+  background: #eaf4f8;
+  box-shadow: var(--shadow);
+}
+
+.patient-avatar-large {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #18b9c8, #1197ad);
+  color: #fff;
+  font-size: 1.3rem;
+  font-weight: 900;
+  box-shadow: var(--shadow);
+}
+
+.patient-heading h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  line-height: 1.1;
+}
+
+.patient-heading p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.patient-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+
+/* ==============================
+   Patient Summary
+============================== */
+
+.patient-summary-card {
+  padding: 22px;
+}
+
+.patient-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.summary-tile {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.summary-tile {
+  padding: 16px;
+  background: #fbfdff;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  cursor: grab;
+}
+
+.summary-tile:active {
+  cursor: grabbing;
+}
+
+.summary-tile.dragging {
+  opacity: 0.45;
+}
+
+.summary-tile.drag-over {
+  outline: 2px dashed #18b9c8;
+}
+
+.summary-label {
+  color: var(--muted);
+  font-size: .78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.summary-value {
+  margin-top: 8px;
+  color: #203040;
+  font-size: 1.15rem;
+  font-weight: 950;
+}
+
+.summary-sub {
+  margin-top: 5px;
+  color: #6e7c8a;
+  font-size: .84rem;
+  font-weight: 700;
+}
+
+
+/* ==============================
+   Risk / Status Text
+============================== */
+
+.risk-ok {
+  color: #2e7d32;
+  font-weight: 900;
+}
+
+.risk-denied {
+  color: #e53935;
+  font-weight: 900;
+}
+
+.risk-pending {
+  color: #f9a825;
+  font-weight: 900;
+}
+
+.risk-sub {
+  display: inline-block;
+  margin-top: 4px;
+  color: #6e7c8a;
+  font-size: .85rem;
+  font-weight: 800;
+}
+
+.case-surgical {
+  color: #e53935;
+  font-weight: 900;
+  letter-spacing: .5px;
+}
+
+
+/* ==============================
+   Alert Dashboard
+============================== */
+
+.patient-alert-dashboard {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.patient-alert-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  padding: 18px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+}
+
+.patient-alert-card.is-ok {
+  border-color: #d8f0df;
+  box-shadow: inset 5px 0 0 #46b56b, var(--shadow);
+}
+
+.patient-alert-card.is-warning {
+  border-color: #f2d087;
+  box-shadow: inset 5px 0 0 #e8a820, var(--shadow);
+}
+
+.patient-alert-card.is-danger {
+  border-color: #ffd1d1;
+  box-shadow: inset 5px 0 0 #e96d6d, var(--shadow);
+}
+
+.patient-alert-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  font-size: .78rem;
+  font-weight: 950;
+}
+
+.patient-alert-title {
+  color: #203040;
+  font-weight: 950;
+  line-height: 1.2;
+}
+
+.patient-alert-value {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: .9rem;
+  font-weight: 800;
+}
+
+
+/* ==============================
+   Tabs
+============================== */
+
+.patient-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px;
+  background: #edf3f7;
+  border: 1px solid #d7e3ec;
+  border-radius: 16px;
+}
+
+.patient-tab-btn {
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  color: #5a6d7f;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.patient-tab-btn.active {
+  background: #fff;
+  color: #0d728a;
+  box-shadow: 0 2px 8px rgba(31, 57, 91, .08);
+}
+
+
+/* ==============================
+   Patient Sections
+============================== */
+
+.patient-section {
+  display: none;
+  padding: 22px;
+}
+
+.patient-section.active {
+  display: block;
+}
+
+.section-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+
+/* ==============================
+   Info Cards
+============================== */
+
+.info-card {
+  padding: 18px;
+  background: #fbfdff;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+}
+
+.info-card.full {
+  grid-column: 1 / -1;
+}
+
+.info-title {
+  margin: 0 0 14px;
+  color: #203040;
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+
+.info-list {
+  display: grid;
+  gap: 10px;
+}
+
+.info-row {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding-bottom: 9px;
+  border-bottom: 1px solid #edf2f6;
+}
+
+.info-row:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.info-label {
+  color: #6e7c8a;
+  font-size: .85rem;
+  font-weight: 900;
+}
+
+.info-value {
+  color: #203040;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+
+/* ==============================
+   Tables
+============================== */
+
+.patient-table-wrap {
+  overflow: auto;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+
+.patient-detail-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+}
+
+.patient-detail-table th,
+.patient-detail-table td {
+  padding: 12px;
+  border-bottom: 1px solid #edf2f6;
+  text-align: left;
+}
+
+.patient-detail-table th {
+  background: #f5f7fb;
+  color: #425466;
+  font-size: .86rem;
+  font-weight: 900;
+}
+
+.patient-detail-table td {
+  color: #203040;
+  font-weight: 700;
+}
+
+
+/* ==============================
+   Notes
+============================== */
+
+.note-compose {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.note-compose textarea {
+  width: 100%;
+  min-height: 110px;
+  padding: 12px;
+  resize: vertical;
+  background: #fbfdff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+}
+
+.note-item {
+  margin-bottom: 10px;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+
+.note-meta {
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: .82rem;
+  font-weight: 900;
+}
+
+
+/* ==============================
+   Empty State
+============================== */
+
+.empty-state {
+  padding: 20px;
+  text-align: center;
+  color: var(--muted);
+  font-weight: 800;
+  background: #fbfdff;
+  border: 1px dashed #d7e3ec;
+  border-radius: 18px;
+}
+
+
+/* ==============================
+   Responsive Layout
+============================== */
+
+@media (max-width: 1100px) {
+  .patient-summary-grid,
+  .patient-alert-dashboard {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .patient-header-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .patient-actions {
+    justify-content: flex-start;
+  }
+
+  .section-grid,
+  .info-row,
+  .patient-alert-dashboard {
+    grid-template-columns: 1fr;
+  }
+
+  .info-row {
+    gap: 4px;
+  }
+}
+
+@media (max-width: 640px) {
+  .patient-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}

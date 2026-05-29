@@ -1,0 +1,214 @@
+/* ==============================
+   Client EHR Layout
+============================== */
+
+.client-ehr-page {
+  display: grid;
+  gap: 18px;
+}
+
+.ehr-header-card,
+.ehr-results-panel {
+  padding: 22px;
+}
+
+.ehr-header-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.ehr-search {
+  min-width: 320px;
+}
+
+.ehr-search input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: #fff;
+  color: var(--text);
+  font-weight: 800;
+}
+
+
+/* ==============================
+   KPI Cards
+============================== */
+
+.ehr-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.ehr-kpi {
+  padding: 18px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+}
+
+.ehr-kpi-label {
+  color: var(--muted);
+  font-size: .78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.ehr-kpi-value {
+  margin-top: 8px;
+  color: #203040;
+  font-size: 1.8rem;
+  font-weight: 950;
+}
+
+
+/* ==============================
+   Results Header
+============================== */
+
+.ehr-results-header {
+  display: grid;
+  grid-template-columns:
+    minmax(120px, .8fr)
+    minmax(180px, 1fr)
+    minmax(180px, 1fr)
+    minmax(180px, 1fr)
+    minmax(120px, .8fr)
+    minmax(130px, .8fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.ehr-results-header button {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #f5f7fb;
+  color: #425466;
+  padding: 10px;
+  font-size: .76rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.ehr-results-header button:hover {
+  background: #fff;
+  color: #0d728a;
+}
+
+
+/* ==============================
+   Document Cards
+============================== */
+
+.ehr-doc-list {
+  display: grid;
+  gap: 12px;
+}
+
+.ehr-doc-card {
+  display: grid;
+  grid-template-columns:
+    minmax(260px, 1.4fr)
+    minmax(180px, 1fr)
+    minmax(120px, .8fr)
+    minmax(140px, .8fr)
+    auto;
+  gap: 16px;
+  align-items: center;
+  padding: 18px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+
+.ehr-doc-card:hover {
+  background: #f8fcff;
+  transform: translateY(-1px);
+}
+
+.ehr-doc-title {
+  color: #203040;
+  font-size: 1rem;
+  font-weight: 950;
+}
+
+.ehr-doc-sub {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: .85rem;
+  font-weight: 800;
+}
+
+.ehr-label {
+  color: var(--muted);
+  font-size: .72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.ehr-value {
+  margin-top: 4px;
+  color: #203040;
+  font-size: .9rem;
+  font-weight: 800;
+}
+
+.ehr-actions {
+  justify-self: end;
+}
+
+
+/* ==============================
+   Empty State
+============================== */
+
+.empty-state {
+  padding: 22px;
+  text-align: center;
+  color: var(--muted);
+  font-weight: 900;
+}
+
+
+/* ==============================
+   Responsive
+============================== */
+
+@media (max-width: 1100px) {
+  .ehr-results-header {
+    display: none;
+  }
+
+  .ehr-doc-card {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ehr-actions {
+    justify-self: start;
+  }
+}
+
+@media (max-width: 760px) {
+  .ehr-header-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ehr-search {
+    min-width: 0;
+  }
+
+  .ehr-summary,
+  .ehr-doc-card {
+    grid-template-columns: 1fr;
+  }
+}

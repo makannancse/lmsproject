@@ -1,0 +1,9 @@
+Options -Indexes
+
+RewriteEngine On
+RewriteBase /LMS-Project/public/
+
+# Route to front controller for non-files. (Do not skip existing directories: a physical
+# `public/admin/` folder was stealing /admin from the router and showed "Index of /admin".)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php [L]

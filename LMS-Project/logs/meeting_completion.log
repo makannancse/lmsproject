@@ -1,0 +1,42 @@
+{"message":"Meeting status sync completed","buffer_minutes":10,"checked":1,"completed":0,"skipped":1,"timestamp":"2026-05-16 03:35:52"}
+{"message":"Meeting status sync completed","buffer_minutes":10,"checked":1,"completed":0,"skipped":1,"timestamp":"2026-05-16 03:36:38"}
+{"message":"Class completed","class_id":29,"trigger":"calendar_end_passed","actual_end_time":"2026-05-16 03:43:10","actual_duration_minutes":64,"timestamp":"2026-05-16 03:43:10"}
+{"message":"Marked ongoing class as completed","class_id":29,"teacher_id":12,"google_event_id":"brljhnl6ku0cib60294ou8u52k","calendar_status":"confirmed","calendar_end_passed":true,"actual_start_time":"2026-05-16 02:39:16","scheduled_end_time":"2026-05-16 03:35:00","timestamp":"2026-05-16 03:43:10"}
+{"message":"Meeting status sync completed","buffer_minutes":10,"checked":1,"completed":1,"skipped":0,"timestamp":"2026-05-16 03:43:10"}
+{"message":"Teacher acknowledged recording; class marked ongoing","class_id":30,"teacher_id":3,"actual_start_time":"2026-05-16 04:23:29","timestamp":"2026-05-16 04:23:29"}
+{"message":"Meeting status sync completed","buffer_minutes":10,"checked":1,"completed":0,"skipped":1,"timestamp":"2026-05-16 04:28:23"}
+{"message":"Meeting status sync completed","buffer_minutes":10,"checked":1,"completed":0,"skipped":1,"timestamp":"2026-05-16 04:28:32"}
+{"message":"Meeting status sync completed","buffer_minutes":10,"checked":1,"completed":0,"skipped":1,"timestamp":"2026-05-16 04:28:45"}
+{"message":"Meeting status sync completed","buffer_minutes":10,"checked":1,"completed":0,"skipped":1,"timestamp":"2026-05-16 04:29:42"}
+{"message":"Meeting status sync completed","buffer_minutes":10,"checked":1,"completed":0,"skipped":1,"timestamp":"2026-05-16 04:29:49"}
+{"message":"Meeting status sync completed","buffer_minutes":10,"checked":1,"completed":0,"skipped":1,"timestamp":"2026-05-16 04:30:20"}
+{"message":"Teacher acknowledged recording; class marked ongoing","class_id":31,"teacher_id":12,"actual_start_time":"2026-05-16 04:30:44","timestamp":"2026-05-16 04:30:44"}
+{"message":"Meeting status sync completed","buffer_minutes":10,"checked":2,"completed":0,"skipped":2,"timestamp":"2026-05-16 04:32:37"}
+{"message":"Meeting status sync completed","buffer_minutes":10,"checked":2,"completed":0,"skipped":2,"timestamp":"2026-05-16 04:33:07"}
+{"message":"Meeting status sync completed","buffer_minutes":10,"checked":2,"completed":0,"skipped":2,"timestamp":"2026-05-16 04:33:33"}
+{"message":"Meeting status sync completed","buffer_minutes":10,"checked":2,"completed":0,"skipped":2,"timestamp":"2026-05-16 04:40:07"}
+{"message":"Class completed","class_id":30,"trigger":"calendar_end_passed","actual_end_time":"2026-05-16 05:35:42","actual_duration_minutes":72,"timestamp":"2026-05-16 05:35:46"}
+{"message":"Marked ongoing class as completed","class_id":30,"teacher_id":3,"google_event_id":"vl904hk19vh976kqv9rvpoc498","calendar_status":"confirmed","calendar_end_passed":true,"actual_start_time":"2026-05-16 04:23:29","scheduled_end_utc":"2026-05-16 05:17:00","current_utc":"2026-05-16 05:35:42","trigger":"calendar_end_passed","timestamp":"2026-05-16 05:35:46"}
+{"message":"Class completed","class_id":31,"trigger":"calendar_end_passed","actual_end_time":"2026-05-16 05:35:42","actual_duration_minutes":65,"timestamp":"2026-05-16 05:35:47"}
+{"message":"Marked ongoing class as completed","class_id":31,"teacher_id":12,"google_event_id":"ovgskh3dfq0u4e9isu6g579vns","calendar_status":"confirmed","calendar_end_passed":true,"actual_start_time":"2026-05-16 04:30:44","scheduled_end_utc":"2026-05-16 05:30:00","current_utc":"2026-05-16 05:35:42","trigger":"calendar_end_passed","timestamp":"2026-05-16 05:35:47"}
+{"message":"Meeting status sync completed","buffer_minutes":5,"checked":2,"completed":2,"skipped":0,"skip_reasons":[],"timestamp":"2026-05-16 05:35:47"}
+{"message":"Teacher acknowledged recording; class marked ongoing","class_id":32,"teacher_id":12,"actual_start_time":"2026-05-16 07:16:48","timestamp":"2026-05-16 07:16:48"}
+{"message":"Meeting status sync completed","buffer_minutes":5,"checked":1,"completed":0,"skipped":1,"skip_reasons":{"scheduled_end_not_reached":1},"timestamp":"2026-05-16 07:19:43"}
+{"message":"Meeting status sync completed","buffer_minutes":5,"checked":1,"completed":0,"skipped":1,"skip_reasons":{"scheduled_end_not_reached":1},"timestamp":"2026-05-16 07:20:03"}
+{"message":"Meeting status sync completed","buffer_minutes":5,"checked":1,"completed":0,"skipped":1,"skip_reasons":{"scheduled_end_not_reached":1},"timestamp":"2026-05-16 07:25:56"}
+{"message":"Meeting status sync completed","buffer_minutes":5,"checked":1,"completed":0,"skipped":1,"skip_reasons":{"scheduled_end_not_reached":1},"timestamp":"2026-05-16 07:26:07"}
+{"message":"Meeting status sync completed","buffer_minutes":5,"checked":1,"completed":0,"skipped":1,"skip_reasons":{"scheduled_end_not_reached":1},"timestamp":"2026-05-16 07:29:39"}
+{"message":"Meeting status sync completed","buffer_minutes":5,"checked":1,"completed":0,"skipped":1,"skip_reasons":{"scheduled_end_not_reached":1},"timestamp":"2026-05-16 07:31:21"}
+{"message":"Meeting status sync crashed","buffer_minutes":5,"error":"SQLSTATE[HY093]: Invalid parameter number","timestamp":"2026-05-16 07:52:03"}
+{"message":"Class completed","class_id":32,"trigger":"calendar_end_passed","actual_end_time":"2026-05-16 07:53:38","actual_duration_minutes":37,"timestamp":"2026-05-16 07:53:39"}
+{"message":"Marked ongoing class as completed","class_id":32,"teacher_id":12,"google_event_id":"me43t3tul6eda44kmcrjvbn40g","calendar_status":"confirmed","calendar_end_passed":true,"actual_start_time":"2026-05-16 07:16:48","scheduled_end_utc":"2026-05-16 09:17:00","current_utc":"2026-05-16 07:53:38","trigger":"calendar_end_passed","timestamp":"2026-05-16 07:53:39"}
+{"message":"Meeting status sync completed","buffer_minutes":5,"checked":1,"completed":1,"skipped":0,"skip_reasons":[],"timestamp":"2026-05-16 07:53:39"}
+{"message":"Teacher acknowledged recording; class marked ongoing","class_id":33,"teacher_id":12,"actual_start_time":"2026-05-16 07:58:26","timestamp":"2026-05-16 07:58:26"}
+{"message":"Meeting status sync completed","buffer_minutes":5,"checked":1,"completed":0,"skipped":1,"skip_reasons":{"scheduled_end_not_reached":1},"timestamp":"2026-05-16 08:00:14"}
+{"message":"Meeting status sync completed","buffer_minutes":5,"checked":1,"completed":0,"skipped":1,"skip_reasons":{"scheduled_end_not_reached":1},"timestamp":"2026-05-16 08:00:20"}
+{"message":"Meeting status sync completed","buffer_minutes":5,"checked":1,"completed":0,"skipped":1,"skip_reasons":{"scheduled_end_not_reached":1},"timestamp":"2026-05-16 08:00:25"}
+{"message":"Meeting status sync completed","buffer_minutes":5,"checked":1,"completed":0,"skipped":1,"skip_reasons":{"scheduled_end_not_reached":1},"timestamp":"2026-05-16 08:00:45"}
+{"message":"Teacher acknowledged recording; awaiting Google Meet host join","class_id":33,"teacher_id":12,"recording_acknowledged_at":"2026-05-16 08:38:16","timestamp":"2026-05-16 08:38:16"}
+{"message":"Teacher acknowledged recording; awaiting Google Meet host join","class_id":34,"teacher_id":3,"recording_acknowledged_at":"2026-05-16 09:35:56","timestamp":"2026-05-16 09:35:56"}
+{"message":"Teacher acknowledged recording; awaiting Google Meet host join","class_id":35,"teacher_id":12,"recording_acknowledged_at":"2026-05-16 09:43:44","timestamp":"2026-05-16 09:43:44"}
+{"message":"Teacher acknowledged recording; awaiting Google Meet host join","class_id":35,"teacher_id":12,"recording_acknowledged_at":"2026-05-16 09:46:18","timestamp":"2026-05-16 09:46:18"}

@@ -1,0 +1,268 @@
+[2026-03-21 08:36:42] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d2e1a72fcca58-82b0421df0esm4927918b3a.58 - gsmtp
+
+[2026-03-21 08:36:42] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-03-21 08:36:42] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:56:f4bc:df74:58a3:78f2]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-03-21 08:36:42] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-03-21 08:36:42] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-03-21 08:36:42] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-03-21 08:36:43] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:56:f4bc:df74:58a3:78f2]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-03-21 08:36:43] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-03-21 08:36:43] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-03-21 08:36:43] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-03-21 08:36:43] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-03-21 08:36:43] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-03-21 08:36:44] [SMTP-2] SERVER -> CLIENT: 235 2.7.0 Accepted
+
+[2026-03-21 08:36:44] [SMTP-1] CLIENT -> SERVER: MAIL FROM:<mohan0606rajan2004@gmail.com>
+
+[2026-03-21 08:36:44] [SMTP-2] SERVER -> CLIENT: 250 2.1.0 OK d2e1a72fcca58-82b0421df0esm4927918b3a.58 - gsmtp
+
+[2026-03-21 08:36:44] [SMTP-1] CLIENT -> SERVER: RCPT TO:<nandhinibalakrishnan2020@gmail.com>
+
+[2026-03-21 08:36:44] [SMTP-2] SERVER -> CLIENT: 250 2.1.5 OK d2e1a72fcca58-82b0421df0esm4927918b3a.58 - gsmtp
+
+[2026-03-21 08:36:44] [SMTP-1] CLIENT -> SERVER: DATA
+
+[2026-03-21 08:36:45] [SMTP-2] SERVER -> CLIENT: 354 Go ahead d2e1a72fcca58-82b0421df0esm4927918b3a.58 - gsmtp
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER: Date: Sat, 21 Mar 2026 08:36:41 +0000
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER: To: nandhinibalakrishnan2020@gmail.com
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER: From: LMS <mohan0606rajan2004@gmail.com>
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER: Subject: Class Scheduled: Maths Class
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER: Message-ID: <fqkQzrhli6XH94xEeuQ7sKLPyVGlmXXpRdazg0IQ@localhost>
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER: X-Mailer: PHPMailer 7.0.2 (https://github.com/PHPMailer/PHPMailer)
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER: MIME-Version: 1.0
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER: Content-Type: multipart/alternative;
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:  boundary="b1=_fqkQzrhli6XH94xEeuQ7sKLPyVGlmXXpRdazg0IQ"
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER: Content-Transfer-Encoding: 8bit
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER: --b1=_fqkQzrhli6XH94xEeuQ7sKLPyVGlmXXpRdazg0IQ
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER: Content-Type: text/plain; charset=us-ascii
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER: Class Scheduled
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:                 Hi Nandhini,
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:                 Your class has been scheduled successfully.
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:                 
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:                     ClassMaths Class
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:                     Date & Time2026-03-21 05:07 PM to 2026-03-21 07:06 PM
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:                     InstructorKannan
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:                     Meeting Linkhttps://zoom.us/j/7874901508
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:                 
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:                 
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:                     
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:                         Join Class
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:                     
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:                 
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:                 Regards,
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER: LMS Team
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER: --b1=_fqkQzrhli6XH94xEeuQ7sKLPyVGlmXXpRdazg0IQ
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER: Content-Type: text/html; charset=us-ascii
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:             <div style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.6;">
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:                 <h2 style="margin-bottom: 8px;">Class Scheduled</h2>
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:                 <p>Hi Nandhini,</p>
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:                 <p>Your class has been scheduled successfully.</p>
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:                 <table cellpadding="6" cellspacing="0" border="0" style="border-collapse: collapse;">
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:                     <tr><td><strong>Class</strong></td><td>Maths Class</td></tr>
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:                     <tr><td><strong>Date & Time</strong></td><td>2026-03-21 05:07 PM to 2026-03-21 07:06 PM</td></tr>
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:                     <tr><td><strong>Instructor</strong></td><td>Kannan</td></tr>
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:                     <tr><td><strong>Meeting Link</strong></td><td><a href="https://zoom.us/j/7874901508">https://zoom.us/j/7874901508</a></td></tr>
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:                 </table>
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:                 <p style="margin-top: 16px;">
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:                     <a href="https://zoom.us/j/7874901508" style="display: inline-block; background: #0d6efd; color: #ffffff; text-decoration: none; padding: 10px 16px; border-radius: 6px;">
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:                         Join Class
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:                     </a>
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:                 </p>
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:                 <p style="margin-top: 16px;">Regards,<br>LMS Team</p>
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:             </div>
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER:         
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER: --b1=_fqkQzrhli6XH94xEeuQ7sKLPyVGlmXXpRdazg0IQ--
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-03-21 08:36:45] [SMTP-1] CLIENT -> SERVER: .
+
+[2026-03-21 08:36:46] [SMTP-2] SERVER -> CLIENT: 250 2.0.0 OK  1774082205 d2e1a72fcca58-82b0421df0esm4927918b3a.58 - gsmtp
+
+[2026-03-21 08:36:46] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-03-21 08:36:46] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d2e1a72fcca58-82b0421df0esm4927918b3a.58 - gsmtp
+
+[2026-04-11 07:06:36] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d2e1a72fcca58-82f0c330925sm5650691b3a.15 - gsmtp
+
+[2026-04-11 07:06:36] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-04-11 07:06:36] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [117.247.133.226]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-04-11 07:06:36] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-04-11 07:06:36] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-04-11 07:06:36] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-04-11 07:06:37] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [117.247.133.226]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-04-11 07:06:37] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-04-11 07:06:37] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-04-11 07:06:37] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-04-11 07:06:37] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-04-11 07:06:37] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-04-11 07:06:38] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-82f0c330925sm5650691b3a.15 - gsmtp
+
+[2026-04-11 07:06:38] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-82f0c330925sm5650691b3a.15 - gsmtp
+
+[2026-04-11 07:06:38] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-04-11 07:06:38] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-04-11 07:06:38] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d2e1a72fcca58-82f0c330925sm5650691b3a.15 - gsmtp
+
+[2026-04-11 07:06:38] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-04-11 07:18:58] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP 41be03b00d2f7-c79216ffa72sm4583664a12.6 - gsmtp
+
+[2026-04-11 07:18:58] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-04-11 07:18:58] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [117.247.133.226]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-04-11 07:18:58] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-04-11 07:18:59] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-04-11 07:18:59] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-04-11 07:18:59] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [117.247.133.226]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-04-11 07:18:59] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-04-11 07:18:59] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-04-11 07:18:59] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-04-11 07:18:59] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-04-11 07:18:59] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-04-11 07:19:00] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 41be03b00d2f7-c79216ffa72sm4583664a12.6 - gsmtp
+
+[2026-04-11 07:19:00] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 41be03b00d2f7-c79216ffa72sm4583664a12.6 - gsmtp
+
+[2026-04-11 07:19:00] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-04-11 07:19:00] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-04-11 07:19:00] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection 41be03b00d2f7-c79216ffa72sm4583664a12.6 - gsmtp
+
+[2026-04-11 07:19:00] [SMTP-2] SMTP Error: Could not authenticate.

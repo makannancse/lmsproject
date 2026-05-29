@@ -1,0 +1,76 @@
+{
+  "_comment": "Postman: POST to your zoom_webhook.php URL, Content-Type: application/json, body = one of the objects below (use recording_completed as a whole JSON body). Set ZOOM_WEBHOOK_SKIP_SIGNATURE=1 in .env for unsigned tests. Replace 12345678901 with a zoom_meeting_id that exists in class_sessions. The handler picks the first MP4 play_url; M4A/audio-only files are skipped until fallbacks.",
+  "endpoint_url_validation": {
+    "event": "endpoint.url_validation",
+    "payload": {
+      "plainToken": "test_plain_token_replace_with_zoom_challenge"
+    }
+  },
+  "meeting_started": {
+    "event": "meeting.started",
+    "payload": {
+      "account_id": "ACCOUNT_ID",
+      "object": {
+        "id": 12345678901,
+        "uuid": "sample-uuid",
+        "host_id": "HOST_ID",
+        "topic": "Test Class",
+        "type": 2,
+        "start_time": "2026-04-15T10:00:00Z",
+        "timezone": "Asia/Kolkata"
+      }
+    }
+  },
+  "meeting_ended": {
+    "event": "meeting.ended",
+    "payload": {
+      "account_id": "ACCOUNT_ID",
+      "object": {
+        "id": 12345678901,
+        "uuid": "sample-uuid",
+        "host_id": "HOST_ID",
+        "topic": "Test Class",
+        "type": 2,
+        "start_time": "2026-04-15T10:00:00Z",
+        "timezone": "Asia/Kolkata",
+        "duration": 60
+      }
+    }
+  },
+  "recording_completed": {
+    "event": "recording.completed",
+    "payload": {
+      "account_id": "ACCOUNT_ID",
+      "object": {
+        "id": 12345678901,
+        "uuid": "sample-uuid",
+        "host_id": "HOST_ID",
+        "topic": "Test Class",
+        "share_url": "https://zoom.us/rec/share/example",
+        "recording_files": [
+          {
+            "id": "file-id-gallery",
+            "meeting_id": "12345678901",
+            "recording_start": "2026-04-15T10:00:00Z",
+            "recording_end": "2026-04-15T11:00:00Z",
+            "file_type": "MP4",
+            "play_url": "https://zoom.us/rec/play/gallery-view-mp4"
+          },
+          {
+            "id": "file-id-speaker",
+            "meeting_id": "12345678901",
+            "recording_start": "2026-04-15T10:00:00Z",
+            "recording_end": "2026-04-15T11:00:00Z",
+            "file_type": "MP4",
+            "play_url": "https://zoom.us/rec/play/speaker-view-second-mp4"
+          },
+          {
+            "id": "file-id-m4a",
+            "file_type": "M4A",
+            "play_url": "https://zoom.us/rec/play/audio-only"
+          }
+        ]
+      }
+    }
+  }
+}

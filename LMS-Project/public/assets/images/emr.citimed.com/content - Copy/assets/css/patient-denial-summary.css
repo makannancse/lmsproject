@@ -1,0 +1,90 @@
+
+    .document-page {
+      display: grid;
+      gap: 18px;
+    }
+
+    .document-summary-card {
+      padding: 22px;
+    }
+
+    .document-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .document-tile {
+      background: #fbfdff;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+      min-width: 0;
+    }
+
+    .document-label {
+      color: var(--muted);
+      font-weight: 900;
+      font-size: .78rem;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .document-value {
+      margin-top: 8px;
+      color: #203040;
+      font-weight: 950;
+      font-size: 1.1rem;
+      overflow-wrap: anywhere;
+    }
+
+    .document-note {
+      color: #506273;
+      font-weight: 750;
+      line-height: 1.55;
+      margin-top: 12px;
+      white-space: pre-wrap;
+    }
+
+    .document-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .document-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      background: #fbfdff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #eef3f8;
+      color: #546579;
+      font-size: .82rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .status-pill.denied { background: #ffe9e9; color: #c84a4a; }
+    .status-pill.pending { background: #fff4d7; color: #b07c10; }
+    .status-pill.paid { background: #e7f7ed; color: #2f8f52; }
+
+    @media (max-width: 1000px) {
+      .document-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 640px) {
+      .document-grid { grid-template-columns: 1fr; }
+      .document-row { flex-direction: column; align-items: flex-start; }
+    }

@@ -1,0 +1,183 @@
+/* ==============================
+   Attorney KPI Cards
+============================== */
+
+.attorney-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.attorney-kpi {
+  position: relative;
+  padding: 20px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 6px;
+}
+
+/* subtle left color bar */
+.attorney-kpi::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 14px;
+  bottom: 14px;
+  width: 4px;
+  border-radius: 4px;
+}
+
+/* KPI color meanings */
+.kpi-total::before {
+  background: #18b9c8;
+}
+
+.kpi-active::before {
+  background: #2e7d32;
+}
+
+.kpi-inactive::before {
+  background: #e53935;
+}
+
+/* text styles */
+.kpi-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.kpi-title {
+  font-size: .75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: var(--muted);
+  letter-spacing: .05em;
+}
+
+.kpi-main {
+  font-size: 2rem;
+  font-weight: 950;
+  color: #203040;
+  line-height: 1.1;
+}
+
+.kpi-sub {
+  font-size: .82rem;
+  color: #6e7c8a;
+  font-weight: 700;
+}
+
+/* subtle hover (optional but nice) */
+.attorney-kpi:hover {
+  transform: translateY(-2px);
+  background: #f8fcff;
+}
+
+/* responsive */
+@media (max-width: 900px) {
+  .attorney-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
+.attorney-header-card,
+.attorney-table-panel {
+  padding: 22px;
+}
+
+.attorney-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.attorney-results-header {
+  display: grid;
+  grid-template-columns:
+    minmax(100px, .7fr)
+    minmax(240px, 1.4fr)
+    minmax(180px, 1fr)
+    minmax(120px, .8fr)
+    minmax(120px, .8fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.attorney-results-header button {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #f5f7fb;
+  color: #425466;
+  padding: 10px;
+  font-size: .78rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.attorney-results-header button:hover {
+  background: #fff;
+  color: #0d728a;
+}
+
+.attorney-case-list {
+  display: grid;
+  gap: 12px;
+}
+
+.attorney-filter-panel {
+  padding: 22px;
+}
+
+.attorney-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+  align-items: end;
+}
+
+@media (max-width: 1100px) {
+  .attorney-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .attorney-filter-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.attorney-case-card {
+  display: grid;
+  grid-template-columns:
+    minmax(240px, 1.4fr)
+    minmax(180px, 1fr)
+    minmax(130px, .8fr)
+    minmax(180px, .8fr);
+  gap: 18px;
+  align-items: center;
+  padding: 18px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+
+.attorney-case-card:hover {
+  background: #f8fcff;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 900px) {
+  .attorney-summary,
+  .attorney-case-card,
+  .attorney-results-header {
+    grid-template-columns: 1fr;
+  }
+}
