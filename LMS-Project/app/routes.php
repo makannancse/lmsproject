@@ -24,7 +24,9 @@ require_once __DIR__ . '/controllers/TeacherStudentMapController.php';
 require_once __DIR__ . '/controllers/StudentPaymentController.php';
 require_once __DIR__ . '/controllers/GoogleIntegrationController.php';
 require_once __DIR__ . '/controllers/MeetingTrackingController.php';
+require_once __DIR__ . '/controllers/MeetingSyncDebugController.php';
 require_once __DIR__ . '/controllers/RecordingController.php';
+require_once __DIR__ . '/controllers/TeacherStudentApiController.php';
 
 $router = new Router();
 
@@ -42,11 +44,13 @@ $router->get('/logout', [AuthController::class, 'logout']);
 
 $router->get('/dashboard', [DashboardController::class, 'index']);
 $router->get('/admin', [AdminController::class, 'dashboard']);
+$router->get('/admin/meeting-sync-debug', [MeetingSyncDebugController::class, 'index']);
 $router->get('/teacher', [TeacherController::class, 'dashboard']);
 $router->get('/teacher/calendar', [CalendarController::class, 'teacherPage']);
 $router->get('/admin/calendar', [CalendarController::class, 'adminPage']);
 $router->get('/student/calendar', [CalendarController::class, 'studentPage']);
 $router->get('/calendar/events', [CalendarController::class, 'serveEventsJson']);
+$router->get('/api/teacher-students', [TeacherStudentApiController::class, 'listForTeacher']);
 $router->get('/student', [StudentController::class, 'dashboard']);
 $router->get('/classes', [ClassController::class, 'index']);
 $router->get('/classes/create', [ClassController::class, 'createForm']);
@@ -69,6 +73,7 @@ $router->get('/reminders/send', [ReminderController::class, 'sendUpcoming']);
 // Join tracking redirects to meeting link
 $router->get('/join-class', [ClassController::class, 'joinTrack']);
 $router->post('/meeting/track', [MeetingTrackingController::class, 'track']);
+$router->get('/meeting/sync-ongoing', [MeetingTrackingController::class, 'syncOngoing']);
 $router->post('/webhooks/google-meet', [MeetingTrackingController::class, 'webhook']);
 
 // Admin: class types (class_master CRUD)

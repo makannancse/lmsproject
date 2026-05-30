@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS teacher_google_accounts (
     google_email VARCHAR(255) NULL,
     google_person_resource_name VARCHAR(191) NULL,
     google_person_id VARCHAR(191) NULL,
+    google_user_id VARCHAR(64) NULL,
     account_type ENUM('workspace', 'personal') NOT NULL DEFAULT 'workspace',
     recording_supported TINYINT(1) NOT NULL DEFAULT 1,
     access_token TEXT NULL,

@@ -2,10 +2,35 @@
 
 declare(strict_types=1);
 
+if (!function_exists('parseInrAmount')) {
+    /**
+     * Parse a user-entered INR amount without currency conversion.
+     * Strips grouping separators and currency symbols; stores exact decimal value.
+     */
+    function parseInrAmount(mixed $value): float
+    {
+        if ($value === null || $value === '') {
+            return 0.0;
+        }
+
+        if (is_string($value)) {
+            $normalized = str_replace(["\xC2\xA0", ' '], '', trim($value));
+            $normalized = str_replace([',', '₹', 'INR', 'inr'], '', $normalized);
+            $value = $normalized;
+        }
+
+        if (!is_numeric($value)) {
+            return 0.0;
+        }
+
+        return round((float) $value, 2);
+    }
+}
+
 if (!function_exists('formatCurrency')) {
     function formatCurrency($amount): string
     {
-        return '₹' . number_format((float) $amount, 2);
+        return '₹' . number_format(parseInrAmount($amount), 2);
     }
 }
 
@@ -529,6 +554,49 @@ if (!function_exists('formatRescheduleLocalDateTime')) {
         } catch (Throwable $e) {
             return '';
         }
+    }
+}
+
+if (!function_exists('isTeacherHostActiveForClass')) {
+    /**
+     * @param array<string, mixed> $class
+     */
+    function isTeacherHostActiveForClass(array $class): bool
+    {
+        $liveStatus = strtolower(trim((string) ($class['meeting_live_status'] ?? '')));
+        if ($liveStatus === 'active') {
+            return true;
+        }
+
+        $status = strtolower(trim((string) ($class['status'] ?? '')));
+        if ($status === 'ongoing') {
+            return true;
+        }
+
+        if (trim((string) ($class['teacher_joined_at'] ?? '')) !== '') {
+            return true;
+        }
+
+        if (trim((string) ($class['actual_start_time'] ?? '')) !== '') {
+            return true;
+        }
+
+        return false;
+    }
+}
+
+if (!function_exists('studentMeetJoinUrl')) {
+    /**
+     * @param array<string, mixed> $user
+     */
+    function studentMeetJoinUrl(string $meetingLink, array $user): string
+    {
+        $email = trim((string) ($user['email'] ?? ''));
+        if ($email === '') {
+            return $meetingLink;
+        }
+
+        return appendMeetAuthUser($meetingLink, $email);
     }
 }
 

@@ -30,15 +30,22 @@ $timezoneOptions = calendarTimezoneOptions(resolveUserTimezone(Auth::user() ?: n
                     <span class="badge rounded-pill bg-secondary">Cancelled / other</span>
                 </div>
             </div>
-            <div class="ms-lg-auto" style="min-width:min(100%, 280px);">
-                <label class="form-label form-label-sm mb-1" for="calendarTimezone">Calendar timezone</label>
-                <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <select id="calendarTimezone" class="form-select form-select-sm flex-grow-1">
-                        <?php foreach ($timezoneOptions as $option): ?>
-                            <option value="<?= h($option['value']) ?>"><?= h($option['label']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                    <span class="badge text-bg-dark text-truncate d-none d-sm-inline-flex" style="max-width: 200px;" id="calendarTimezoneBadge" title="">UTC</span>
+            <div class="ms-lg-auto d-flex flex-column align-items-stretch gap-2" style="min-width:min(100%, 280px);">
+                <?php if ($canSchedule): ?>
+                    <button type="button" class="btn btn-primary btn-sm" id="calOpenScheduleBtn">
+                        <i class="fa-solid fa-plus me-1"></i> Schedule class
+                    </button>
+                <?php endif; ?>
+                <div>
+                    <label class="form-label form-label-sm mb-1" for="calendarTimezone">Calendar timezone</label>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <select id="calendarTimezone" class="form-select form-select-sm flex-grow-1">
+                            <?php foreach ($timezoneOptions as $option): ?>
+                                <option value="<?= h($option['value']) ?>"><?= h($option['label']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <span class="badge text-bg-dark text-truncate d-none d-sm-inline-flex" style="max-width: 200px;" id="calendarTimezoneBadge" title="">UTC</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -77,8 +84,8 @@ $timezoneOptions = calendarTimezoneOptions(resolveUserTimezone(Auth::user() ?: n
 
 <div id="calendar" class="calendar-shell bg-white p-2 rounded shadow-sm"></div>
 
-<div class="modal fade" id="calDetailModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+<div class="modal fade schedule-class-modal" id="calDetailModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="true" data-bs-keyboard="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="calDetailTitle">Class</h5>
@@ -91,11 +98,11 @@ $timezoneOptions = calendarTimezoneOptions(resolveUserTimezone(Auth::user() ?: n
 </div>
 
 <?php if ($canSchedule): ?>
-<div class="modal fade" id="calScheduleModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+<div class="modal fade schedule-class-modal" id="calScheduleModal" tabindex="-1" aria-labelledby="calScheduleModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Schedule class</h5>
+                <h5 class="modal-title" id="calScheduleModalLabel">Schedule class</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -142,11 +149,11 @@ $timezoneOptions = calendarTimezoneOptions(resolveUserTimezone(Auth::user() ?: n
                     </div>
                     <div class="col-md-6">
                         <label class="form-label" for="cal_payout">Payout (INR)</label>
-                        <input type="number" step="0.01" min="0" name="payout_amount" id="cal_payout" class="form-control form-control-sm" value="0">
+                        <input type="number" step="1" min="0" inputmode="decimal" name="payout_amount" id="cal_payout" class="form-control form-control-sm" value="0">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label" for="cal_student_fee">Student Fee (INR)</label>
-                        <input type="number" step="0.01" min="0" name="student_fee" id="cal_student_fee" class="form-control form-control-sm" value="0">
+                        <input type="number" step="1" min="0" inputmode="decimal" name="student_fee" id="cal_student_fee" class="form-control form-control-sm" value="0">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label" for="cal_timezone">Timezone</label>
@@ -157,14 +164,21 @@ $timezoneOptions = calendarTimezoneOptions(resolveUserTimezone(Auth::user() ?: n
                         </select>
                         <div class="form-text">Stored in UTC; the event is created on the teacher’s Google Calendar.</div>
                     </div>
-                    <div class="col-12">
-                        <label class="form-label" for="cal_student_ids">Students</label>
-                        <select name="student_ids[]" id="cal_student_ids" class="form-select form-select-sm" multiple size="4">
+                    <div class="col-12 student-picker-panel">
+                        <label class="form-label" for="cal_student_search">Students (mapped to teacher)</label>
+                        <input type="search" id="cal_student_search" class="form-control form-control-sm mb-2" placeholder="Search by name or email…" autocomplete="off">
+                        <div id="cal_student_map_notice" class="alert alert-warning py-2 small mb-2 <?= empty($students) ? '' : 'd-none' ?>">
+                            No students mapped to this teacher. Link them under Admin → Teacher-Students, then select the teacher again.
+                        </div>
+                        <select name="student_ids[]" id="cal_student_ids" class="form-select form-select-sm" multiple size="5" <?= empty($students) ? 'disabled' : '' ?>>
                             <?php foreach ($students as $s): ?>
-                                <option value="<?= (int) $s['id'] ?>"><?= h($s['name'] . ' (' . $s['email'] . ')') ?></option>
+                                <option value="<?= (int) $s['id'] ?>"
+                                    data-search="<?= h(strtolower((string) ($s['name'] ?? '') . ' ' . (string) ($s['email'] ?? ''))) ?>">
+                                    <?= h($s['name'] . ' (' . $s['email'] . ')') ?>
+                                </option>
                             <?php endforeach; ?>
                         </select>
-                        <div class="form-text">Ctrl/Cmd + click for multiple. Invited students wait until the teacher opens class.</div>
+                        <div class="form-text">Only mapped students appear. Ctrl/Cmd + click for multiple.</div>
                     </div>
                 </form>
             </div>
@@ -178,6 +192,7 @@ $timezoneOptions = calendarTimezoneOptions(resolveUserTimezone(Auth::user() ?: n
 <?php endif; ?>
 
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.js"></script>
+<script src="<?= h($base . '/assets/js/schedule-class-form.js') ?>"></script>
 <script>
 (function () {
     var base = <?= json_encode($base, JSON_UNESCAPED_SLASHES) ?>;
@@ -381,9 +396,62 @@ $timezoneOptions = calendarTimezoneOptions(resolveUserTimezone(Auth::user() ?: n
 
     calendar.render();
 
+    if (canSchedule && typeof window.initScheduleClassForm === 'function') {
+        window.initScheduleClassForm({
+            base: base,
+            teacherSelectId: 'cal_teacher_id',
+            studentSelectId: 'cal_student_ids',
+            searchInputId: 'cal_student_search',
+            emptyNoticeId: 'cal_student_map_notice',
+            selectedIds: []
+        });
+    }
+
+    var openScheduleBtn = document.getElementById('calOpenScheduleBtn');
+    if (openScheduleBtn && canSchedule) {
+        openScheduleBtn.addEventListener('click', function () {
+            syncScheduleTimezone();
+            var tz = calendarTimezoneValue();
+            var now = new Date();
+            var end = new Date(now.getTime() + 60 * 60 * 1000);
+            document.getElementById('cal_start').value = toTimezoneDatetimeLocal(now, tz);
+            document.getElementById('cal_end').value = toTimezoneDatetimeLocal(end, tz);
+            document.getElementById('cal_title').value = '';
+            document.getElementById('cal_description').value = '';
+            var schedModal = document.getElementById('calScheduleModal');
+            if (schedModal) {
+                bootstrap.Modal.getOrCreateInstance(schedModal).show();
+            }
+        });
+    }
+
     var ftEl = document.getElementById('calFilterTeacher');
     var fsEl = document.getElementById('calFilterStudent');
-    if (ftEl) ftEl.addEventListener('change', function () { calendar.refetchEvents(); });
+    if (ftEl) {
+        ftEl.addEventListener('change', function () {
+            calendar.refetchEvents();
+            if (calendarRole === 'admin' && fsEl && ftEl.value !== '0') {
+                fetch(base + '/api/teacher-students?teacher_id=' + encodeURIComponent(ftEl.value), { credentials: 'same-origin' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        var current = fsEl.value;
+                        fsEl.innerHTML = '<option value="0">All mapped students</option>';
+                        if (data && data.ok && data.students) {
+                            data.students.forEach(function (s) {
+                                var opt = document.createElement('option');
+                                opt.value = String(s.id);
+                                opt.textContent = s.label || s.name;
+                                fsEl.appendChild(opt);
+                            });
+                        }
+                        if (current !== '0') {
+                            fsEl.value = current;
+                        }
+                    })
+                    .catch(function () {});
+            }
+        });
+    }
     if (fsEl) fsEl.addEventListener('change', function () { calendar.refetchEvents(); });
 
     var tzEl = document.getElementById('calendarTimezone');
@@ -438,7 +506,11 @@ $timezoneOptions = calendarTimezoneOptions(resolveUserTimezone(Auth::user() ?: n
                         }
                         bootstrap.Modal.getInstance(document.getElementById('calScheduleModal')).hide();
                         calendar.refetchEvents();
-                        window.AppUI.success(msg, 'Class scheduled');
+                        if (typeof window.showSuccess === 'function') {
+                            window.showSuccess(msg);
+                        } else if (window.AppUI) {
+                            window.AppUI.success(msg, 'Class scheduled');
+                        }
                         return;
                     }
                     if (res.json && res.json.errors) {

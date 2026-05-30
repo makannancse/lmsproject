@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Google\Service\Meet as GoogleMeet;
+use Google\Service\Oauth2 as GoogleOauth2;
 use Google\Service\PeopleService as GooglePeopleService;
 
 require_once dirname(__DIR__) . '/lib/Database.php';
@@ -13,9 +14,21 @@ require_once dirname(__DIR__) . '/models/ClassAttendance.php';
 require_once dirname(__DIR__) . '/models/MeetingActivityLog.php';
 require_once dirname(__DIR__) . '/models/TeacherGoogleAccount.php';
 require_once dirname(__DIR__) . '/models/TeacherPayout.php';
+require_once dirname(__DIR__) . '/lib/MeetingSyncDebugService.php';
 
 class GoogleMeetLiveTrackingService
 {
+    private ?MeetingSyncDebugService $debugService = null;
+
+    private function debug(): MeetingSyncDebugService
+    {
+        if ($this->debugService === null) {
+            $this->debugService = new MeetingSyncDebugService();
+        }
+
+        return $this->debugService;
+    }
+
     /**
      * @return array<string, mixed>|null
      */
@@ -56,6 +69,11 @@ class GoogleMeetLiveTrackingService
             try {
                 $sync = $this->syncClass($classId, 'meet_poll');
                 $status = (string) ($sync['status'] ?? 'skipped');
+
+                if ($status !== 'completed') {
+                    $status = $this->autoCompleteIfHostLeft($classId, $sync, 'meet_poll') ?: $status;
+                }
+
                 if ($status === 'started') {
                     $result['started']++;
                 } elseif ($status === 'completed') {
@@ -78,6 +96,41 @@ class GoogleMeetLiveTrackingService
         }
 
         return $result;
+    }
+
+    /**
+     * Poll Google Meet after the host leaves so conference end times are available.
+     *
+     * @return array<string, mixed>
+     */
+    public function syncClassAfterHostLeave(int $classId, ?string $trigger = 'teacher_leave_request'): array
+    {
+        $attempts = max(1, (int) env('GOOGLE_MEET_HOST_LEAVE_SYNC_ATTEMPTS', 4));
+        $delaySeconds = max(1, (int) env('GOOGLE_MEET_HOST_LEAVE_SYNC_DELAY_SECONDS', 2));
+        $last = ['status' => 'skipped', 'class_id' => $classId];
+
+        for ($attempt = 1; $attempt <= $attempts; $attempt++) {
+            $last = $this->syncClass($classId, $trigger ?? 'teacher_leave_request');
+            $this->logMeetStatus([
+                'event' => 'host_leave_sync_attempt',
+                'class_id' => $classId,
+                'attempt' => $attempt,
+                'max_attempts' => $attempts,
+                'sync_status' => $last['status'] ?? 'unknown',
+                'meeting_live_status' => $last['meeting_live_status'] ?? null,
+                'actual_end_time' => $last['actual_end_time'] ?? null,
+            ]);
+
+            if (($last['status'] ?? '') === 'completed') {
+                return $last;
+            }
+
+            if ($attempt < $attempts) {
+                sleep($delaySeconds);
+            }
+        }
+
+        return $last;
     }
 
     /**
@@ -121,6 +174,30 @@ class GoogleMeetLiveTrackingService
             $teacherParticipant = $this->findTeacherParticipant($participants, $teacherIdentity);
             $teacherSessions = $teacherParticipant !== null ? (array) ($teacherParticipant['sessions'] ?? []) : [];
             $teacherSummary = $this->summarizeSessions($teacherSessions);
+            $teacherSummary = $this->enrichTeacherSummaryFromParticipant($teacherParticipant, $teacherSummary);
+
+            $conferenceEnd = $this->normalizeUtcValue((string) ($conference['end_time'] ?? ''));
+            $storedTeacherJoin = $this->normalizeUtcValue((string) ($class['teacher_joined_at'] ?? ''));
+            $storedActualStart = $this->normalizeUtcValue((string) ($class['actual_start_time'] ?? ''));
+
+            if ($teacherSummary['actual_start_time'] === null && $storedTeacherJoin !== null) {
+                $teacherSummary['actual_start_time'] = $storedTeacherJoin;
+                $teacherSummary['authoritative_start_time'] = $storedTeacherJoin;
+            }
+            if ($teacherSummary['actual_start_time'] === null && $storedActualStart !== null) {
+                $teacherSummary['actual_start_time'] = $storedActualStart;
+                $teacherSummary['authoritative_start_time'] = $storedActualStart;
+            }
+
+            if (
+                !$teacherSummary['has_active_session']
+                && $teacherSummary['actual_end_time'] === null
+                && $conferenceEnd !== null
+                && !$this->conferenceEndedBeforeScheduledStart($conferenceEnd, $class)
+            ) {
+                $teacherSummary['actual_end_time'] = $conferenceEnd;
+                $teacherSummary['authoritative_end_time'] = $conferenceEnd;
+            }
 
             $studentEarliestStart = $this->earliestNonTeacherJoinUtc($participants, $teacherParticipant['name'] ?? null);
             $participantCount = count($participants);
@@ -128,26 +205,78 @@ class GoogleMeetLiveTrackingService
             $actualStart = $teacherSummary['actual_start_time'];
             $actualEnd = $teacherSummary['actual_end_time'];
             $hasActiveTeacherSession = (bool) $teacherSummary['has_active_session'];
+            $hostJoined = $teacherSummary['authoritative_start_time'] !== null || $storedTeacherJoin !== null;
 
-            if ($actualStart === null) {
-                $actualStart = $this->normalizeUtcValue((string) ($conference['start_time'] ?? ''));
-                if ($actualStart !== null) {
-                    $timingSource = 'conference_record_inferred';
-                }
-            }
-            if ($actualEnd === null && !$hasActiveTeacherSession) {
-                $actualEnd = $this->normalizeUtcValue((string) ($conference['end_time'] ?? ''));
-                if ($actualEnd !== null && $timingSource !== 'host_participant_session') {
-                    $timingSource = 'conference_record_inferred';
-                }
-            }
+            $this->logMeetStatus([
+                'event' => $hostJoined ? 'host_join_detected' : 'host_not_in_meet',
+                'class_id' => $classId,
+                'teacher_id' => $teacherId,
+                'teacher_email' => $teacherIdentity['google_email'] ?? ($class['teacher_google_email'] ?? null),
+                'conference_id' => $conference['name'] ?? null,
+                'host_joined' => $hostJoined,
+                'host_left' => !$hasActiveTeacherSession && $actualEnd !== null,
+                'host_active_session' => $hasActiveTeacherSession,
+                'actual_start_time' => $actualStart,
+                'actual_end_time' => $actualEnd,
+                'conference_end_time' => $conferenceEnd,
+                'participant_count' => $participantCount,
+                'trigger' => $trigger,
+            ]);
 
+            $previousDbStatus = (string) ($class['status'] ?? 'scheduled');
             $liveStatus = 'pending';
-            if ($hasActiveTeacherSession || ($teacherParticipant === null && empty($conference['end_time']) && !empty($conference['start_time']))) {
-                $liveStatus = $teacherParticipant === null ? 'sync_error' : 'active';
-            } elseif ($actualEnd !== null) {
+            if ($hasActiveTeacherSession) {
+                $liveStatus = 'active';
+            } elseif (
+                $actualEnd !== null
+                && (
+                    $hostJoined
+                    || $storedTeacherJoin !== null
+                    || $previousDbStatus === 'ongoing'
+                    || ($conferenceEnd !== null && !$hasActiveTeacherSession)
+                )
+            ) {
                 $liveStatus = 'ended';
+            } elseif ($hostJoined || $storedTeacherJoin !== null) {
+                $liveStatus = 'active';
+            } elseif ($teacherParticipant === null && $conferenceEnd === null) {
+                $liveStatus = 'sync_error';
             }
+
+            $wouldComplete = $actualEnd !== null
+                && $liveStatus === 'ended'
+                && (
+                    $teacherSummary['authoritative_start_time'] !== null
+                    || $storedTeacherJoin !== null
+                    || $previousDbStatus === 'ongoing'
+                );
+
+            $googlePayload = [
+                'space' => $space,
+                'conference' => $conference,
+                'participants' => $participants,
+                'teacher_participant' => $teacherParticipant,
+                'teacher_identity' => $teacherIdentity,
+            ];
+            $classContext = $this->debug()->buildClassContext($class);
+            $syncState = [
+                'host_joined' => $hostJoined || $storedTeacherJoin !== null,
+                'host_left' => !$hasActiveTeacherSession && $actualEnd !== null,
+                'host_active_session' => $hasActiveTeacherSession,
+                'actual_start_time' => $actualStart,
+                'actual_end_time' => $actualEnd,
+                'conference_end_time' => $conferenceEnd,
+                'meeting_live_status' => $liveStatus,
+                'participant_count' => $participantCount,
+                'teacher_participant_matched' => $teacherParticipant !== null,
+                'would_complete' => $wouldComplete,
+                'would_complete_reason' => $wouldComplete
+                    ? 'Host end + meeting_live_status ended + host join evidence'
+                    : 'Blocked: liveStatus=' . $liveStatus
+                        . ' host_joined=' . ($hostJoined || $storedTeacherJoin !== null ? 'yes' : 'no')
+                        . ' actual_end=' . ($actualEnd ?? 'null'),
+                'resulting_status' => $wouldComplete ? 'completed' : $previousDbStatus,
+            ];
 
             $persisted = $this->applyLiveSnapshot(
                 $class,
@@ -177,19 +306,51 @@ class GoogleMeetLiveTrackingService
             }
 
             $status = $persisted['status'] ?? 'unchanged';
+            $syncState['resulting_status'] = (string) ($persisted['class_status'] ?? $previousDbStatus);
+            $syncState['meeting_live_status'] = (string) ($persisted['meeting_live_status'] ?? $liveStatus);
+            $decision = $this->debug()->evaluateCompletionDecision($classContext, $syncState, $googlePayload);
+            $decision['timezone_verification'] = $this->debug()->verifyTimezoneStorage($class);
+            $this->debug()->logClassSync($classContext, $decision, $googlePayload, $trigger);
+
+            $this->logMeetStatus([
+                'event' => 'status_update_result',
+                'class_id' => $classId,
+                'teacher_email' => $teacherIdentity['google_email'] ?? ($class['teacher_google_email'] ?? null),
+                'conference_id' => $conference['name'] ?? null,
+                'previous_status' => $previousDbStatus,
+                'new_status' => (string) ($persisted['class_status'] ?? $previousDbStatus),
+                'sync_result' => $status,
+                'meeting_live_status' => $persisted['meeting_live_status'] ?? $liveStatus,
+                'actual_end_time' => $persisted['actual_end_time'] ?? $actualEnd,
+                'actual_duration_minutes' => $persisted['actual_duration_minutes'] ?? null,
+                'completion_reason' => $decision['reason'] ?? '',
+                'trigger' => $trigger,
+            ]);
+
             return [
                 'status' => $status,
                 'class_id' => $classId,
                 'meeting_live_status' => $persisted['meeting_live_status'] ?? $liveStatus,
                 'actual_start_time' => $persisted['actual_start_time'] ?? $actualStart,
                 'actual_end_time' => $persisted['actual_end_time'] ?? $actualEnd,
+                'actual_duration_minutes' => $persisted['actual_duration_minutes'] ?? null,
                 'participant_count' => $participantCount,
                 'conference_id' => $conference['name'] ?? null,
                 'timing_source' => $timingSource,
+                'debug' => $decision,
             ];
         } catch (\Throwable $e) {
             $message = $this->humanizeGoogleApiError($e);
             $this->markSyncError($class, $message);
+            $this->logMeetStatus([
+                'event' => 'sync_failed',
+                'class_id' => $classId,
+                'teacher_id' => $teacherId,
+                'teacher_email' => $class['teacher_google_email'] ?? null,
+                'error' => $e->getMessage(),
+                'display_error' => $message,
+                'trigger' => $trigger,
+            ]);
             $this->logLiveTracking([
                 'message' => 'Meet live sync failed',
                 'class_id' => $classId,
@@ -283,10 +444,14 @@ class GoogleMeetLiveTrackingService
         $stmt = $pdo->prepare(
             'SELECT *
              FROM class_sessions
-             WHERE start_datetime BETWEEN :window_start AND :window_end
-               AND status IN ("scheduled", "rescheduled", "ongoing")
-               AND meeting_link IS NOT NULL
+             WHERE meeting_link IS NOT NULL
                AND TRIM(meeting_link) <> ""
+               AND status IN ("scheduled", "rescheduled", "ongoing")
+               AND (
+                    start_datetime BETWEEN :window_start AND :window_end
+                    OR status = "ongoing"
+                    OR meeting_live_status = "active"
+               )
              ORDER BY start_datetime ASC, id ASC'
         );
         $stmt->execute([
@@ -311,7 +476,7 @@ class GoogleMeetLiveTrackingService
     }
 
     /**
-     * @return array{google_person_resource_name:?string,google_person_id:?string,google_email:?string}
+     * @return array{google_person_resource_name:?string,google_person_id:?string,google_user_id:?string,google_email:?string}
      */
     private function ensureTeacherIdentity(int $teacherId): array
     {
@@ -320,12 +485,14 @@ class GoogleMeetLiveTrackingService
             throw new RuntimeException('Teacher Google account is not connected.');
         }
 
+        $existingUserId = trim((string) ($account['google_user_id'] ?? ''));
         $existingPersonId = trim((string) ($account['google_person_id'] ?? ''));
         $existingResource = trim((string) ($account['google_person_resource_name'] ?? ''));
-        if ($existingPersonId !== '') {
+        if ($existingUserId !== '') {
             return [
-                'google_person_resource_name' => $existingResource !== '' ? $existingResource : ('people/' . $existingPersonId),
-                'google_person_id' => $existingPersonId,
+                'google_person_resource_name' => $existingResource !== '' ? $existingResource : ($existingPersonId !== '' ? 'people/' . $existingPersonId : null),
+                'google_person_id' => $existingPersonId !== '' ? $existingPersonId : null,
+                'google_user_id' => $existingUserId,
                 'google_email' => $account['google_email'] ?? null,
             ];
         }
@@ -333,22 +500,55 @@ class GoogleMeetLiveTrackingService
         $oauth = new GoogleOAuthService();
         $client = $oauth->client();
         $client->setAccessToken($oauth->getActiveAccessTokenForTeacher($teacherId));
-        $people = new GooglePeopleService($client);
-        $person = $people->people->get('people/me', [
-            'personFields' => 'emailAddresses',
-        ]);
 
-        $resourceName = trim((string) $person->getResourceName());
-        $personId = $this->personIdFromResourceName($resourceName);
-        if ($personId === null) {
-            throw new RuntimeException('Unable to resolve the teacher Google identity for Meet tracking.');
+        $googleUserId = null;
+        try {
+            $token = $client->getAccessToken();
+            if (is_array($token) && !empty($token['id_token'])) {
+                $payload = $client->verifyIdToken((string) $token['id_token']);
+                if (is_array($payload) && !empty($payload['sub'])) {
+                    $googleUserId = trim((string) $payload['sub']);
+                }
+            }
+        } catch (\Throwable $ignored) {
+            // Fall through to userinfo / People API lookup.
         }
 
-        TeacherGoogleAccount::updateIdentity($teacherId, $resourceName, $personId);
+        if ($googleUserId === null || $googleUserId === '') {
+            try {
+                $oauth2 = new GoogleOauth2($client);
+                $profile = $oauth2->userinfo->get();
+                $googleUserId = trim((string) ($profile->getId() ?? ''));
+            } catch (\Throwable $ignored) {
+                // Fall through to People API lookup.
+            }
+        }
+
+        $resourceName = null;
+        $personId = null;
+        try {
+            $people = new GooglePeopleService($client);
+            $person = $people->people->get('people/me', [
+                'personFields' => 'emailAddresses',
+            ]);
+            $resourceName = trim((string) $person->getResourceName());
+            $personId = $this->personIdFromResourceName($resourceName);
+        } catch (\Throwable $e) {
+            if ($googleUserId === null || $googleUserId === '') {
+                throw new RuntimeException('Unable to resolve the teacher Google identity for Meet tracking.');
+            }
+        }
+
+        if ($googleUserId === null || $googleUserId === '') {
+            throw new RuntimeException('Unable to resolve the teacher Google user id for Meet tracking. Reconnect the Google account.');
+        }
+
+        TeacherGoogleAccount::updateIdentity($teacherId, $resourceName, $personId, $googleUserId);
 
         return [
             'google_person_resource_name' => $resourceName,
             'google_person_id' => $personId,
+            'google_user_id' => $googleUserId,
             'google_email' => $account['google_email'] ?? null,
         ];
     }
@@ -402,7 +602,17 @@ class GoogleMeetLiveTrackingService
         if ($storedConferenceId !== '') {
             try {
                 $record = $meet->conferenceRecords->get($storedConferenceId);
-                return $this->conferenceRecordToArray($record);
+                $array = $this->conferenceRecordToArray($record);
+                if (!$this->isStaleGhostConference($array, $class)) {
+                    return $array;
+                }
+                $this->logMeetStatus([
+                    'event' => 'ignored_stale_conference_record',
+                    'class_id' => (int) ($class['id'] ?? 0),
+                    'google_conference_id' => $storedConferenceId,
+                    'conference_end_time' => $array['end_time'] ?? null,
+                    'scheduled_start_utc' => $class['start_time_utc'] ?? $class['start_datetime'] ?? null,
+                ]);
             } catch (\Throwable $ignored) {
                 // Fall through to live lookup.
             }
@@ -451,29 +661,108 @@ class GoogleMeetLiveTrackingService
             return null;
         }
 
-        usort($records, function (array $a, array $b) use ($scheduledStartTs): int {
-            $aEnd = empty($a['end_time']) ? 0 : 1;
-            $bEnd = empty($b['end_time']) ? 0 : 1;
-            if ($aEnd !== $bEnd) {
-                return $aEnd <=> $bEnd;
+        return $this->pickBestConferenceRecord($records, $class);
+    }
+
+    /**
+     * Prefer the conference that overlaps the scheduled class window (avoids empty "preview" meets).
+     *
+     * @param list<array<string, mixed>> $records
+     * @return array<string, mixed>|null
+     */
+    private function pickBestConferenceRecord(array $records, array $class): ?array
+    {
+        if ($records === []) {
+            return null;
+        }
+
+        $scheduledStartTs = $this->parseUtcTimestamp(
+            $this->normalizeUtcValue((string) ($class['start_time_utc'] ?? $class['start_datetime'] ?? ''))
+        );
+        $scheduledEndTs = $this->parseUtcTimestamp(
+            $this->normalizeUtcValue((string) ($class['end_time_utc'] ?? $class['end_datetime'] ?? ''))
+        );
+
+        $best = null;
+        $bestScore = PHP_INT_MIN;
+        foreach ($records as $record) {
+            $startTs = $this->parseUtcTimestamp((string) ($record['start_time'] ?? ''));
+            $endTs = $this->parseUtcTimestamp((string) ($record['end_time'] ?? ''));
+            $score = 0;
+
+            if ($scheduledStartTs !== null && $endTs !== null && $endTs < $scheduledStartTs) {
+                $score -= 1000;
+            }
+            if ($startTs !== null && $endTs !== null && ($endTs - $startTs) < 120) {
+                $score -= 800;
+            }
+            if ($scheduledStartTs !== null && $startTs !== null) {
+                $windowEnd = $scheduledEndTs ?? ($scheduledStartTs + 3600);
+                if ($startTs <= ($windowEnd + 900) && ($endTs ?? time()) >= ($scheduledStartTs - 900)) {
+                    $score += 500;
+                }
+                $score -= (int) min(400, abs($startTs - $scheduledStartTs) / 60);
+            }
+            if ($startTs !== null && $endTs !== null && $endTs > $startTs) {
+                $score += (int) min(200, ($endTs - $startTs) / 60);
+            }
+            if (empty($record['end_time'])) {
+                $score += 150;
             }
 
-            $aTs = $this->parseUtcTimestamp((string) ($a['start_time'] ?? '')) ?? 0;
-            $bTs = $this->parseUtcTimestamp((string) ($b['start_time'] ?? '')) ?? 0;
-            if ($scheduledStartTs === null) {
-                return $bTs <=> $aTs;
+            if ($score > $bestScore) {
+                $bestScore = $score;
+                $best = $record;
             }
+        }
 
-            $aDelta = abs($aTs - $scheduledStartTs);
-            $bDelta = abs($bTs - $scheduledStartTs);
-            if ($aDelta === $bDelta) {
-                return $bTs <=> $aTs;
-            }
+        return $best;
+    }
 
-            return $aDelta <=> $bDelta;
-        });
+    /**
+     * @param array<string, mixed> $conference
+     * @param array<string, mixed> $class
+     */
+    private function isStaleGhostConference(array $conference, array $class): bool
+    {
+        $scheduledStartTs = $this->parseUtcTimestamp(
+            $this->normalizeUtcValue((string) ($class['start_time_utc'] ?? $class['start_datetime'] ?? ''))
+        );
+        $startTs = $this->parseUtcTimestamp((string) ($conference['start_time'] ?? ''));
+        $endTs = $this->parseUtcTimestamp((string) ($conference['end_time'] ?? ''));
+        $teacherJoined = trim((string) ($class['teacher_joined_at'] ?? '')) !== '';
 
-        return $records[0] ?? null;
+        if ($scheduledStartTs === null || $endTs === null) {
+            return false;
+        }
+
+        if ($endTs < $scheduledStartTs) {
+            return true;
+        }
+
+        if ($teacherJoined) {
+            return false;
+        }
+
+        if ($startTs !== null && ($endTs - $startTs) < 120) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function conferenceEndedBeforeScheduledStart(?string $conferenceEndUtc, array $class): bool
+    {
+        $endTs = $this->parseUtcTimestamp($this->normalizeUtcValue((string) $conferenceEndUtc));
+        $scheduledStartTs = $this->parseUtcTimestamp(
+            $this->normalizeUtcValue((string) ($class['start_time_utc'] ?? $class['start_datetime'] ?? ''))
+        );
+
+        if ($endTs === null || $scheduledStartTs === null) {
+            return false;
+        }
+
+        return $endTs < $scheduledStartTs;
     }
 
     /**
@@ -531,23 +820,39 @@ class GoogleMeetLiveTrackingService
 
     /**
      * @param list<array<string, mixed>> $participants
-     * @param array{google_person_resource_name:?string,google_person_id:?string,google_email:?string} $teacherIdentity
+     * @param array{google_person_resource_name:?string,google_person_id:?string,google_user_id:?string,google_email:?string} $teacherIdentity
      * @return array<string, mixed>|null
      */
     private function findTeacherParticipant(array $participants, array $teacherIdentity): ?array
     {
+        $teacherUserId = trim((string) ($teacherIdentity['google_user_id'] ?? ''));
         $teacherPersonId = trim((string) ($teacherIdentity['google_person_id'] ?? ''));
-        if ($teacherPersonId === '') {
-            return null;
-        }
+        $teacherUserResource = $teacherUserId !== '' ? 'users/' . $teacherUserId : '';
+        $legacyUserResource = $teacherPersonId !== '' ? 'users/' . $teacherPersonId : '';
 
-        $teacherUserResource = 'users/' . $teacherPersonId;
         foreach ($participants as $participant) {
             $signedInUser = trim((string) ($participant['signed_in_user'] ?? ''));
-            $participantId = $this->participantIdFromResourceName((string) ($participant['name'] ?? ''));
-            if ($signedInUser === $teacherUserResource || $participantId === $teacherPersonId) {
+            if ($teacherUserResource !== '' && $signedInUser === $teacherUserResource) {
                 return $participant;
             }
+            if ($legacyUserResource !== '' && $signedInUser === $legacyUserResource) {
+                return $participant;
+            }
+            $participantId = $this->participantIdFromResourceName((string) ($participant['name'] ?? ''));
+            if ($teacherUserId !== '' && $participantId === $teacherUserId) {
+                return $participant;
+            }
+            if ($teacherPersonId !== '' && $participantId === $teacherPersonId) {
+                return $participant;
+            }
+        }
+
+        $signedInHosts = array_values(array_filter(
+            $participants,
+            static fn (array $participant): bool => trim((string) ($participant['signed_in_user'] ?? '')) !== ''
+        ));
+        if (count($signedInHosts) === 1) {
+            return $signedInHosts[0];
         }
 
         return null;
@@ -642,10 +947,18 @@ class GoogleMeetLiveTrackingService
 
         $previousStatus = (string) ($class['status'] ?? 'scheduled');
         $status = $previousStatus;
-        if ($mergedEnd !== null && $liveStatus === 'ended') {
+        $hostJoinEvidence = $mergedTeacherJoin !== null || $existingTeacherJoin !== null;
+        if ($mergedEnd !== null && $liveStatus === 'ended' && $hostJoinEvidence) {
             $status = 'completed';
-        } elseif ($mergedStart !== null && in_array($liveStatus, ['active', 'sync_error'], true)) {
+        } elseif ($mergedTeacherJoin !== null && $liveStatus === 'active') {
             $status = 'ongoing';
+        } elseif (
+            $mergedEnd !== null
+            && $liveStatus === 'ended'
+            && $previousStatus === 'ongoing'
+            && $mergedStart !== null
+        ) {
+            $status = 'completed';
         }
 
         $recordingStatus = (string) ($class['recording_sync_status'] ?? 'pending');
@@ -735,8 +1048,24 @@ class GoogleMeetLiveTrackingService
             'actual_duration_minutes' => $durationMinutes,
         ]);
 
+        $this->logMeetStatus([
+            'event' => $status === 'completed' ? 'host_left_class_completed' : ($resultStatus === 'started' ? 'host_joined_class_ongoing' : 'snapshot_applied'),
+            'class_id' => $classId,
+            'teacher_email' => $class['teacher_google_email'] ?? null,
+            'conference_id' => $conference['name'] ?? null,
+            'host_joined' => $mergedTeacherJoin !== null,
+            'host_left' => $mergedEnd !== null,
+            'status_update_result' => $status,
+            'previous_status' => $previousStatus,
+            'actual_start_time' => $mergedStart,
+            'actual_end_time' => $mergedEnd,
+            'actual_duration_minutes' => $durationMinutes,
+            'trigger' => $trigger,
+        ]);
+
         return [
             'status' => $resultStatus,
+            'class_status' => $status,
             'meeting_live_status' => $liveStatus,
             'actual_start_time' => $mergedStart,
             'actual_end_time' => $mergedEnd,
@@ -745,16 +1074,44 @@ class GoogleMeetLiveTrackingService
     }
 
     /**
+     * @param array<string, mixed>|null $teacherParticipant
+     * @param array{actual_start_time:?string,actual_end_time:?string,authoritative_start_time:?string,authoritative_end_time:?string,has_active_session:bool} $summary
+     * @return array{actual_start_time:?string,actual_end_time:?string,authoritative_start_time:?string,authoritative_end_time:?string,has_active_session:bool}
+     */
+    private function enrichTeacherSummaryFromParticipant(?array $teacherParticipant, array $summary): array
+    {
+        if ($teacherParticipant === null) {
+            return $summary;
+        }
+
+        $participantStart = $this->normalizeUtcValue((string) ($teacherParticipant['earliest_start_time'] ?? ''));
+        $participantEnd = $this->normalizeUtcValue((string) ($teacherParticipant['latest_end_time'] ?? ''));
+
+        if ($summary['actual_start_time'] === null && $participantStart !== null) {
+            $summary['actual_start_time'] = $participantStart;
+            $summary['authoritative_start_time'] = $participantStart;
+        }
+
+        if (!$summary['has_active_session'] && $summary['actual_end_time'] === null && $participantEnd !== null) {
+            $summary['actual_end_time'] = $participantEnd;
+            $summary['authoritative_end_time'] = $participantEnd;
+        }
+
+        return $summary;
+    }
+
+    /**
      * @param array<string, mixed> $class
      * @param list<array<string, mixed>> $participants
-     * @param array{google_person_resource_name:?string,google_person_id:?string,google_email:?string} $teacherIdentity
+     * @param array{google_person_resource_name:?string,google_person_id:?string,google_user_id:?string,google_email:?string} $teacherIdentity
      */
     private function syncParticipantLogs(array $class, array $participants, array $teacherIdentity): void
     {
         $classId = (int) ($class['id'] ?? 0);
         $teacherUserId = (int) ($class['teacher_id'] ?? 0);
+        $teacherMeetUserId = trim((string) ($teacherIdentity['google_user_id'] ?? ''));
         $teacherPersonId = trim((string) ($teacherIdentity['google_person_id'] ?? ''));
-        $teacherUserResource = $teacherPersonId !== '' ? 'users/' . $teacherPersonId : '';
+        $teacherUserResource = $teacherMeetUserId !== '' ? 'users/' . $teacherMeetUserId : ($teacherPersonId !== '' ? 'users/' . $teacherPersonId : '');
 
         foreach ($participants as $participant) {
             $participantName = (string) ($participant['name'] ?? '');
@@ -763,7 +1120,11 @@ class GoogleMeetLiveTrackingService
             $role = 'student';
             $userId = null;
 
-            if (($teacherUserResource !== '' && $signedInUser === $teacherUserResource) || ($teacherPersonId !== '' && $participantId === $teacherPersonId)) {
+            if (
+                ($teacherUserResource !== '' && $signedInUser === $teacherUserResource)
+                || ($teacherMeetUserId !== '' && $participantId === $teacherMeetUserId)
+                || ($teacherPersonId !== '' && $participantId === $teacherPersonId)
+            ) {
                 $role = 'teacher';
                 $userId = $teacherUserId > 0 ? $teacherUserId : null;
             } elseif (empty($participant['signed_in_user']) && empty($participant['display_name'])) {
@@ -1057,11 +1418,67 @@ class GoogleMeetLiveTrackingService
     }
 
     /**
+     * When Meet reports the host has left, finalize completion without a manual "End Class" click.
+     *
+     * @param array<string, mixed> $sync
+     */
+    private function autoCompleteIfHostLeft(int $classId, array $sync, string $trigger): string
+    {
+        $class = $this->getClassById($classId);
+        if ($class === null || (string) ($class['status'] ?? '') === 'completed') {
+            return ($sync['status'] ?? '') === 'completed' ? 'completed' : (string) ($sync['status'] ?? 'unchanged');
+        }
+
+        if ((string) ($class['status'] ?? '') !== 'ongoing') {
+            return (string) ($sync['status'] ?? 'unchanged');
+        }
+
+        $liveStatus = (string) ($sync['meeting_live_status'] ?? ($class['meeting_live_status'] ?? ''));
+        $hasHostEnd = trim((string) ($sync['actual_end_time'] ?? ($class['actual_end_time'] ?? ''))) !== '';
+
+        if ($liveStatus !== 'ended' && !$hasHostEnd) {
+            return (string) ($sync['status'] ?? 'unchanged');
+        }
+
+        $leaveSync = $this->syncClassAfterHostLeave($classId, $trigger . '_auto');
+        if (($leaveSync['status'] ?? '') === 'completed') {
+            return 'completed';
+        }
+
+        $refreshed = $this->getClassById($classId);
+        if ($refreshed !== null && (string) ($refreshed['status'] ?? '') === 'completed') {
+            return 'completed';
+        }
+
+        try {
+            require_once dirname(__DIR__) . '/lib/MeetingTrackingService.php';
+            (new MeetingTrackingService())->completeClass($classId, null, $trigger . '_auto');
+        } catch (\Throwable $ignored) {
+            return (string) ($sync['status'] ?? 'unchanged');
+        }
+
+        $refreshed = $this->getClassById($classId);
+
+        return ($refreshed !== null && (string) ($refreshed['status'] ?? '') === 'completed')
+            ? 'completed'
+            : (string) ($sync['status'] ?? 'unchanged');
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private function logMeetStatus(array $context): void
+    {
+        SyncLog::write('google_meet_status.log', $context);
+    }
+
+    /**
      * @param array<string, mixed> $context
      */
     private function logLiveTracking(array $context): void
     {
         SyncLog::write('google_meet_live_tracking.log', $context);
+        $this->logMeetStatus($context);
     }
 
     /**

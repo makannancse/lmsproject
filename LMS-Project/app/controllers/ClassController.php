@@ -15,6 +15,7 @@ require_once dirname(__DIR__) . '/models/TeacherGoogleAccount.php';
 require_once dirname(__DIR__) . '/lib/PayoutService.php';
 require_once dirname(__DIR__) . '/models/TeacherPayout.php';
 require_once dirname(__DIR__) . '/models/StudentPayment.php';
+require_once dirname(__DIR__) . '/models/TeacherStudent.php';
 require_once dirname(__DIR__) . '/lib/MeetingTrackingService.php';
 require_once dirname(__DIR__) . '/lib/GoogleMeetLiveTrackingService.php';
 
@@ -64,20 +65,18 @@ class ClassController
             return;
         }
 
-        if (empty($class['teacher_joined_at']) && empty($class['actual_start_time'])) {
-            try {
-                $liveService = new GoogleMeetLiveTrackingService();
-                $liveService->syncClass($classId, 'student_join_check');
-                $refreshed = ClassSession::findByIdForUser($classId, $uid, $role);
-                if (is_array($refreshed)) {
-                    $class = $refreshed;
-                }
-            } catch (\Throwable $ignored) {
-                // Keep the waiting-room experience if the Meet API check is temporarily unavailable.
+        try {
+            $liveService = new GoogleMeetLiveTrackingService();
+            $liveService->syncClass($classId, 'student_join_check');
+            $refreshed = ClassSession::findByIdForUser($classId, $uid, $role);
+            if (is_array($refreshed)) {
+                $class = $refreshed;
             }
+        } catch (\Throwable $ignored) {
+            // Keep the waiting-room experience if the Meet API check is temporarily unavailable.
         }
 
-        if (empty($class['teacher_joined_at']) && empty($class['actual_start_time'])) {
+        if (!isTeacherHostActiveForClass($class)) {
             View::render('classes/student_waiting', [
                 'pageTitle' => 'Waiting For Teacher',
                 'class' => $class,
@@ -89,7 +88,7 @@ class ClassController
         $tracking = new MeetingTrackingService();
         $tracking->markJoin($classId, $uid, $role);
 
-        header('Location: ' . $target);
+        header('Location: ' . studentMeetJoinUrl($target, $user));
         exit;
     }
 
@@ -468,11 +467,29 @@ class ClassController
         header('Location: ' . $base . '/classes');
     }
 
+    /**
+     * @param array<string, mixed> $old
+     * @return list<array<string, mixed>>
+     */
+    private static function studentsForScheduleForm(array $old = []): array
+    {
+        $teacherId = (int) ($old['teacher_id'] ?? 0);
+        if ($teacherId <= 0) {
+            $teachers = User::allTeachers();
+            if ($teachers !== []) {
+                $teacherId = (int) ($teachers[0]['id'] ?? 0);
+            }
+        }
+
+        return $teacherId > 0 ? TeacherStudent::studentsForTeacher($teacherId) : [];
+    }
+
     public static function createForm(): void
     {
         Auth::requireRole(['admin']);
         $teachers = User::allTeachers();
-        $students = User::allStudents();
+        $old = [];
+        $students = self::studentsForScheduleForm($old);
         $classTypes = [];
         try {
             $classTypes = ClassMaster::allActive();
@@ -547,8 +564,8 @@ class ClassController
 
         $startRaw = trim((string) ($_POST['start_datetime'] ?? ''));
         $durationMin = (int) ($_POST['duration_minutes'] ?? 0);
-        $payoutAmount = (float) ($_POST['payout_amount'] ?? $class['payout_amount']);
-        $studentFee = (float) ($_POST['student_fee'] ?? ($class['student_fee'] ?? 0));
+        $payoutAmount = parseInrAmount($_POST['payout_amount'] ?? $class['payout_amount']);
+        $studentFee = parseInrAmount($_POST['student_fee'] ?? ($class['student_fee'] ?? 0));
         $meetingLink = trim((string) ($_POST['meeting_link'] ?? ''));
         $timezone = classScheduledTimezone($class, APP_TIMEZONE);
         $errors = [];
@@ -661,8 +678,8 @@ class ClassController
             'end_time_utc' => $endUtcValue,
             'timezone' => $timezone,
             'scheduled_timezone' => $timezone,
-            'payout' => round($payoutAmount, 2),
-            'student_fee' => round($studentFee, 2),
+            'payout' => $payoutAmount,
+            'student_fee' => $studentFee,
             'meeting_link' => $meetingLink !== '' ? $meetingLink : null,
             'google_meeting_code' => $nextMeetingCode,
             'google_meet_space_name' => $meetingCodeChanged ? null : ($class['google_meet_space_name'] ?? null),
@@ -705,8 +722,8 @@ class ClassController
         $description = trim($_POST['description'] ?? '');
         $teacherId = (int) ($_POST['teacher_id'] ?? 0);
         $classMasterId = (int) ($_POST['class_master_id'] ?? 0);
-        $payoutAmount = isset($_POST['payout_amount']) ? (float) $_POST['payout_amount'] : 0.0;
-        $studentFee = isset($_POST['student_fee']) ? (float) $_POST['student_fee'] : 0.0;
+        $payoutAmount = parseInrAmount($_POST['payout_amount'] ?? 0);
+        $studentFee = parseInrAmount($_POST['student_fee'] ?? 0);
         $start = $_POST['start_datetime'] ?? '';
         $end = $_POST['end_datetime'] ?? '';
         $timezone = normalizeTimezone((string) ($_POST['timezone'] ?? APP_TIMEZONE), APP_TIMEZONE);
@@ -740,6 +757,12 @@ class ClassController
         if ($teacherId <= 0) {
             $errors[] = 'Teacher is required.';
         }
+        if ($teacherId > 0 && $studentIds !== []) {
+            $unmapped = TeacherStudent::filterUnmappedStudentIds($teacherId, $studentIds);
+            if ($unmapped !== []) {
+                $errors[] = 'One or more selected students are not mapped to this teacher. Link them under Admin → Teacher-Students, then refresh the student list.';
+            }
+        }
         if ($start === '' || $end === '') {
             $errors[] = 'Start and end date/time are required.';
         }
@@ -761,7 +784,6 @@ class ClassController
                 return;
             }
             $teachers = User::allTeachers();
-            $students = User::allStudents();
             $classTypes = [];
             try {
                 $classTypes = ClassMaster::allActive();
@@ -770,7 +792,7 @@ class ClassController
             View::render('classes/create', [
                 'pageTitle' => 'Schedule Class',
                 'teachers' => $teachers,
-                'students' => $students,
+                'students' => self::studentsForScheduleForm($_POST),
                 'classTypes' => $classTypes,
                 'errors' => $errors,
                 'old' => $_POST,
@@ -787,7 +809,6 @@ class ClassController
             }
 
             $teachers = User::allTeachers();
-            $students = User::allStudents();
             $classTypes = [];
             try {
                 $classTypes = ClassMaster::allActive();
@@ -797,7 +818,7 @@ class ClassController
             View::render('classes/create', [
                 'pageTitle' => 'Schedule Class',
                 'teachers' => $teachers,
-                'students' => $students,
+                'students' => self::studentsForScheduleForm($_POST),
                 'classTypes' => $classTypes,
                 'errors' => [$teacherGoogleError],
                 'old' => $_POST,
@@ -849,7 +870,6 @@ class ClassController
             }
 
             $teachers = User::allTeachers();
-            $students = User::allStudents();
             $classTypes = [];
             try {
                 $classTypes = ClassMaster::allActive();
@@ -859,7 +879,7 @@ class ClassController
             View::render('classes/create', [
                 'pageTitle' => 'Schedule Class',
                 'teachers' => $teachers,
-                'students' => $students,
+                'students' => self::studentsForScheduleForm($_POST),
                 'classTypes' => $classTypes,
                 'errors' => [$errorMessage],
                 'old' => $_POST,
@@ -882,8 +902,8 @@ class ClassController
                 'class_master_id' => $classMasterId > 0 ? $classMasterId : null,
                 'title' => $title,
                 'description' => $description,
-                'payout_amount' => round($payoutAmount, 2),
-                'student_fee' => round($studentFee, 2),
+                'payout_amount' => $payoutAmount,
+                'student_fee' => $studentFee,
                 'start_datetime' => $startUtc,
                 'scheduled_time_utc' => $startUtc,
                 'start_time_utc' => $startUtc,

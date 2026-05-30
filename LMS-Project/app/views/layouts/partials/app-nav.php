@@ -47,6 +47,7 @@ $item = static function (string $href, string $icon, string $label) use ($base, 
         <?php $item('/admin/payments', 'fa-solid fa-wallet', 'Payments'); ?>
         <?php $item('/admin/student-payments', 'fa-solid fa-indian-rupee-sign', 'Student Payments'); ?>
         <?php $item('/admin/recordings', 'fa-solid fa-video', 'Recordings'); ?>
+        <?php $item('/admin/meeting-sync-debug', 'fa-solid fa-bug', 'Meeting Sync Debug'); ?>
         <?php $item('/settings', 'fa-solid fa-gear', 'Settings'); ?>
     <?php elseif (Auth::isTeacher()): ?>
         <?php $item('/teacher/calendar', 'fa-solid fa-calendar-days', 'Calendar'); ?>

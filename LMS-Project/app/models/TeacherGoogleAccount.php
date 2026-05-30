@@ -30,6 +30,7 @@ class TeacherGoogleAccount
      *   google_email:?string,
      *   google_person_resource_name:?string,
      *   google_person_id:?string,
+     *   google_user_id:?string,
      *   access_token:string,
      *   refresh_token:string,
      *   token_expiry:?string,
@@ -53,6 +54,9 @@ class TeacherGoogleAccount
                 : null,
             'google_person_id' => isset($row['google_person_id']) && $row['google_person_id'] !== null
                 ? (string) $row['google_person_id']
+                : null,
+            'google_user_id' => isset($row['google_user_id']) && $row['google_user_id'] !== null
+                ? (string) $row['google_user_id']
                 : null,
             'account_type' => self::effectiveAccountType($row),
             'recording_supported' => self::recordingSupportedFromAccountRow($row) ? 1 : 0,
@@ -98,7 +102,8 @@ class TeacherGoogleAccount
         ?DateTimeImmutable $tokenExpiry,
         string $status = 'active',
         ?string $googlePersonResourceName = null,
-        ?string $googlePersonId = null
+        ?string $googlePersonId = null,
+        ?string $googleUserId = null
     ): void {
         $existing = self::findByTeacherId($teacherId);
         $encryptedAccessToken = self::encryptNullable($accessToken);
@@ -113,15 +118,16 @@ class TeacherGoogleAccount
             $pdo = Database::connection();
             $stmt = $pdo->prepare(
                 'INSERT INTO teacher_google_accounts
-                    (teacher_id, google_email, google_person_resource_name, google_person_id, account_type, recording_supported, access_token, refresh_token, token_expiry, connected_at, status, created_at, updated_at)
+                    (teacher_id, google_email, google_person_resource_name, google_person_id, google_user_id, account_type, recording_supported, access_token, refresh_token, token_expiry, connected_at, status, created_at, updated_at)
                  VALUES
-                    (:teacher_id, :google_email, :google_person_resource_name, :google_person_id, :account_type, :recording_supported, :access_token, :refresh_token, :token_expiry, NOW(), :status, NOW(), NOW())'
+                    (:teacher_id, :google_email, :google_person_resource_name, :google_person_id, :google_user_id, :account_type, :recording_supported, :access_token, :refresh_token, :token_expiry, NOW(), :status, NOW(), NOW())'
             );
             $stmt->execute([
                 'teacher_id' => $teacherId,
                 'google_email' => $googleEmail,
                 'google_person_resource_name' => $googlePersonResourceName,
                 'google_person_id' => $googlePersonId,
+                'google_user_id' => $googleUserId,
                 'account_type' => $profile['account_type'],
                 'recording_supported' => $profile['recording_supported'] ? 1 : 0,
                 'access_token' => $encryptedAccessToken,
@@ -138,6 +144,7 @@ class TeacherGoogleAccount
              SET google_email = :google_email,
                  google_person_resource_name = :google_person_resource_name,
                  google_person_id = :google_person_id,
+                 google_user_id = :google_user_id,
                  account_type = :account_type,
                  recording_supported = :recording_supported,
                  access_token = :access_token,
@@ -157,6 +164,9 @@ class TeacherGoogleAccount
             'google_person_id' => $googlePersonId !== null && $googlePersonId !== ''
                 ? $googlePersonId
                 : ($existing['google_person_id'] ?? null),
+            'google_user_id' => $googleUserId !== null && $googleUserId !== ''
+                ? $googleUserId
+                : ($existing['google_user_id'] ?? null),
             'account_type' => $profile['account_type'],
             'recording_supported' => $profile['recording_supported'] ? 1 : 0,
             'access_token' => $encryptedAccessToken ?? ($existing['access_token'] ?? null),
@@ -166,13 +176,18 @@ class TeacherGoogleAccount
         ]);
     }
 
-    public static function updateIdentity(int $teacherId, ?string $googlePersonResourceName, ?string $googlePersonId): void
-    {
+    public static function updateIdentity(
+        int $teacherId,
+        ?string $googlePersonResourceName,
+        ?string $googlePersonId,
+        ?string $googleUserId = null
+    ): void {
         $pdo = Database::connection();
         $stmt = $pdo->prepare(
             'UPDATE teacher_google_accounts
              SET google_person_resource_name = :google_person_resource_name,
                  google_person_id = :google_person_id,
+                 google_user_id = COALESCE(:google_user_id, google_user_id),
                  updated_at = NOW()
              WHERE teacher_id = :teacher_id'
         );
@@ -180,6 +195,7 @@ class TeacherGoogleAccount
             'teacher_id' => $teacherId,
             'google_person_resource_name' => $googlePersonResourceName,
             'google_person_id' => $googlePersonId,
+            'google_user_id' => $googleUserId,
         ]);
     }
 

@@ -1,76 +1,78 @@
 (() => {
     'use strict';
 
-    function appUi() {
-        return window.AppUI || null;
-    }
-
-    function normalizeConfirmOptions(options) {
-        return {
-            title: options.title || 'Are you sure?',
-            text: options.text || 'Please confirm this action.',
-            icon: options.icon || 'warning',
-            confirmButtonText: options.confirmButtonText || 'Continue',
-            cancelButtonText: options.cancelButtonText || 'Cancel',
-        };
-    }
-
-    function withAppUi(method, fallback) {
-        const ui = appUi();
-        if (ui && typeof ui[method] === 'function') {
-            return ui[method].bind(ui);
+    function fireSwal(options) {
+        if (window.Swal && typeof window.Swal.fire === 'function') {
+            return window.Swal.fire(options || {});
         }
 
-        return fallback;
+        const ui = window.AppUI;
+        if (ui && typeof ui.alert === 'function') {
+            return ui.alert(options || {});
+        }
+
+        return Promise.resolve({ isConfirmed: true });
     }
 
-    function show(options) {
-        const invoke = withAppUi('alert', (alertOptions) => {
-            if (window.Swal && typeof window.Swal.fire === 'function') {
-                return window.Swal.fire(alertOptions || {});
-            }
-            return Promise.resolve({ isConfirmed: true });
-        });
-        return invoke(options || {});
-    }
+    const swalModalClass = {
+        popup: 'app-swal-popup',
+        title: 'app-swal-title swal2-title',
+        htmlContainer: 'app-swal-body swal2-html-container',
+        confirmButton: 'btn btn-primary app-swal-confirm',
+        cancelButton: 'btn btn-outline-secondary app-swal-cancel',
+        actions: 'app-swal-actions',
+    };
 
     function showSuccess(message, title = 'Success') {
-        return withAppUi('success', (text, heading) => show({ icon: 'success', text, title: heading }))(message, title);
+        return fireSwal({
+            icon: 'success',
+            title: title || 'Success',
+            text: message || '',
+            timer: 2500,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            customClass: swalModalClass,
+        });
     }
 
     function showError(message, title = 'Error') {
-        return withAppUi('error', (text, heading) => show({ icon: 'error', text, title: heading }))(message, title);
+        return fireSwal({
+            icon: 'error',
+            title: title || 'Error',
+            text: message || '',
+            confirmButtonColor: '#0d6efd',
+            customClass: swalModalClass,
+            buttonsStyling: false,
+        });
     }
 
     function showWarning(message, title = 'Warning') {
-        return withAppUi('warning', (text, heading) => show({ icon: 'warning', text, title: heading }))(message, title);
-    }
-
-    function showInfo(message, title = 'Notice') {
-        const ui = appUi();
-        if (ui && typeof ui.info === 'function') {
-            return ui.info(message, title);
-        }
-
-        return show({ icon: 'info', text: message, title });
+        return fireSwal({
+            icon: 'warning',
+            title: title || 'Warning',
+            text: message || '',
+            confirmButtonColor: '#0d6efd',
+            customClass: swalModalClass,
+            buttonsStyling: false,
+        });
     }
 
     function showToast(message, type = 'success', title = '') {
-        return withAppUi('toast', (icon, text, heading) => {
-            if (window.Swal && typeof window.Swal.fire === 'function') {
-                return window.Swal.fire({
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000,
-                    timerProgressBar: true,
-                    icon,
-                    title: heading || '',
-                    text: text || '',
-                });
-            }
-            return Promise.resolve({ isConfirmed: true });
-        })(type, message, title);
+        const ui = window.AppUI;
+        if (ui && typeof ui.toast === 'function') {
+            return ui.toast(type, message, title);
+        }
+
+        return fireSwal({
+            toast: true,
+            position: 'top-end',
+            icon: type || 'success',
+            title: title || message || '',
+            text: title ? (message || '') : '',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+        });
     }
 
     function showConfirm(optionsOrCallback, maybeCallback) {
@@ -79,16 +81,30 @@
             ? optionsOrCallback
             : (typeof maybeCallback === 'function' ? maybeCallback : null);
 
-        return withAppUi('confirm', (confirmOptions) => {
-            if (window.Swal && typeof window.Swal.fire === 'function') {
-                return window.Swal.fire({
-                    ...normalizeConfirmOptions(confirmOptions),
-                    showCancelButton: true,
-                }).then((result) => Boolean(result && result.isConfirmed));
-            }
-            const confirmed = window.confirm((confirmOptions && confirmOptions.text) || 'Please confirm this action.');
-            return Promise.resolve(confirmed);
-        })(normalizeConfirmOptions(options)).then((confirmed) => {
+        const ui = window.AppUI;
+        if (ui && typeof ui.confirm === 'function') {
+            return ui.confirm(options).then((confirmed) => {
+                if (confirmed && callback) {
+                    callback();
+                }
+                return confirmed;
+            });
+        }
+
+        return fireSwal({
+            icon: options.icon || 'warning',
+            title: options.title || 'Are you sure?',
+            text: options.text || 'Please confirm this action.',
+            showCancelButton: true,
+            confirmButtonText: options.confirmButtonText || 'Continue',
+            cancelButtonText: options.cancelButtonText || 'Cancel',
+            reverseButtons: true,
+            confirmButtonColor: '#0d6efd',
+            cancelButtonColor: '#94a3b8',
+            buttonsStyling: false,
+            customClass: swalModalClass,
+        }).then((result) => {
+            const confirmed = Boolean(result && result.isConfirmed);
             if (confirmed && callback) {
                 callback();
             }
@@ -117,15 +133,15 @@
             return showWarning(text, title || 'Warning');
         }
 
-        return showInfo(text, title || 'Notice');
+        return showToast(text, 'info', title || 'Notice');
     }
 
     window.AppAlerts = {
-        show,
+        show: (options) => fireSwal(options),
         showSuccess,
         showError,
         showWarning,
-        showInfo,
+        showInfo: (message, title = 'Notice') => showToast(message, 'info', title || 'Notice'),
         showToast,
         showConfirm,
         presentFlash,
@@ -135,4 +151,5 @@
     window.showError = showError;
     window.showWarning = showWarning;
     window.showConfirm = showConfirm;
+    window.showToast = showToast;
 })();

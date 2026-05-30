@@ -84,5 +84,21 @@ if (is_array($flashSessionQueue)) {
 <script>window.__APP_FLASHES__ = <?= json_encode($flashQueue, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;</script>
 <script src="<?= h($base . '/assets/js/app.js') ?>"></script>
 <script src="<?= h($base . '/assets/js/alerts.js') ?>"></script>
+<?php
+if (!class_exists('Auth', false)) {
+    require_once dirname(__DIR__) . '/app/lib/Auth.php';
+}
+Auth::startSession();
+if (Auth::check()):
+    $meetPollInterval = max(15, (int) env('GOOGLE_MEET_AUTO_POLL_SECONDS', 20));
+?>
+<script>
+window.__MEET_STATUS_POLL__ = <?= json_encode([
+    'url' => $base . '/meeting/sync-ongoing',
+    'intervalSeconds' => $meetPollInterval,
+], JSON_UNESCAPED_SLASHES) ?>;
+</script>
+<script src="<?= h($base . '/assets/js/meet-status-poll.js') ?>"></script>
+<?php endif; ?>
 </body>
 </html>

@@ -45,8 +45,28 @@ class GoogleOAuthService
         return trim((string) SystemConfig::get('google_client_secret', ''));
     }
 
+    /**
+     * Scopes required to create Google Calendar events with Meet links.
+     *
+     * @return list<string>
+     */
+    public static function requiredScopes(): array
+    {
+        return [
+            GoogleCalendar::CALENDAR,
+            GoogleMeet::MEETINGS_SPACE_READONLY,
+            'https://www.googleapis.com/auth/drive.readonly',
+            GooglePeopleService::USERINFO_EMAIL,
+            'openid',
+            'email',
+            'profile',
+        ];
+    }
+
     public function buildAuthUrl(int $teacherId): string
     {
+        $this->prepareReconnect($teacherId);
+
         $client = $this->client();
         $state = base64_encode(json_encode([
             'teacher_id' => $teacherId,
@@ -56,6 +76,32 @@ class GoogleOAuthService
 
         $client->setState($state);
         return $client->createAuthUrl();
+    }
+
+    /**
+     * Revoke any existing Google tokens so reconnect always issues fresh consent + refresh token.
+     */
+    public function prepareReconnect(int $teacherId): void
+    {
+        $account = TeacherGoogleAccount::getCredentialsForTeacher($teacherId);
+        if ($account === null) {
+            return;
+        }
+
+        $tokenToRevoke = trim((string) ($account['refresh_token'] ?? ''));
+        if ($tokenToRevoke === '') {
+            $tokenToRevoke = trim((string) ($account['access_token'] ?? ''));
+        }
+
+        if ($tokenToRevoke !== '') {
+            try {
+                $this->client()->revokeToken($tokenToRevoke);
+            } catch (\Throwable $e) {
+                // Non-fatal: token may already be invalid.
+            }
+        }
+
+        TeacherGoogleAccount::disconnect($teacherId);
     }
 
     /**
@@ -82,6 +128,15 @@ class GoogleOAuthService
             throw new RuntimeException((string) $err);
         }
 
+        $refresh = trim((string) ($token['refresh_token'] ?? ''));
+        if ($refresh === '') {
+            throw new RuntimeException(
+                'Google did not return a refresh token. Disconnect the account, then connect again and approve all requested permissions (including Google Calendar).'
+            );
+        }
+
+        self::assertCalendarScopeGranted($token);
+
         $email = null;
         $payload = null;
         try {
@@ -96,6 +151,7 @@ class GoogleOAuthService
 
         $googlePersonResourceName = null;
         $googlePersonId = null;
+        $googleUserId = is_array($payload) && !empty($payload['sub']) ? trim((string) $payload['sub']) : null;
         try {
             $client->setAccessToken($token);
             $people = new GooglePeopleService($client);
@@ -107,9 +163,9 @@ class GoogleOAuthService
                 $googlePersonId = substr($googlePersonResourceName, strlen('people/')) ?: null;
             }
         } catch (\Throwable $e) {
-            if (is_array($payload ?? null) && !empty($payload['sub'])) {
-                $googlePersonId = (string) $payload['sub'];
-                $googlePersonResourceName = 'people/' . $googlePersonId;
+            if ($googleUserId !== null && $googleUserId !== '') {
+                $googlePersonId = $googleUserId;
+                $googlePersonResourceName = 'people/' . $googleUserId;
             }
         }
 
@@ -117,8 +173,6 @@ class GoogleOAuthService
         if (($email === null || trim($email) === '') && $existing !== null && !empty($existing['google_email'])) {
             $email = (string) $existing['google_email'];
         }
-        $refresh = (string) ($token['refresh_token'] ?? ($existing['refresh_token'] ?? ''));
-        $saved = $refresh !== '';
         $this->validateTeacherGoogleEmail($email);
 
         TeacherGoogleAccount::upsertConnection(
@@ -129,7 +183,8 @@ class GoogleOAuthService
             $this->tokenExpiryFromPayload($token),
             'active',
             $googlePersonResourceName,
-            $googlePersonId
+            $googlePersonId,
+            $googleUserId
         );
         $profile = GoogleAccountType::profileFromEmail($email);
         SyncLog::write('google_account_type.log', [
@@ -138,6 +193,7 @@ class GoogleOAuthService
             'google_email' => $email,
             'google_person_resource_name' => $googlePersonResourceName,
             'google_person_id' => $googlePersonId,
+            'google_user_id' => $googleUserId,
             'account_type' => $profile['account_type'],
             'recording_supported' => $profile['recording_supported'],
             'configured_workspace_domain' => $this->workspaceDomain(),
@@ -148,12 +204,59 @@ class GoogleOAuthService
             'teacher_google_email' => $email,
             'google_person_resource_name' => $googlePersonResourceName,
             'google_person_id' => $googlePersonId,
+            'google_user_id' => $googleUserId,
             'account_type' => $profile['account_type'],
             'recording_supported' => $profile['recording_supported'],
             'workspace_domain' => $this->workspaceDomain(),
         ]);
 
-        return ['teacher_id' => $teacherId, 'email' => $email, 'refresh_token_saved' => $saved];
+        return ['teacher_id' => $teacherId, 'email' => $email, 'refresh_token_saved' => true];
+    }
+
+    /**
+     * @param array<string, mixed> $token
+     */
+    public static function assertCalendarScopeGranted(array $token): void
+    {
+        $granted = array_filter(explode(' ', trim((string) ($token['scope'] ?? ''))));
+        if ($granted === []) {
+            return;
+        }
+
+        $calendarScopes = [
+            GoogleCalendar::CALENDAR,
+            GoogleCalendar::CALENDAR_EVENTS,
+            GoogleCalendar::CALENDAR_EVENTS_OWNED,
+        ];
+
+        foreach ($granted as $scope) {
+            if (in_array($scope, $calendarScopes, true)) {
+                return;
+            }
+        }
+
+        throw new RuntimeException(
+            'Google Calendar permission was not granted. In Google Cloud Console, add the '
+            . 'Google Calendar API and the "calendar" scope to your OAuth consent screen, then '
+            . 'disconnect and reconnect the teacher Google account, approving all permissions.'
+        );
+    }
+
+    public static function scopeInsufficientMessage(): string
+    {
+        return 'This teacher\'s Google token is missing Calendar permission. Disconnect the Google account '
+            . 'on the Admin dashboard, reconnect it, and approve all permissions (including Google Calendar). '
+            . 'Also verify the Google Calendar API is enabled and the "calendar" scope is on your OAuth consent screen.';
+    }
+
+    public static function isScopeInsufficientError(\Throwable $e): bool
+    {
+        $lower = strtolower($e->getMessage());
+
+        return str_contains($lower, 'insufficient authentication scopes')
+            || str_contains($lower, 'insufficientpermission')
+            || str_contains($lower, 'insufficient permission')
+            || str_contains($lower, 'access_token_scope_insufficient');
     }
 
     /**
@@ -253,16 +356,8 @@ class GoogleOAuthService
         $client->setRedirectUri($redirectUri);
         $client->setAccessType('offline');
         $client->setPrompt('consent');
-        $client->setIncludeGrantedScopes(true);
-        $client->setScopes([
-            GoogleCalendar::CALENDAR,
-            GoogleMeet::MEETINGS_SPACE_READONLY,
-            'https://www.googleapis.com/auth/drive.readonly',
-            GooglePeopleService::USERINFO_EMAIL,
-            'openid',
-            'email',
-            'profile',
-        ]);
+        $client->setIncludeGrantedScopes(false);
+        $client->setScopes(self::requiredScopes());
         $client->setHttpClient($this->buildHttpClient());
 
         return $client;

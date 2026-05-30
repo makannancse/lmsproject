@@ -192,6 +192,23 @@
             });
         },
         success(text, title = 'Success') {
+            if (window.Swal && typeof window.Swal.fire === 'function') {
+                return window.Swal.fire({
+                    icon: 'success',
+                    title,
+                    text,
+                    timer: 2500,
+                    timerProgressBar: true,
+                    showConfirmButton: false,
+                    position: 'top-end',
+                    toast: false,
+                    customClass: {
+                        popup: 'app-swal-popup app-swal-popup-success',
+                        title: 'app-swal-title',
+                        htmlContainer: 'app-swal-body',
+                    },
+                });
+            }
             return AppUI.alert({ icon: 'success', title, text });
         },
         error(text, title = 'Error') {

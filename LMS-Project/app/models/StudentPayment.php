@@ -16,7 +16,7 @@ class StudentPayment
         $stmt->execute([
             'student_id' => $studentId,
             'class_id' => $classId,
-            'amount' => round($amount, 2),
+            'amount' => function_exists('parseInrAmount') ? parseInrAmount($amount) : round((float) $amount, 2),
         ]);
     }
 

@@ -135,7 +135,13 @@ class GoogleCalendarMeetingService
                     'request_id' => $requestId,
                     'error' => $retryError->getMessage(),
                 ]);
-                throw $retryError;
+                throw new RuntimeException(
+                    GoogleOAuthService::isScopeInsufficientError($retryError)
+                        ? GoogleOAuthService::scopeInsufficientMessage()
+                        : $retryError->getMessage(),
+                    0,
+                    $retryError
+                );
             }
         }
 
@@ -298,7 +304,13 @@ class GoogleCalendarMeetingService
                     'timezone' => $timezone,
                     'error' => $retryError->getMessage(),
                 ]);
-                throw $retryError;
+                throw new RuntimeException(
+                    GoogleOAuthService::isScopeInsufficientError($retryError)
+                        ? GoogleOAuthService::scopeInsufficientMessage()
+                        : $retryError->getMessage(),
+                    0,
+                    $retryError
+                );
             }
         }
 

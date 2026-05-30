@@ -5,7 +5,6 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/lib/Auth.php';
 require_once dirname(__DIR__) . '/lib/View.php';
 require_once dirname(__DIR__) . '/models/ClassSession.php';
-require_once dirname(__DIR__) . '/models/TeacherPayout.php';
 require_once dirname(__DIR__) . '/models/TeacherGoogleAccount.php';
 require_once dirname(__DIR__) . '/lib/PayoutService.php';
 require_once dirname(__DIR__) . '/models/ClassRecording.php';
@@ -22,8 +21,8 @@ class TeacherController
         $upcoming = ClassSession::findUpcomingByTeacher($teacherId);
         $completed = ClassSession::findCompletedByTeacher($teacherId);
 
-        $totalPayout = TeacherPayout::totalForTeacher($teacherId, null);
         $payoutBreakdown = PayoutService::calculateTeacherPayout($teacherId);
+        $totalPayout = (float) ($payoutBreakdown['total'] ?? 0);
         $googleAccount = TeacherGoogleAccount::findByTeacherId($teacherId);
         if ($googleAccount !== null) {
             $accountKindRaw = strtolower(trim((string) ($googleAccount['account_type'] ?? '')));

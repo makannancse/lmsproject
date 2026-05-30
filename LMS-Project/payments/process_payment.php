@@ -35,7 +35,9 @@ if (isset($_POST['mark_paid'])) {
 }
 
 if (isset($_POST['add_payment'])) {
-    $amount = (float) ($_POST['advance_amount'] ?? 0);
+    $amount = function_exists('parseInrAmount')
+        ? parseInrAmount($_POST['advance_amount'] ?? 0)
+        : round((float) ($_POST['advance_amount'] ?? 0), 2);
     $remarks = trim((string) ($_POST['remarks'] ?? 'Manual payment from dashboard'));
     if ($amount > 0) {
         createTeacherPaymentEntry($teacherId, $amount, $remarks);

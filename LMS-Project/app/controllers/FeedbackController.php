@@ -6,10 +6,11 @@ require_once dirname(__DIR__) . '/lib/Auth.php';
 require_once dirname(__DIR__) . '/lib/View.php';
 require_once dirname(__DIR__) . '/lib/Database.php';
 require_once dirname(__DIR__) . '/models/ClassSession.php';
+require_once dirname(__DIR__) . '/models/TeacherStudent.php';
 
 class FeedbackController
 {
-    /** Teachers can send feedback anytime for students they have enrolled in at least one class. */
+    /** Teachers can send feedback for students mapped to them in teacher_students. */
     public static function teacherIndex(): void
     {
         Auth::requireRole(['teacher']);
@@ -17,14 +18,16 @@ class FeedbackController
         $pdo = Database::connection();
 
         $stmt = $pdo->prepare(
-            'SELECT e.student_id, MAX(u.name) AS student_name,
-                    SUM(CASE WHEN cs.status = "completed" THEN 1 ELSE 0 END) AS completed_count
-             FROM enrollments e
-             INNER JOIN class_sessions cs ON cs.id = e.class_id
-             INNER JOIN users u ON u.id = e.student_id
-             WHERE cs.teacher_id = :tid
-             GROUP BY e.student_id
-             ORDER BY MAX(u.name) ASC'
+            'SELECT ts.student_id,
+                    u.name AS student_name,
+                    COALESCE(SUM(CASE WHEN cs.status = "completed" THEN 1 ELSE 0 END), 0) AS completed_count
+             FROM teacher_students ts
+             INNER JOIN users u ON u.id = ts.student_id
+             LEFT JOIN enrollments e ON e.student_id = ts.student_id
+             LEFT JOIN class_sessions cs ON cs.id = e.class_id AND cs.teacher_id = ts.teacher_id
+             WHERE ts.teacher_id = :tid
+             GROUP BY ts.student_id, u.name
+             ORDER BY u.name ASC'
         );
         $stmt->execute(['tid' => $teacherId]);
         $eligible = $stmt->fetchAll() ?: [];
@@ -46,8 +49,8 @@ class FeedbackController
             return;
         }
 
-        if (!self::studentEnrolledWithTeacher($studentId, $teacherId)) {
-            $_SESSION['flash_warning'] = 'Pick a student from your roster.';
+        if (!TeacherStudent::isMapped($teacherId, $studentId)) {
+            $_SESSION['flash_warning'] = 'Pick a student from your mapped roster.';
             header('Location: ' . $base . '/teacher/feedback');
             return;
         }
@@ -82,8 +85,8 @@ class FeedbackController
             return;
         }
 
-        if (!self::studentEnrolledWithTeacher($studentId, $teacherId)) {
-            $_SESSION['flash_warning'] = 'That student is not on your roster.';
+        if (!TeacherStudent::isMapped($teacherId, $studentId)) {
+            $_SESSION['flash_warning'] = 'That student is not mapped to you.';
             header('Location: ' . $base . '/teacher/feedback');
             return;
         }
@@ -104,17 +107,4 @@ class FeedbackController
         header('Location: ' . $base . '/teacher/feedback');
     }
 
-    private static function studentEnrolledWithTeacher(int $studentId, int $teacherId): bool
-    {
-        $pdo = Database::connection();
-        $stmt = $pdo->prepare(
-            'SELECT 1 FROM enrollments e
-             INNER JOIN class_sessions cs ON cs.id = e.class_id
-             WHERE cs.teacher_id = :tid AND e.student_id = :sid
-             LIMIT 1'
-        );
-        $stmt->execute(['tid' => $teacherId, 'sid' => $studentId]);
-
-        return (bool) $stmt->fetchColumn();
-    }
 }

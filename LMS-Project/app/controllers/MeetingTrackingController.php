@@ -11,6 +11,31 @@ require_once dirname(__DIR__) . '/models/TeacherGoogleAccount.php';
 
 class MeetingTrackingController
 {
+    /**
+     * Background poll: sync ongoing classes from Google Meet (no "End Class" click required).
+     */
+    public static function syncOngoing(): void
+    {
+        Auth::requireRole(['admin', 'teacher', 'student']);
+        $user = Auth::user() ?: [];
+        $userId = (int) ($user['id'] ?? 0);
+        $role = (string) ($user['role'] ?? '');
+
+        $service = new MeetingTrackingService();
+        try {
+            $result = $service->autoSyncOngoingClasses($userId, $role);
+            self::json([
+                'ok' => true,
+                'checked' => $result['checked'],
+                'completed' => $result['completed'],
+                'still_ongoing' => $result['still_ongoing'],
+                'reload' => $result['completed'] !== [],
+            ]);
+        } catch (\Throwable $e) {
+            self::json(['ok' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
     public static function track(): void
     {
         Auth::requireRole(['admin', 'teacher', 'student']);
@@ -47,6 +72,15 @@ class MeetingTrackingController
                 }
 
                 $class = $service->startTeacherSession($classId, $userId);
+                try {
+                    $liveService->syncClass($classId, 'teacher_launch');
+                    $synced = $service->getClassById($classId);
+                    if (is_array($synced)) {
+                        $class = $synced;
+                    }
+                } catch (\Throwable $ignored) {
+                    // Meet API sync is best-effort before redirect; cron/webhooks continue tracking.
+                }
                 $meetingLink = trim((string) ($class['meeting_link'] ?? ''));
                 if ($meetingLink === '') {
                     $meetingLink = trim((string) SystemConfig::get('static_meeting_link', env('STATIC_MEETING_LINK', '')));
@@ -60,14 +94,27 @@ class MeetingTrackingController
                 header('Location: ' . $meetingLink);
                 exit;
             } elseif ($event === 'leave') {
-                $service->markLeave($classId, $userId, $role === 'admin' ? 'teacher' : $role);
-                $_SESSION['flash_info'] = 'Refreshing the class status from Google Meet activity.';
-            } elseif ($event === 'end') {
-                $sync = $liveService->syncClass($classId, 'manual_end_request');
-                if (($sync['status'] ?? '') === 'completed') {
-                    $_SESSION['flash_success'] = 'Class completed using real Google Meet timings.';
+                if ($role === 'teacher' || $role === 'admin') {
+                    $result = $service->finalizeTeacherHostLeave($classId, 'teacher_leave_request');
+                    if (($result['status'] ?? '') === 'completed') {
+                        $_SESSION['flash_success'] = 'Class completed using the host\'s actual Google Meet end time.';
+                    } else {
+                        $_SESSION['flash_warning'] = 'Google Meet has not confirmed the host left yet. Leave the Meet call, wait a few seconds, then try again.';
+                    }
                 } else {
-                    $_SESSION['flash_warning'] = 'Google Meet has not reported the host session as ended yet.';
+                    $service->markLeave($classId, $userId, $role);
+                    $_SESSION['flash_info'] = 'Your attendance has been updated.';
+                }
+            } elseif ($event === 'end') {
+                try {
+                    $result = $service->finalizeTeacherHostLeave($classId, 'manual_end_request');
+                    if (($result['status'] ?? '') === 'completed') {
+                        $_SESSION['flash_success'] = 'Class completed using real Google Meet timings.';
+                    } else {
+                        $_SESSION['flash_warning'] = 'Google Meet has not reported the host session as ended yet.';
+                    }
+                } catch (\Throwable $endError) {
+                    $_SESSION['flash_warning'] = $endError->getMessage();
                 }
             } elseif ($event === 'sync-recording') {
                 $result = $service->syncRecordingForClass($classId, true);
@@ -92,6 +139,7 @@ class MeetingTrackingController
         $workspaceEvent = self::decodeWorkspaceEventPayload($payload);
         if ($workspaceEvent !== null) {
             $liveService = new GoogleMeetLiveTrackingService();
+            $trackingService = new MeetingTrackingService();
             try {
                 $conferenceRecordName = self::conferenceRecordFromWorkspaceEvent($workspaceEvent);
                 $spaceName = self::spaceNameFromWorkspaceEvent($workspaceEvent);
@@ -102,7 +150,27 @@ class MeetingTrackingController
                 if ($synced === null && $spaceName !== null) {
                     $synced = $liveService->syncClassBySpaceName($spaceName, 'workspace_event');
                 }
-                self::json(['ok' => true, 'workspace_event_synced' => $synced !== null]);
+                $completed = false;
+                $classId = (int) ($synced['class_id'] ?? 0);
+                if (
+                    $classId > 0
+                    && (
+                        ($synced['status'] ?? '') === 'completed'
+                        || ($synced['meeting_live_status'] ?? '') === 'ended'
+                    )
+                ) {
+                    try {
+                        $trackingService->finalizeTeacherHostLeave($classId, 'workspace_event');
+                        $completed = true;
+                    } catch (\Throwable $ignored) {
+                        $completed = ($synced['status'] ?? '') === 'completed';
+                    }
+                }
+                self::json([
+                    'ok' => true,
+                    'workspace_event_synced' => $synced !== null,
+                    'class_completed' => $completed,
+                ]);
             } catch (\Throwable $e) {
                 self::json(['ok' => false, 'error' => $e->getMessage()], 500);
             }
@@ -137,8 +205,10 @@ class MeetingTrackingController
                 case 'meeting_started':
                 case 'participant_joined':
                 case 'participant_left':
-                case 'meeting_ended':
                     $liveService->syncClass((int) $class['id'], 'google_webhook');
+                    break;
+                case 'meeting_ended':
+                    $service->finalizeTeacherHostLeave((int) $class['id'], 'google_webhook');
                     break;
                 case 'recording_ready':
                     $service->syncRecordingForClass((int) $class['id'], true);

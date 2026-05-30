@@ -57,9 +57,7 @@ class GoogleIntegrationController
 
         try {
             $result = (new GoogleOAuthService())->handleCallback($code, $state);
-            $message = $result['refresh_token_saved']
-                ? 'Google account connected successfully.'
-                : 'Google connected, but no refresh token was returned. Reconnect with consent if meeting creation fails.';
+            $message = 'Google account connected successfully.';
             $profile = GoogleAccountType::profileFromEmail($result['email'] ?? null);
             if (!$profile['recording_supported']) {
                 $message .= ' Meet scheduling works with your Gmail account. Cloud recording and Drive sync require Google Workspace.';
@@ -93,7 +91,7 @@ class GoogleIntegrationController
             return;
         }
 
-        TeacherGoogleAccount::disconnect($teacherId);
+        (new GoogleOAuthService())->prepareReconnect($teacherId);
         $_SESSION['flash_success'] = 'Google account disconnected.';
         header('Location: ' . ($actorRole === 'admin' ? self::appBasePath() . '/admin' : self::appBasePath() . '/teacher'));
         exit;

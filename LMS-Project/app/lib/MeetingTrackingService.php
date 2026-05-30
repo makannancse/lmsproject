@@ -132,12 +132,43 @@ class MeetingTrackingService
         ]);
 
         if ($role === 'teacher') {
-            $liveService = new GoogleMeetLiveTrackingService();
-            $liveService->syncClass($classId, 'teacher_leave_request');
+            $this->finalizeTeacherHostLeave($classId, 'teacher_leave_request');
             return;
         }
 
         ClassAttendance::markLeave($classId, $userId, $role, $now);
+    }
+
+    /**
+     * After the host leaves Google Meet, poll conference activity and mark the class completed.
+     *
+     * @return array<string, mixed>
+     */
+    public function finalizeTeacherHostLeave(int $classId, string $trigger = 'teacher_leave_request'): array
+    {
+        $liveService = new GoogleMeetLiveTrackingService();
+        $sync = $liveService->syncClassAfterHostLeave($classId, $trigger);
+
+        try {
+            $this->completeClass($classId, null, $trigger);
+        } catch (\Throwable $e) {
+            SyncLog::write('google_meet_status.log', [
+                'event' => 'host_leave_finalize_incomplete',
+                'class_id' => $classId,
+                'trigger' => $trigger,
+                'sync_status' => $sync['status'] ?? 'unknown',
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
+        }
+
+        $refreshed = $this->getClassById($classId) ?? [];
+
+        return [
+            'sync' => $sync,
+            'class' => $refreshed,
+            'status' => (string) ($refreshed['status'] ?? ''),
+        ];
     }
 
     public function completeClass(int $classId, ?string $endedAt = null, string $trigger = 'meeting_ended'): void
@@ -147,7 +178,39 @@ class MeetingTrackingService
             throw new RuntimeException('Class not found.');
         }
 
-        $endTime = $this->normalizeUtcValue($endedAt ?? $this->utcNow()) ?? $this->utcNow();
+        try {
+            $liveService = new GoogleMeetLiveTrackingService();
+            if (in_array($trigger, ['teacher_leave_request', 'manual_end_request', 'meeting_ended', 'google_webhook', 'workspace_event'], true)) {
+                $liveService->syncClassAfterHostLeave($classId, $trigger);
+            } else {
+                $liveService->syncClass($classId, $trigger);
+            }
+            $refreshed = $this->getClassById($classId);
+            if (is_array($refreshed)) {
+                $class = $refreshed;
+            }
+        } catch (\Throwable $ignored) {
+            // Fall through only when Meet sync is unavailable.
+        }
+
+        if ((string) ($class['status'] ?? '') === 'completed') {
+            TeacherPayout::ensureForCompletedClass($classId);
+            SyncLog::write('google_meet_status.log', [
+                'event' => 'class_already_completed',
+                'class_id' => $classId,
+                'trigger' => $trigger,
+                'actual_end_time' => $class['actual_end_time'] ?? null,
+            ]);
+            return;
+        }
+
+        $endTime = $this->normalizeUtcValue((string) ($class['actual_end_time'] ?? ''));
+        if ($endTime === null) {
+            throw new RuntimeException(
+                'Google Meet has not reported the host leaving yet. Leave the Google Meet call, wait a few seconds, then click End Class again.'
+            );
+        }
+
         $actualStart = $this->resolveActualClassStartUtc($class);
         $endTimeTs = $this->parseUtcTimestamp($endTime) ?? time();
         $actualStartTs = $this->parseUtcTimestamp($actualStart);
@@ -209,6 +272,15 @@ class MeetingTrackingService
             'trigger' => $trigger,
             'actual_end_time' => $endTime,
             'actual_duration_minutes' => $duration,
+        ]);
+        SyncLog::write('google_meet_status.log', [
+            'event' => 'class_completed',
+            'class_id' => $classId,
+            'trigger' => $trigger,
+            'host_left' => true,
+            'actual_end_time' => $endTime,
+            'actual_duration_minutes' => $duration,
+            'status_update_result' => 'completed',
         ]);
     }
 
@@ -394,9 +466,140 @@ class MeetingTrackingService
             'SELECT *
              FROM class_sessions
              WHERE status = "ongoing"
+               AND meeting_link IS NOT NULL
+               AND TRIM(meeting_link) <> ""
              ORDER BY COALESCE(actual_start_time, teacher_joined_at, start_datetime) ASC'
         );
         return $stmt->fetchAll() ?: [];
+    }
+
+    /**
+     * Ongoing classes visible to the current user (for automatic Meet status polling).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function findOngoingClassesForUser(int $userId, string $role): array
+    {
+        $pdo = Database::connection();
+        if ($role === 'admin') {
+            return $this->findOngoingClasses();
+        }
+
+        if ($role === 'teacher') {
+            $stmt = $pdo->prepare(
+                'SELECT *
+                 FROM class_sessions
+                 WHERE status = "ongoing"
+                   AND teacher_id = :teacher_id
+                   AND meeting_link IS NOT NULL
+                   AND TRIM(meeting_link) <> ""
+                 ORDER BY COALESCE(actual_start_time, teacher_joined_at, start_datetime) ASC'
+            );
+            $stmt->execute(['teacher_id' => $userId]);
+
+            return $stmt->fetchAll() ?: [];
+        }
+
+        if ($role === 'student') {
+            $stmt = $pdo->prepare(
+                'SELECT cs.*
+                 FROM class_sessions cs
+                 INNER JOIN enrollments e ON e.class_id = cs.id AND e.status = "active"
+                 WHERE cs.status = "ongoing"
+                   AND e.student_id = :student_id
+                   AND cs.meeting_link IS NOT NULL
+                   AND TRIM(cs.meeting_link) <> ""
+                 ORDER BY COALESCE(cs.actual_start_time, cs.teacher_joined_at, cs.start_datetime) ASC'
+            );
+            $stmt->execute(['student_id' => $userId]);
+
+            return $stmt->fetchAll() ?: [];
+        }
+
+        return [];
+    }
+
+    /**
+     * Poll Google Meet for ongoing classes and mark completed when the host has left.
+     * Does not require the teacher to click "End Class".
+     *
+     * @return array{checked:int,completed:list<int>,still_ongoing:list<int>,errors:array<int,string>}
+     */
+    public function autoSyncOngoingClasses(?int $userId = null, ?string $role = null): array
+    {
+        $liveService = new GoogleMeetLiveTrackingService();
+        $classes = ($userId !== null && $userId > 0 && $role !== null && $role !== '')
+            ? $this->findOngoingClassesForUser($userId, $role)
+            : $this->findOngoingClasses();
+
+        $result = [
+            'checked' => 0,
+            'completed' => [],
+            'still_ongoing' => [],
+            'errors' => [],
+        ];
+
+        foreach ($classes as $class) {
+            $classId = (int) ($class['id'] ?? 0);
+            if ($classId <= 0) {
+                continue;
+            }
+
+            $result['checked']++;
+            try {
+                $sync = $liveService->syncClass($classId, 'auto_poll');
+                $refreshed = $this->getClassById($classId) ?? $class;
+
+                if ((string) ($refreshed['status'] ?? '') === 'completed' || ($sync['status'] ?? '') === 'completed') {
+                    $result['completed'][] = $classId;
+                    continue;
+                }
+
+                $liveStatus = (string) ($sync['meeting_live_status'] ?? ($refreshed['meeting_live_status'] ?? ''));
+                $hasHostEnd = trim((string) ($sync['actual_end_time'] ?? ($refreshed['actual_end_time'] ?? ''))) !== '';
+
+                if ($liveStatus === 'ended' || $hasHostEnd) {
+                    $leaveSync = $liveService->syncClassAfterHostLeave($classId, 'auto_poll');
+                    $refreshed = $this->getClassById($classId) ?? $refreshed;
+
+                    if ((string) ($refreshed['status'] ?? '') !== 'completed') {
+                        try {
+                            $this->completeClass($classId, null, 'auto_poll');
+                            $refreshed = $this->getClassById($classId) ?? $refreshed;
+                        } catch (\Throwable $ignored) {
+                            // Meet API may not have published host end yet; next poll will retry.
+                        }
+                    }
+
+                    if ((string) ($refreshed['status'] ?? '') === 'completed' || ($leaveSync['status'] ?? '') === 'completed') {
+                        $result['completed'][] = $classId;
+                        continue;
+                    }
+                }
+
+                if ((string) ($refreshed['status'] ?? '') === 'ongoing') {
+                    $result['still_ongoing'][] = $classId;
+                }
+            } catch (\Throwable $e) {
+                $result['errors'][$classId] = $e->getMessage();
+                SyncLog::write('google_meet_status.log', [
+                    'event' => 'auto_poll_failed',
+                    'class_id' => $classId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        if ($result['completed'] !== []) {
+            SyncLog::write('google_meet_status.log', [
+                'event' => 'auto_poll_completed_classes',
+                'class_ids' => $result['completed'],
+                'user_id' => $userId,
+                'role' => $role,
+            ]);
+        }
+
+        return $result;
     }
 
     /**

@@ -127,6 +127,7 @@ function refreshTeacherPaymentLogs(int $teacherId): void
 function createTeacherPaymentEntry(int $teacherId, float $amount, string $remarks = ''): void
 {
     $pdo = db();
+    $amount = function_exists('parseInrAmount') ? parseInrAmount($amount) : round((float) $amount, 2);
     if ($amount <= 0) {
         return;
     }

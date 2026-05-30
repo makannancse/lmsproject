@@ -1,7 +1,8 @@
 Options -Indexes
 
 RewriteEngine On
-RewriteBase /LMS-Project/public/
+# Omit RewriteBase so Apache uses this directory's URL prefix automatically
+# (works whether the app lives at /LMS-Project/public or /lmsproject/LMS-Project/public).
 
 # Route to front controller for non-files. (Do not skip existing directories: a physical
 # `public/admin/` folder was stealing /admin from the router and showed "Index of /admin".)

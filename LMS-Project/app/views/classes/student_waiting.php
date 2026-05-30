@@ -38,8 +38,8 @@ $endLabel = formatUtcForTimezone(classEndUtcValue($class), $displayTimezone, 'd 
                     </div>
                 </div>
 
-                <div class="alert alert-info">
-                    LearnWise checks Google Meet for the teacher's real host join. After the teacher joins, Google Meet may still place you in the lobby until the teacher admits you.
+                <div class="alert alert-info mb-0">
+                    LearnWise checks Google Meet for the teacher host join in real time. Once the teacher is in the meeting, you will be redirected automatically. Use the same Google account email that is registered in this LMS.
                 </div>
 
                 <div class="d-flex flex-wrap gap-2">

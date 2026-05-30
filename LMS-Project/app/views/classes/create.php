@@ -7,9 +7,9 @@ $old = $old ?? [];
 
 ?>
 
-<div class="row justify-content-center">
-    <div class="col-12 col-lg-8">
-        <div class="card shadow-sm">
+<div class="row justify-content-center schedule-class-page">
+    <div class="col-12 col-lg-9 col-xl-8">
+        <div class="card shadow-sm border-0">
             <div class="card-body">
                 <h1 class="h4 mb-3">Schedule Class</h1>
                 <?php if (!empty($errors)): ?>
@@ -74,17 +74,19 @@ $old = $old ?? [];
                                    value="<?= h($old['end_datetime'] ?? '') ?>" required>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label" for="payout_amount">Teacher payout for this class (INR)</label>
-                        <input type="number" step="0.01" min="0" id="payout_amount" name="payout_amount" class="form-control"
-                               value="<?= h($old['payout_amount'] ?? '0') ?>">
-                        <div class="form-text">Stored per class; used when the class is marked completed.</div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label" for="student_fee">Student fee for this class (INR)</label>
-                        <input type="number" step="0.01" min="0" id="student_fee" name="student_fee" class="form-control"
-                               value="<?= h($old['student_fee'] ?? '0') ?>">
-                        <div class="form-text">This creates pending payment entries for each enrolled student.</div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="payout_amount">Teacher payout for this class (INR)</label>
+                            <input type="number" step="1" min="0" inputmode="decimal" id="payout_amount" name="payout_amount" class="form-control"
+                                   value="<?= h((string) parseInrAmount($old['payout_amount'] ?? 0)) ?>">
+                            <div class="form-text">Exact INR amount — no currency conversion applied.</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="student_fee">Student fee for this class (INR)</label>
+                            <input type="number" step="1" min="0" inputmode="decimal" id="student_fee" name="student_fee" class="form-control"
+                                   value="<?= h((string) parseInrAmount($old['student_fee'] ?? 0)) ?>">
+                            <div class="form-text">Per enrolled student; stored as entered.</div>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label" for="timezone">Timezone</label>
@@ -96,21 +98,51 @@ $old = $old ?? [];
                         </select>
                         <div class="form-text">Selected local time is converted to UTC before saving, and the Meet is created using the assigned teacher's Workspace calendar.</div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label" for="student_ids">Students</label>
-                        <select id="student_ids" name="student_ids[]" class="form-select" multiple size="5">
+                    <div class="mb-3 student-picker-panel">
+                        <label class="form-label" for="student_search">Students (mapped to teacher)</label>
+                        <input type="search" id="student_search" class="form-control form-control-sm mb-2" placeholder="Search by name or email…" autocomplete="off">
+                        <div id="student_map_notice" class="alert alert-warning py-2 small mb-2 <?= empty($students) ? '' : 'd-none' ?>">
+                            No students mapped to this teacher yet. Use <a href="<?= h((defined('BASE_PATH') ? BASE_PATH : '') . '/admin/teacher-students') ?>">Admin → Teacher-Students</a> to link students, then change the teacher above to refresh.
+                        </div>
+                        <select id="student_ids" name="student_ids[]" class="form-select" multiple size="6" <?= empty($students) ? 'disabled' : '' ?>>
                             <?php foreach ($students as $s): ?>
                                 <option value="<?= (int) $s['id'] ?>"
+                                    data-search="<?= h(strtolower((string) ($s['name'] ?? '') . ' ' . (string) ($s['email'] ?? ''))) ?>"
                                     <?= isset($old['student_ids']) && in_array((string)$s['id'], (array)$old['student_ids'], true) ? 'selected' : '' ?>>
                                     <?= h($s['name'] . ' (' . $s['email'] . ')') ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
-                        <div class="form-text">Hold Ctrl (Cmd on Mac) to select multiple.</div>
+                        <div class="form-text">Only students linked to the selected teacher are listed. Ctrl/Cmd + click for multiple.</div>
                     </div>
-                    <button type="submit" class="btn btn-primary">Create Class</button>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="submit" class="btn btn-primary">Create Class</button>
+                        <a href="<?= h((defined('BASE_PATH') ? BASE_PATH : '') . '/admin/calendar') ?>" class="btn btn-outline-secondary">Open calendar</a>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
+<?php
+$selectedStudentIds = [];
+if (!empty($old['student_ids']) && is_array($old['student_ids'])) {
+    $selectedStudentIds = array_map('strval', $old['student_ids']);
+}
+$scheduleFormBase = defined('BASE_PATH') ? BASE_PATH : '';
+?>
+<script src="<?= h($scheduleFormBase . '/assets/js/schedule-class-form.js') ?>"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof window.initScheduleClassForm === 'function') {
+        window.initScheduleClassForm({
+            base: <?= json_encode($scheduleFormBase, JSON_UNESCAPED_SLASHES) ?>,
+            teacherSelectId: 'teacher_id',
+            studentSelectId: 'student_ids',
+            searchInputId: 'student_search',
+            emptyNoticeId: 'student_map_notice',
+            selectedIds: <?= json_encode($selectedStudentIds, JSON_UNESCAPED_UNICODE) ?>
+        });
+    }
+});
+</script>

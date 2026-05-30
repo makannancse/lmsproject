@@ -249,6 +249,14 @@ class Database
             'ALTER TABLE teacher_google_accounts
              ADD COLUMN google_person_id VARCHAR(191) NULL AFTER google_person_resource_name'
         );
+        self::ensureColumnExists(
+            $pdo,
+            $databaseName,
+            'teacher_google_accounts',
+            'google_user_id',
+            'ALTER TABLE teacher_google_accounts
+             ADD COLUMN google_user_id VARCHAR(64) NULL AFTER google_person_id'
+        );
 
         $pdo->exec(
             'UPDATE class_sessions

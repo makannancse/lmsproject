@@ -190,14 +190,14 @@ body.app-loader-on {
 }
 
 .app-swal-title {
-    color: #0f172a;
+    color: #000;
     font-weight: 700;
     letter-spacing: -0.02em;
 }
 
 .app-swal-body {
-    color: #475569;
-    font-size: 0.96rem;
+    color: #000;
+    font-size: 15px;
 }
 
 .app-swal-actions {
@@ -307,11 +307,50 @@ body.app-loader-on {
     background: linear-gradient(135deg, #0d6efd, #2563eb);
 }
 
-.calendar-shell,
+.calendar-shell {
+    overflow: visible;
+}
+
 .classes-page .card,
 .banner-card,
 .surface-card {
     overflow: hidden;
+}
+
+/* Bootstrap modals above app chrome (loader 2000, topbar 1030) */
+.modal-backdrop {
+    z-index: 2050 !important;
+}
+
+.modal.schedule-class-modal {
+    z-index: 2055 !important;
+}
+
+body.schedule-modal-open {
+    overflow: hidden !important;
+    padding-right: 0;
+}
+
+.schedule-class-modal .modal-dialog {
+    margin: 1rem auto;
+    max-width: min(96vw, 720px);
+}
+
+.schedule-class-modal .modal-body {
+    max-height: min(72vh, 560px);
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.schedule-class-page .student-picker-panel {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 0.85rem;
+    background: #f8fafc;
+}
+
+.schedule-class-page .student-picker-panel select[multiple] {
+    min-height: 160px;
 }
 
 .badge.text-bg-warning {

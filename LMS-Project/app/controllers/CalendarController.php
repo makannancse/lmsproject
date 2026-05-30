@@ -8,6 +8,7 @@ require_once dirname(__DIR__) . '/lib/Database.php';
 require_once dirname(__DIR__) . '/models/ClassSession.php';
 require_once dirname(__DIR__) . '/models/User.php';
 require_once dirname(__DIR__) . '/models/ClassMaster.php';
+require_once dirname(__DIR__) . '/models/TeacherStudent.php';
 
 /**
  * FullCalendar UI + JSON feed for class_sessions.
@@ -18,7 +19,8 @@ class CalendarController
     {
         Auth::requireRole(['admin']);
         $teachers = User::allTeachers();
-        $students = User::allStudents();
+        $initialTeacherId = $teachers !== [] ? (int) ($teachers[0]['id'] ?? 0) : 0;
+        $students = $initialTeacherId > 0 ? TeacherStudent::studentsForTeacher($initialTeacherId) : [];
         $classTypes = [];
         try {
             $classTypes = ClassMaster::allActive();
