@@ -53,11 +53,14 @@ class ClassController
 
         $displayTimezone = resolveUserTimezone($user, classScheduledTimezone($class, APP_TIMEZONE));
         if ($role === 'teacher') {
+            $teacherGoogleEmail = (string) ($class['teacher_google_email'] ?? ($user['email'] ?? ''));
+            $openMeetUrl = appendMeetAuthUser($target, $teacherGoogleEmail);
             View::render('classes/teacher_launch', [
                 'pageTitle' => 'Launch Class',
                 'class' => $class,
                 'displayTimezone' => $displayTimezone,
-                'teacherGoogleEmail' => (string) ($class['teacher_google_email'] ?? ($user['email'] ?? '')),
+                'teacherGoogleEmail' => $teacherGoogleEmail,
+                'openMeetUrl' => $openMeetUrl,
                 'recordingWorkflowSupported' => TeacherGoogleAccount::recordingSupportedFromAccountRow(
                     TeacherGoogleAccount::findByTeacherId((int) ($user['id'] ?? 0))
                 ),

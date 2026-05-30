@@ -76,10 +76,18 @@ class MeetingTrackingService
         $acknowledgedAt = $now;
 
         $pdo = Database::connection();
+        if ((int) ($class['teacher_id'] ?? 0) !== $teacherId) {
+            throw new RuntimeException('Only the assigned teacher can start this class.');
+        }
+
         $stmt = $pdo->prepare(
             'UPDATE class_sessions
              SET recording_acknowledged_at = COALESCE(recording_acknowledged_at, :acknowledged_at),
                  recording_acknowledged_by = COALESCE(recording_acknowledged_by, :teacher_id),
+                 status = CASE
+                     WHEN status IN ("scheduled", "rescheduled") THEN "ongoing"
+                     ELSE status
+                 END,
                  meeting_live_status = CASE
                      WHEN meeting_live_status = "ended" THEN meeting_live_status
                      ELSE "pending"

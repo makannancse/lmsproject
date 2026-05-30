@@ -353,6 +353,14 @@ body.schedule-modal-open {
     min-height: 160px;
 }
 
+.teacher-launch-modal .modal-content {
+    border-radius: 18px;
+}
+
+.teacher-launch-modal .btn-lg {
+    font-weight: 600;
+}
+
 .badge.text-bg-warning {
     color: #2d1600 !important;
 }

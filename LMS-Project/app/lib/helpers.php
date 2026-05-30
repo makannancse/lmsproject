@@ -577,6 +577,10 @@ if (!function_exists('isTeacherHostActiveForClass')) {
             return true;
         }
 
+        if (trim((string) ($class['recording_acknowledged_at'] ?? '')) !== '') {
+            return true;
+        }
+
         if (trim((string) ($class['actual_start_time'] ?? '')) !== '') {
             return true;
         }
