@@ -782,8 +782,11 @@ class ClassController
 
         if (!empty($errors)) {
             if ($calendarAjax) {
-                header('Content-Type: application/json; charset=UTF-8');
-                echo json_encode(['ok' => false, 'errors' => $errors]);
+                self::respondScheduleJson([
+                    'success' => false,
+                    'message' => implode(' ', $errors),
+                    'errors' => $errors,
+                ], 422);
                 return;
             }
             $teachers = User::allTeachers();
@@ -806,8 +809,11 @@ class ClassController
         $teacherGoogleError = self::teacherGoogleSchedulingError($teacherId);
         if ($teacherGoogleError !== null) {
             if ($calendarAjax) {
-                header('Content-Type: application/json; charset=UTF-8');
-                echo json_encode(['ok' => false, 'errors' => [$teacherGoogleError]]);
+                self::respondScheduleJson([
+                    'success' => false,
+                    'message' => $teacherGoogleError,
+                    'errors' => [$teacherGoogleError],
+                ], 422);
                 return;
             }
 
@@ -867,8 +873,11 @@ class ClassController
         } catch (\Throwable $e) {
             $errorMessage = $e->getMessage();
             if ($calendarAjax) {
-                header('Content-Type: application/json; charset=UTF-8');
-                echo json_encode(['ok' => false, 'errors' => [$errorMessage]]);
+                self::respondScheduleJson([
+                    'success' => false,
+                    'message' => $errorMessage,
+                    'errors' => [$errorMessage],
+                ], 422);
                 return;
             }
 
@@ -961,6 +970,19 @@ class ClassController
             if ($googleEventId !== null) {
                 $meetingService->deleteMeeting($teacherId, (string) $googleEventId);
             }
+            if ($calendarAjax) {
+                self::logClassSchedule([
+                    'event' => 'class_schedule_failed',
+                    'teacher_id' => $teacherId,
+                    'error' => $e->getMessage(),
+                ]);
+                self::respondScheduleJson([
+                    'success' => false,
+                    'message' => 'Could not save class: ' . $e->getMessage(),
+                    'errors' => [$e->getMessage()],
+                ], 500);
+                return;
+            }
             throw $e;
         }
 
@@ -1003,18 +1025,36 @@ class ClassController
         }
 
         if ($calendarAjax) {
-            header('Content-Type: application/json; charset=UTF-8');
-            $messages = [];
             if ($mailStatus === 'success') {
-                $messages[] = 'Class scheduled successfully. Notifications sent.';
+                $message = 'Class scheduled successfully. Notifications sent.';
             } else {
-                $messages[] = 'Class scheduled.';
+                $message = 'Class scheduled successfully.';
             }
-            echo json_encode([
-                'ok' => true,
+            if ($notices !== []) {
+                $message .= ' ' . implode(' ', $notices);
+            }
+
+            $redirectUrl = self::defaultScheduleRedirectUrl() . '?scheduled=' . $classId;
+            self::logClassSchedule([
+                'event' => 'class_scheduled',
+                'class_id' => $classId,
+                'teacher_id' => $teacherId,
+                'student_ids' => $studentIds,
+                'google_meet_created' => $meetLink !== null && $meetLink !== '',
+                'google_event_id' => $googleEventId,
+                'meeting_link' => $meetLink,
+                'email_sent' => $mailStatus === 'success',
+                'email_status' => $mailStatus,
+                'redirect_url' => $redirectUrl,
+            ]);
+            self::respondScheduleJson([
+                'success' => true,
+                'message' => $message,
+                'redirect_url' => $redirectUrl,
                 'class_id' => $classId,
                 'warnings' => $notices,
-                'messages' => $messages,
+                'google_meet_created' => $meetLink !== null && $meetLink !== '',
+                'email_sent' => $mailStatus === 'success',
             ]);
             return;
         }
@@ -1032,6 +1072,50 @@ class ClassController
         }
 
         $base = defined('BASE_PATH') ? BASE_PATH : '';
-        header('Location: ' . $base . '/admin');
+        header('Location: ' . self::defaultScheduleRedirectUrl());
+    }
+
+    private static function defaultScheduleRedirectUrl(): string
+    {
+        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $target = strtolower(trim((string) ($_POST['redirect_to'] ?? 'calendar')));
+
+        if ($target === 'classes') {
+            return $base . '/classes';
+        }
+
+        return $base . '/admin/calendar';
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private static function logClassSchedule(array $context): void
+    {
+        if (!function_exists('writeStructuredLog')) {
+            return;
+        }
+
+        writeStructuredLog('class_schedule.log', $context);
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private static function respondScheduleJson(array $payload, int $httpStatus = 200): void
+    {
+        http_response_code($httpStatus);
+        header('Content-Type: application/json; charset=UTF-8');
+
+        if (!isset($payload['success'])) {
+            $payload['success'] = !empty($payload['ok']);
+        }
+        if (!isset($payload['ok'])) {
+            $payload['ok'] = !empty($payload['success']);
+        }
+
+        self::logClassSchedule(array_merge(['event' => 'schedule_json_response'], $payload));
+
+        echo json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }
 }

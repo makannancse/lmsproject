@@ -108,6 +108,7 @@ $timezoneOptions = calendarTimezoneOptions(resolveUserTimezone(Auth::user() ?: n
             <div class="modal-body">
                 <form id="calScheduleForm" class="row g-2">
                     <input type="hidden" name="calendar_ajax" value="1">
+                    <input type="hidden" name="redirect_to" value="calendar">
                     <?php if (!empty($classTypes)): ?>
                         <div class="col-12">
                             <label class="form-label" for="cal_class_master_id">Class type (optional)</label>
@@ -193,6 +194,7 @@ $timezoneOptions = calendarTimezoneOptions(resolveUserTimezone(Auth::user() ?: n
 
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.js"></script>
 <script src="<?= h($base . '/assets/js/schedule-class-form.js') ?>"></script>
+<script src="<?= h($base . '/assets/js/class-schedule-submit.js') ?>"></script>
 <script>
 (function () {
     var base = <?= json_encode($base, JSON_UNESCAPED_SLASHES) ?>;
@@ -396,6 +398,21 @@ $timezoneOptions = calendarTimezoneOptions(resolveUserTimezone(Auth::user() ?: n
 
     calendar.render();
 
+    (function () {
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('scheduled')) {
+            var scheduledMsg = 'Class scheduled successfully.';
+            if (typeof window.showSuccess === 'function') {
+                window.showSuccess(scheduledMsg, 'Success');
+            } else if (window.AppUI && typeof window.AppUI.success === 'function') {
+                window.AppUI.success(scheduledMsg, 'Class scheduled');
+            }
+            params.delete('scheduled');
+            var clean = window.location.pathname + (params.toString() ? ('?' + params.toString()) : '');
+            window.history.replaceState({}, '', clean);
+        }
+    })();
+
     if (canSchedule && typeof window.initScheduleClassForm === 'function') {
         window.initScheduleClassForm({
             base: base,
@@ -479,51 +496,21 @@ $timezoneOptions = calendarTimezoneOptions(resolveUserTimezone(Auth::user() ?: n
     }
 
     var submitBtn = document.getElementById('calScheduleSubmit');
-    if (submitBtn) {
+    var scheduleForm = document.getElementById('calScheduleForm');
+    if (submitBtn && scheduleForm && window.LmsScheduleClass) {
         submitBtn.addEventListener('click', function () {
-            var form = document.getElementById('calScheduleForm');
-            var fd = new FormData(form);
-            submitBtn.disabled = true;
-            if (window.AppUI) {
-                window.AppUI.showLoader('Scheduling class...', 'Creating the class and Google Meet link.');
-            }
-            fetch(base + '/classes', {
-                method: 'POST',
-                body: fd,
-                credentials: 'same-origin',
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            })
-                .then(function (r) { return r.json().catch(function () { return null; }).then(function (j) { return { ok: r.ok, json: j, status: r.status }; }); })
-                .then(function (res) {
-                    submitBtn.disabled = false;
-                    if (window.AppUI) {
-                        window.AppUI.hideLoader();
-                    }
-                    if (res.json && res.json.ok === true) {
-                        var msg = (res.json.messages && res.json.messages.length) ? res.json.messages.join(' ') : 'Class scheduled.';
-                        if (res.json.warnings && res.json.warnings.length) {
-                            msg += ' ' + res.json.warnings.join(' ');
+            if (!scheduleForm.reportValidity || scheduleForm.reportValidity()) {
+                window.LmsScheduleClass.submitScheduleForm(scheduleForm, {
+                    base: base,
+                    submitButton: submitBtn,
+                    modalEl: document.getElementById('calScheduleModal'),
+                    onCalendarRefresh: function () {
+                        if (typeof calendar !== 'undefined' && calendar) {
+                            calendar.refetchEvents();
                         }
-                        bootstrap.Modal.getInstance(document.getElementById('calScheduleModal')).hide();
-                        calendar.refetchEvents();
-                        if (typeof window.showSuccess === 'function') {
-                            window.showSuccess(msg);
-                        } else if (window.AppUI) {
-                            window.AppUI.success(msg, 'Class scheduled');
-                        }
-                        return;
-                    }
-                    if (res.json && res.json.errors) {
-                        window.AppUI.error(res.json.errors.join(' '), 'Could not schedule class');
-                        return;
-                    }
-                    window.AppUI.error('Could not schedule (HTTP ' + res.status + '). Use Classes > Schedule Class if this persists.', 'Request failed');
-                })
-                .catch(function () {
-                    submitBtn.disabled = false;
-                    window.AppUI.hideLoader();
-                    window.AppUI.error('Network error while scheduling the class.', 'Network error');
+                    },
                 });
+            }
         });
     }
 })();

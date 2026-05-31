@@ -22,9 +22,14 @@ $old = $old ?? [];
                     </div>
                 <?php endif; ?>
                 <form method="post"
+                      id="scheduleClassForm"
                       action="<?= h((defined('BASE_PATH') ? BASE_PATH : '') . '/classes') ?>"
+                      class="no-app-loader"
+                      data-schedule-ajax="1"
                       data-loader-title="Scheduling class..."
                       data-loader-text="Creating the Google Meet event, saving class timings, and notifying participants.">
+                    <input type="hidden" name="calendar_ajax" value="1">
+                    <input type="hidden" name="redirect_to" value="calendar">
                     <?php if (!empty($classTypes)): ?>
                         <div class="mb-3">
                             <label class="form-label" for="class_master_id">Class type (optional)</label>
@@ -132,17 +137,23 @@ if (!empty($old['student_ids']) && is_array($old['student_ids'])) {
 $scheduleFormBase = defined('BASE_PATH') ? BASE_PATH : '';
 ?>
 <script src="<?= h($scheduleFormBase . '/assets/js/schedule-class-form.js') ?>"></script>
+<script src="<?= h($scheduleFormBase . '/assets/js/class-schedule-submit.js') ?>"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    var base = <?= json_encode($scheduleFormBase, JSON_UNESCAPED_SLASHES) ?>;
     if (typeof window.initScheduleClassForm === 'function') {
         window.initScheduleClassForm({
-            base: <?= json_encode($scheduleFormBase, JSON_UNESCAPED_SLASHES) ?>,
+            base: base,
             teacherSelectId: 'teacher_id',
             studentSelectId: 'student_ids',
             searchInputId: 'student_search',
             emptyNoticeId: 'student_map_notice',
             selectedIds: <?= json_encode($selectedStudentIds, JSON_UNESCAPED_UNICODE) ?>
         });
+    }
+    var scheduleForm = document.getElementById('scheduleClassForm');
+    if (scheduleForm && window.LmsScheduleClass && typeof window.LmsScheduleClass.bindScheduleForm === 'function') {
+        window.LmsScheduleClass.bindScheduleForm(scheduleForm, { base: base });
     }
 });
 </script>
