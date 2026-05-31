@@ -88,16 +88,20 @@ if (is_array($flashSessionQueue)) {
 if (!class_exists('Auth', false)) {
     require_once dirname(__DIR__) . '/app/lib/Auth.php';
 }
-Auth::startSession();
 if (Auth::check()):
     $meetPollInterval = max(15, (int) env('GOOGLE_MEET_AUTO_POLL_SECONDS', 20));
 ?>
 <script>
+window.__SESSION_KEEPALIVE__ = <?= json_encode([
+    'base' => $base,
+    'timeoutSeconds' => Auth::SESSION_TIMEOUT_SECONDS,
+], JSON_UNESCAPED_SLASHES) ?>;
 window.__MEET_STATUS_POLL__ = <?= json_encode([
     'url' => $base . '/meeting/sync-ongoing',
     'intervalSeconds' => $meetPollInterval,
 ], JSON_UNESCAPED_SLASHES) ?>;
 </script>
+<script src="<?= h($base . '/assets/js/session-keepalive.js') ?>"></script>
 <script src="<?= h($base . '/assets/js/meet-status-poll.js') ?>"></script>
 <?php endif; ?>
 </body>

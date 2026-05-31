@@ -4,6 +4,7 @@ use function htmlspecialchars as h;
 
 $error = $_SESSION['error'] ?? null;
 unset($_SESSION['error']);
+$timedOut = !empty($timedOut);
 $roleHint = strtolower(trim((string) ($roleHint ?? '')));
 $isStudentLogin = $roleHint === 'student';
 $logoFsPath = dirname(__DIR__, 3) . '/public/assets/images/logo.png';
@@ -27,6 +28,9 @@ $hasBanner = is_file($studentBannerPath) || is_file($defaultBannerPath);
                     <h1 class="login-title mb-1">Welcome Back 👋</h1>
                     <p class="login-subtitle mb-0">Access your learning dashboard</p>
                 </div>
+                <?php if ($timedOut): ?>
+                    <div class="alert alert-warning small">Your session ended after 15 minutes of inactivity. Please sign in again.</div>
+                <?php endif; ?>
                 <?php if ($error): ?>
                     <div class="alert alert-danger small"><?= h($error) ?></div>
                 <?php endif; ?>

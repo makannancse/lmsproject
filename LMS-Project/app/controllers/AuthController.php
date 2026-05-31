@@ -27,7 +27,12 @@ class AuthController
         if (!in_array($roleHint, ['student', 'teacher', 'admin'], true)) {
             $roleHint = '';
         }
-        View::render('auth/login', ['pageTitle' => 'Login', 'roleHint' => $roleHint]);
+        $timedOut = isset($_GET['timeout']) && (string) $_GET['timeout'] === '1';
+        View::render('auth/login', [
+            'pageTitle' => 'Login',
+            'roleHint' => $roleHint,
+            'timedOut' => $timedOut,
+        ]);
     }
 
     public static function login(): void
@@ -78,9 +83,11 @@ class AuthController
 
     public static function logout(): void
     {
+        Auth::startSession();
         Auth::logout();
         $base = defined('BASE_PATH') ? BASE_PATH : '';
         header('Location: ' . $base . '/login');
+        exit;
     }
 }
 

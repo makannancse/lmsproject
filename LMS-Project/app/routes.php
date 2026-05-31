@@ -27,6 +27,7 @@ require_once __DIR__ . '/controllers/MeetingTrackingController.php';
 require_once __DIR__ . '/controllers/MeetingSyncDebugController.php';
 require_once __DIR__ . '/controllers/RecordingController.php';
 require_once __DIR__ . '/controllers/TeacherStudentApiController.php';
+require_once __DIR__ . '/controllers/KeepAliveController.php';
 
 $router = new Router();
 
@@ -41,6 +42,7 @@ $router->get('/', function () use ($base) {
 $router->get('/login', [AuthController::class, 'showLogin']);
 $router->post('/login', [AuthController::class, 'login']);
 $router->get('/logout', [AuthController::class, 'logout']);
+$router->get('/ajax/keepalive', [KeepAliveController::class, 'ping']);
 
 $router->get('/dashboard', [DashboardController::class, 'index']);
 $router->get('/admin', [AdminController::class, 'dashboard']);
