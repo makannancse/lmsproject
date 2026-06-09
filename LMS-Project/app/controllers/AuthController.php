@@ -28,6 +28,10 @@ class AuthController
             $roleHint = '';
         }
         $timedOut = isset($_GET['timeout']) && (string) $_GET['timeout'] === '1';
+        $deactivated = isset($_GET['deactivated']) && (string) $_GET['deactivated'] === '1';
+        if ($deactivated && empty($_SESSION['error'])) {
+            $_SESSION['error'] = 'This account has been deactivated. Please contact the administrator.';
+        }
         View::render('auth/login', [
             'pageTitle' => 'Login',
             'roleHint' => $roleHint,
@@ -38,28 +42,67 @@ class AuthController
     public static function login(): void
     {
         Auth::startSession();
-        $email = $_POST['email'] ?? '';
-        $password = $_POST['password'] ?? '';
+        $email = trim((string) ($_POST['email'] ?? ''));
+        $password = (string) ($_POST['password'] ?? '');
+        $roleHint = strtolower(trim((string) ($_POST['role_hint'] ?? '')));
+
+        logAdminLogin([
+            'event' => 'login_attempt',
+            'email' => $email,
+            'role_hint' => $roleHint,
+            'ip' => (string) ($_SERVER['REMOTE_ADDR'] ?? ''),
+        ]);
 
         $user = null;
+        $dbError = null;
         try {
             $user = User::findByEmail($email);
         } catch (\Throwable $e) {
-            // Allow fallback login when DB is not ready
+            $dbError = $e->getMessage();
         }
 
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
-
         if ($user && password_verify($password, $user['password_hash'])) {
+            if (!User::isActive($user)) {
+                logAdminLogin([
+                    'event' => 'login_rejected_inactive',
+                    'email' => $email,
+                    'user_id' => (int) ($user['id'] ?? 0),
+                    'role' => (string) ($user['role'] ?? ''),
+                    'result' => 'inactive',
+                ]);
+                $_SESSION['error'] = 'This account has been deactivated. Please contact the administrator.';
+                $suffix = $roleHint !== '' ? ('?role=' . urlencode($roleHint)) : '';
+                redirectTo('/login' . $suffix, 302, [
+                    'event' => 'login_redirect_inactive',
+                    'email' => $email,
+                ]);
+            }
+
             Auth::attempt([
                 'id' => $user['id'],
                 'name' => $user['name'],
                 'role' => $user['role'],
                 'email' => $user['email'],
                 'timezone' => $user['timezone'] ?? APP_TIMEZONE,
+                'status' => $user['status'] ?? 'active',
             ]);
-            header('Location: ' . $base . self::homePathForRole((string) ($user['role'] ?? '')));
-            exit;
+
+            $home = self::homePathForRole((string) ($user['role'] ?? ''));
+            logAdminLogin([
+                'event' => 'login_success',
+                'email' => $email,
+                'user_id' => (int) ($user['id'] ?? 0),
+                'role' => (string) ($user['role'] ?? ''),
+                'session_created' => true,
+                'authentication_result' => 'success',
+                'final_destination' => $home,
+            ]);
+
+            redirectTo($home, 302, [
+                'event' => 'login_redirect_success',
+                'user_id' => (int) ($user['id'] ?? 0),
+                'role' => (string) ($user['role'] ?? ''),
+            ]);
         }
 
         // Local fallback to let you in before seeding the database.
@@ -70,24 +113,39 @@ class AuthController
                 'role' => 'admin',
                 'email' => $email,
                 'timezone' => APP_TIMEZONE,
+                'status' => 'active',
             ]);
-            header('Location: ' . $base . '/admin');
-            exit;
+            logAdminLogin([
+                'event' => 'login_success_fallback',
+                'email' => $email,
+                'role' => 'admin',
+                'authentication_result' => 'fallback',
+                'final_destination' => '/admin',
+            ]);
+            redirectTo('/admin', 302, ['event' => 'login_redirect_fallback']);
         }
 
+        logAdminLogin([
+            'event' => 'login_failed',
+            'email' => $email,
+            'authentication_result' => 'invalid_credentials',
+            'db_error' => $dbError,
+        ]);
+
         $_SESSION['error'] = 'Invalid credentials';
-        $roleHint = strtolower(trim((string) ($_POST['role_hint'] ?? '')));
         $suffix = in_array($roleHint, ['student', 'teacher', 'admin'], true) ? ('?role=' . $roleHint) : '';
-        header('Location: ' . $base . '/login' . $suffix);
+        redirectTo('/login' . $suffix, 302, ['event' => 'login_redirect_failed']);
     }
 
     public static function logout(): void
     {
         Auth::startSession();
+        logAdminLogin([
+            'event' => 'logout',
+            'user_id' => Auth::userId(),
+            'role' => Auth::role(),
+        ]);
         Auth::logout();
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
-        header('Location: ' . $base . '/login');
-        exit;
+        redirectTo('/login', 302, ['event' => 'logout_redirect']);
     }
 }
-

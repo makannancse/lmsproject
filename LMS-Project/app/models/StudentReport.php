@@ -100,7 +100,9 @@ class StudentReport
     public static function allTeachers(): array
     {
         $pdo = Database::connection();
-        $stmt = $pdo->query('SELECT id, name, email FROM users WHERE role = "teacher" ORDER BY name');
+        $stmt = $pdo->query(
+            'SELECT id, name, email FROM users WHERE role = "teacher" AND status = "active" ORDER BY name'
+        );
         return $stmt->fetchAll() ?: [];
     }
 
@@ -111,7 +113,7 @@ class StudentReport
             'SELECT u.id, u.name, u.email, s.parent_email
              FROM users u
              LEFT JOIN students s ON s.user_id = u.id
-             WHERE u.role = "student"
+             WHERE u.role = "student" AND u.status = "active"
              ORDER BY u.name'
         );
         return $stmt->fetchAll() ?: [];

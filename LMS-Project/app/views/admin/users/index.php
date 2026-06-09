@@ -3,13 +3,17 @@
 use function htmlspecialchars as h;
 
 $base = defined('BASE_PATH') ? BASE_PATH : '';
+$role = $role ?? 'student';
+$users = $users ?? [];
+$searchQuery = $searchQuery ?? '';
+$statusFilter = $statusFilter ?? '';
 
 ?>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
     <div>
         <h1 class="h4 mb-0">Users</h1>
-        <p class="text-muted small mb-0">Manage users by role.</p>
+        <p class="text-muted small mb-0">Search, filter, edit, and activate or deactivate accounts.</p>
     </div>
     <div class="btn-group">
         <a href="<?= h($base . '/admin/users/create-student') ?>" class="btn btn-sm btn-primary">New Student</a>
@@ -26,6 +30,31 @@ $base = defined('BASE_PATH') ? BASE_PATH : '';
     <?php endforeach; ?>
 </ul>
 
+<div class="card shadow-sm mb-3">
+    <div class="card-body py-3">
+        <form method="get" action="<?= h($base . '/admin/users') ?>" class="row g-2 align-items-end no-app-loader">
+            <input type="hidden" name="role" value="<?= h($role) ?>">
+            <div class="col-md-5">
+                <label class="form-label form-label-sm mb-0" for="userSearch">Search</label>
+                <input type="search" name="q" id="userSearch" class="form-control form-control-sm"
+                       value="<?= h($searchQuery) ?>" placeholder="Name, email, or phone">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label form-label-sm mb-0" for="userStatus">Status</label>
+                <select name="status" id="userStatus" class="form-select form-select-sm">
+                    <option value="">All statuses</option>
+                    <option value="active" <?= $statusFilter === 'active' ? 'selected' : '' ?>>Active</option>
+                    <option value="inactive" <?= $statusFilter === 'inactive' ? 'selected' : '' ?>>Inactive</option>
+                </select>
+            </div>
+            <div class="col-md-4 d-flex gap-2">
+                <button type="submit" class="btn btn-sm btn-primary">Apply</button>
+                <a href="<?= h($base . '/admin/users?role=' . urlencode($role)) ?>" class="btn btn-sm btn-outline-secondary">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div class="card shadow-sm">
     <div class="card-body">
         <div class="table-responsive">
@@ -34,22 +63,70 @@ $base = defined('BASE_PATH') ? BASE_PATH : '';
                 <tr>
                     <th>Name</th>
                     <th>Email</th>
-                    <th>Role</th>
+                    <th>Phone</th>
                     <th>Timezone</th>
                     <th>Status</th>
+                    <th class="text-end">Actions</th>
                 </tr>
                 </thead>
                 <tbody>
                 <?php if (empty($users)): ?>
-                    <tr><td colspan="5" class="text-muted small">No users for this role yet.</td></tr>
+                    <tr><td colspan="6" class="text-muted small">No users match your filters.</td></tr>
                 <?php else: ?>
                     <?php foreach ($users as $u): ?>
+                        <?php
+                        $uid = (int) ($u['id'] ?? 0);
+                        $isActive = strtolower((string) ($u['status'] ?? 'active')) === 'active';
+                        ?>
                         <tr>
                             <td><?= h($u['name']) ?></td>
                             <td><?= h($u['email']) ?></td>
-                            <td><?= h($u['role']) ?></td>
+                            <td><?= h((string) ($u['phone'] ?? '—')) ?></td>
                             <td><?= h($u['timezone']) ?></td>
-                            <td><?= h($u['status']) ?></td>
+                            <td>
+                                <?php if ($isActive): ?>
+                                    <span class="badge text-bg-success">Active</span>
+                                <?php else: ?>
+                                    <span class="badge text-bg-danger">Inactive</span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex flex-wrap justify-content-end gap-1">
+                                    <a href="<?= h($base . '/admin/users/edit?id=' . $uid) ?>"
+                                       class="btn btn-sm btn-outline-primary">Edit</a>
+                                    <?php if ($isActive): ?>
+                                        <form method="post"
+                                              action="<?= h($base . '/admin/users/toggle-status') ?>"
+                                              class="d-inline no-app-loader"
+                                              data-confirm="1"
+                                              data-confirm-title="Deactivate User?"
+                                              data-confirm-text="This user will no longer be able to access the system."
+                                              data-confirm-button="Deactivate"
+                                              data-confirm-cancel="Cancel"
+                                              data-confirm-icon="warning">
+                                            <input type="hidden" name="user_id" value="<?= $uid ?>">
+                                            <input type="hidden" name="action" value="deactivate">
+                                            <input type="hidden" name="role" value="<?= h($role) ?>">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Deactivate</button>
+                                        </form>
+                                    <?php else: ?>
+                                        <form method="post"
+                                              action="<?= h($base . '/admin/users/toggle-status') ?>"
+                                              class="d-inline no-app-loader"
+                                              data-confirm="1"
+                                              data-confirm-title="Activate user?"
+                                              data-confirm-text="This user will regain access to the LMS."
+                                              data-confirm-button="Activate"
+                                              data-confirm-cancel="Cancel"
+                                              data-confirm-icon="question">
+                                            <input type="hidden" name="user_id" value="<?= $uid ?>">
+                                            <input type="hidden" name="action" value="activate">
+                                            <input type="hidden" name="role" value="<?= h($role) ?>">
+                                            <button type="submit" class="btn btn-sm btn-outline-success">Activate</button>
+                                        </form>
+                                    <?php endif; ?>
+                                </div>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>
@@ -58,4 +135,3 @@ $base = defined('BASE_PATH') ? BASE_PATH : '';
         </div>
     </div>
 </div>
-

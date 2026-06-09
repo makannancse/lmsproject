@@ -40,7 +40,7 @@ use function htmlspecialchars as h;
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Required OAuth Redirect URI</label>
-                        <input type="text" class="form-control" value="<?= h(rtrim((string) env('APP_URL', 'http://localhost'), '/') . '/auth/google/callback') ?>" readonly>
+                        <input type="text" class="form-control" value="<?= h(function_exists('googleOAuthRedirectUri') ? googleOAuthRedirectUri() : (rtrim((string) env('APP_URL', 'http://localhost'), '/') . '/auth/google/callback')) ?>" readonly>
                         <div class="form-text">Use one shared Google OAuth app for all teachers. Add this exact URI in Google Cloud Console and use the <code>https://www.googleapis.com/auth/calendar</code> scope.</div>
                     </div>
                     <div class="mb-3">

@@ -31,14 +31,27 @@ function env(string $key, $default = null)
 
 // Basic configuration constants
 define('APP_ENV', env('APP_ENV', 'local'));
-define('APP_URL', env('APP_URL', 'http://localhost'));
+
+$rawAppUrl = trim((string) env('APP_URL', 'http://localhost'));
+if ($rawAppUrl !== '' && !preg_match('#^https?://#i', $rawAppUrl)) {
+    $rawAppUrl = 'http://' . $rawAppUrl;
+}
+define('APP_URL', rtrim($rawAppUrl !== '' ? $rawAppUrl : 'http://localhost', '/'));
 define('APP_NAME', env('APP_NAME', 'LMS'));
 define('APP_TIMEZONE', env('APP_TIMEZONE', 'UTC'));
 
 // Base path for apps served from a subdirectory (e.g. /LMS-Project/public on WAMP).
-// This is derived from the front controller script location so it works automatically.
-$scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
-$basePath = rtrim(str_replace('\\', '/', dirname($scriptName)), '/');
+// Override with APP_BASE_PATH or BASE_PATH in .env when auto-detection is wrong on production.
+$scriptName = str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? ''));
+$basePath = rtrim(dirname($scriptName), '/');
+// Legacy physical /admin/index.php used to set SCRIPT_NAME to /admin — never use that as BASE_PATH.
+if (preg_match('#/admin$#', $basePath)) {
+    $basePath = preg_replace('#/admin$#', '', $basePath) ?: '';
+}
+$envBase = trim((string) env('APP_BASE_PATH', env('BASE_PATH', '')));
+if ($envBase !== '') {
+    $basePath = rtrim(str_replace('\\', '/', $envBase), '/');
+}
 define('BASE_PATH', ($basePath === '' || $basePath === '/') ? '' : $basePath);
 define('BASE_URL', BASE_PATH === '' ? '/' : (BASE_PATH . '/'));
 define('LOGO_PATH', BASE_URL . 'assets/images/logo.png');

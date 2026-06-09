@@ -39,16 +39,15 @@ class TeacherStudentApiController
             return;
         }
 
-        $teacher = null;
-        foreach (User::allTeachers() as $row) {
-            if ((int) ($row['id'] ?? 0) === $teacherId) {
-                $teacher = $row;
-                break;
-            }
-        }
-        if ($teacher === null) {
+        $teacher = User::findById($teacherId);
+        if ($teacher === null || (string) ($teacher['role'] ?? '') !== 'teacher') {
             http_response_code(404);
             echo json_encode(['ok' => false, 'error' => 'Teacher not found']);
+            return;
+        }
+        if (!User::isActive($teacher)) {
+            http_response_code(422);
+            echo json_encode(['ok' => false, 'error' => 'Teacher account is inactive']);
             return;
         }
 

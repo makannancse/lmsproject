@@ -1,10 +1,11 @@
 Options -Indexes
+DirectoryIndex index.php
 
 RewriteEngine On
 # Omit RewriteBase so Apache uses this directory's URL prefix automatically
-# (works whether the app lives at /LMS-Project/public or /lmsproject/LMS-Project/public).
+# (works whether the app lives at /LMS-Project/public or at the domain document root).
 
-# Route to front controller for non-files. (Do not skip existing directories: a physical
-# `public/admin/` folder was stealing /admin from the router and showed "Index of /admin".)
+# Route to front controller for non-files. Never keep a physical public/admin/ folder —
+# it bypasses the router and breaks /admin login redirects on production.
 RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule ^ index.php [L]
+RewriteRule ^ index.php [L,QSA]

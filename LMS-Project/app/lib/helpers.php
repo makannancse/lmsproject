@@ -49,6 +49,133 @@ if (!function_exists('classStatusBadgeClass')) {
     }
 }
 
+if (!function_exists('appBasePath')) {
+    function appBasePath(): string
+    {
+        return defined('BASE_PATH') ? (string) BASE_PATH : '';
+    }
+}
+
+if (!function_exists('appUrl')) {
+    /**
+     * Build an absolute application URL (scheme + host + BASE_PATH + path).
+     */
+    function appUrl(string $path = '/'): string
+    {
+        $path = $path === '' ? '/' : $path;
+        if (!str_starts_with($path, '/')) {
+            $path = '/' . $path;
+        }
+
+        $relative = appBasePath() . $path;
+        $appUrl = defined('APP_URL') ? (string) APP_URL : rtrim((string) env('APP_URL', ''), '/');
+        if ($appUrl !== '' && filter_var($appUrl, FILTER_VALIDATE_URL)) {
+            return $appUrl . $relative;
+        }
+
+        return $relative;
+    }
+}
+
+if (!function_exists('appRelativeUrl')) {
+    /**
+     * Path-only URL for same-origin redirects and form actions (always starts with /).
+     */
+    function appRelativeUrl(string $path = '/'): string
+    {
+        $path = $path === '' ? '/' : $path;
+        if (!str_starts_with($path, '/')) {
+            $path = '/' . $path;
+        }
+
+        return appBasePath() . $path;
+    }
+}
+
+if (!function_exists('googleOAuthRedirectUri')) {
+    function googleOAuthRedirectUri(): string
+    {
+        $configured = trim((string) env('GOOGLE_REDIRECT_URI', ''));
+        if ($configured !== '') {
+            $path = (string) parse_url($configured, PHP_URL_PATH);
+            if ($path !== '' && str_ends_with(rtrim($path, '/'), '/auth/google/callback')) {
+                return $configured;
+            }
+        }
+
+        return appUrl('/auth/google/callback');
+    }
+}
+
+if (!function_exists('logGoogleAuth')) {
+    /**
+     * @param array<string, mixed> $context
+     */
+    function logGoogleAuth(array $context): void
+    {
+        writeStructuredLog('google_auth_debug.log', $context);
+    }
+}
+
+if (!function_exists('logClassScheduleLive')) {
+    /**
+     * @param array<string, mixed> $context
+     */
+    function logClassScheduleLive(array $context): void
+    {
+        writeStructuredLog('class_schedule_live.log', $context);
+    }
+}
+
+if (!function_exists('logUserEdit')) {
+    /**
+     * @param array<string, mixed> $context
+     */
+    function logUserEdit(array $context): void
+    {
+        writeStructuredLog('user_edit_debug.log', $context);
+    }
+}
+
+if (!function_exists('redirectTo')) {
+    /**
+     * @param array<string, mixed> $logContext
+     */
+    function redirectTo(string $path, int $statusCode = 302, array $logContext = []): void
+    {
+        $relative = appRelativeUrl($path);
+        $location = appUrl($path);
+
+        if ($logContext !== []) {
+            logAdminLogin(array_merge($logContext, [
+                'relative_path' => $relative,
+                'redirect_url' => $location,
+                'http_status' => $statusCode,
+            ]));
+        }
+
+        header('Location: ' . $location, true, $statusCode);
+        exit;
+    }
+}
+
+if (!function_exists('logAdminLogin')) {
+    /**
+     * @param array<string, mixed> $context
+     */
+    function logAdminLogin(array $context): void
+    {
+        $context['request_uri'] = (string) ($_SERVER['REQUEST_URI'] ?? '');
+        $context['script_name'] = (string) ($_SERVER['SCRIPT_NAME'] ?? '');
+        $context['base_path'] = appBasePath();
+        $context['app_url'] = (string) env('APP_URL', '');
+        $context['https'] = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+        $context['forwarded_proto'] = (string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '');
+
+        writeStructuredLog('admin_login_debug.log', $context);
+    }
+}
+
 if (!function_exists('writeStructuredLog')) {
     /**
      * @param array<string, mixed> $context

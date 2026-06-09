@@ -17,8 +17,12 @@ class TeacherStudentMapController
         Auth::requireRole(['admin']);
         $pdo = Database::connection();
 
-        $teachers = $pdo->query("SELECT id, name, email FROM users WHERE role = 'teacher' ORDER BY name")->fetchAll() ?: [];
-        $students = $pdo->query("SELECT id, name, email FROM users WHERE role = 'student' ORDER BY name")->fetchAll() ?: [];
+        $teachers = $pdo->query(
+            "SELECT id, name, email FROM users WHERE role = 'teacher' AND status = 'active' ORDER BY name"
+        )->fetchAll() ?: [];
+        $students = $pdo->query(
+            "SELECT id, name, email FROM users WHERE role = 'student' AND status = 'active' ORDER BY name"
+        )->fetchAll() ?: [];
 
         $teacherId = (int) ($_GET['teacher_id'] ?? 0);
         $teacherIds = array_map(static fn(array $t): int => (int) ($t['id'] ?? 0), $teachers);

@@ -180,10 +180,55 @@ class Auth
         self::startSession();
 
         if (!self::check() || !in_array(self::role(), $roles, true)) {
-            $base = defined('BASE_PATH') ? BASE_PATH : '';
-            header('Location: ' . $base . '/login');
+            if (function_exists('redirectTo')) {
+                redirectTo('/login', 302, [
+                    'event' => 'require_role_denied',
+                    'required_roles' => $roles,
+                    'actual_role' => self::role(),
+                ]);
+            }
+            header('Location: ' . (defined('BASE_PATH') ? BASE_PATH : '') . '/login');
             exit;
         }
+
+        if (!self::isCurrentUserActive()) {
+            self::logout();
+            if (function_exists('redirectTo')) {
+                redirectTo('/login?deactivated=1', 302, ['event' => 'require_role_inactive']);
+            }
+            header('Location: ' . (defined('BASE_PATH') ? BASE_PATH : '') . '/login?deactivated=1');
+            exit;
+        }
+    }
+
+    public static function isCurrentUserActive(): bool
+    {
+        if (!self::check()) {
+            return false;
+        }
+
+        $user = self::user();
+        if ($user === null) {
+            return false;
+        }
+
+        if (isset($user['status'])) {
+            return strtolower((string) $user['status']) === 'active';
+        }
+
+        try {
+            require_once dirname(__DIR__) . '/models/User.php';
+            $fresh = User::findById(self::userId());
+            if ($fresh !== null) {
+                $_SESSION['user']['status'] = (string) ($fresh['status'] ?? 'active');
+
+                return strtolower((string) ($fresh['status'] ?? 'active')) === 'active';
+            }
+        } catch (\Throwable $e) {
+            return true;
+        }
+
+        return true;
     }
 
     public static function isAdmin(): bool

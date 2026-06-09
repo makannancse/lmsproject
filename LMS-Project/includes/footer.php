@@ -82,6 +82,7 @@ if (is_array($flashSessionQueue)) {
 <script src="<?= h($bootstrapJs) ?>"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>window.__APP_FLASHES__ = <?= json_encode($flashQueue, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;</script>
+<script>window.__APP_BASE__ = <?= json_encode($base, JSON_UNESCAPED_SLASHES) ?>;</script>
 <script src="<?= h($base . '/assets/js/app.js') ?>"></script>
 <script src="<?= h($base . '/assets/js/alerts.js') ?>"></script>
 <?php

@@ -126,7 +126,8 @@ class ClassController
              FROM enrollments e
              INNER JOIN users u ON u.id = e.student_id
              WHERE e.class_id = :class_id
-               AND e.status = "active"'
+               AND e.status = "active"
+               AND u.status = "active"'
         );
         $studentStmt->execute(['class_id' => $classId]);
         $students = $studentStmt->fetchAll() ?: [];
@@ -721,6 +722,24 @@ class ClassController
         $pdo = Database::connection();
         $calendarAjax = !empty($_POST['calendar_ajax']);
 
+        if (function_exists('logClassScheduleLive')) {
+            logClassScheduleLive([
+                'event' => 'schedule_request',
+                'admin_id' => Auth::userId(),
+                'calendar_ajax' => $calendarAjax,
+                'teacher_id' => (int) ($_POST['teacher_id'] ?? 0),
+                'student_ids' => $_POST['student_ids'] ?? [],
+                'payload' => [
+                    'title' => $_POST['title'] ?? '',
+                    'start_datetime' => $_POST['start_datetime'] ?? '',
+                    'end_datetime' => $_POST['end_datetime'] ?? '',
+                    'timezone' => $_POST['timezone'] ?? '',
+                ],
+                'request_uri' => (string) ($_SERVER['REQUEST_URI'] ?? ''),
+                'base_path' => defined('BASE_PATH') ? BASE_PATH : '',
+            ]);
+        }
+
         $title = trim($_POST['title'] ?? '');
         $description = trim($_POST['description'] ?? '');
         $teacherId = (int) ($_POST['teacher_id'] ?? 0);
@@ -759,11 +778,19 @@ class ClassController
         }
         if ($teacherId <= 0) {
             $errors[] = 'Teacher is required.';
+        } elseif (!User::isActive(User::findById($teacherId))) {
+            $errors[] = 'Selected teacher is inactive. Activate the account or choose another teacher.';
         }
         if ($teacherId > 0 && $studentIds !== []) {
             $unmapped = TeacherStudent::filterUnmappedStudentIds($teacherId, $studentIds);
             if ($unmapped !== []) {
                 $errors[] = 'One or more selected students are not mapped to this teacher. Link them under Admin → Teacher-Students, then refresh the student list.';
+            }
+            foreach ($studentIds as $studentId) {
+                if (!User::isActive(User::findById($studentId))) {
+                    $errors[] = 'One or more selected students are inactive.';
+                    break;
+                }
             }
         }
         if ($start === '' || $end === '') {
@@ -872,6 +899,13 @@ class ClassController
             }
         } catch (\Throwable $e) {
             $errorMessage = $e->getMessage();
+            if (function_exists('logClassScheduleLive')) {
+                logClassScheduleLive([
+                    'event' => 'google_meet_failed',
+                    'teacher_id' => $teacherId,
+                    'error' => $errorMessage,
+                ]);
+            }
             if ($calendarAjax) {
                 self::respondScheduleJson([
                     'success' => false,
@@ -1035,7 +1069,7 @@ class ClassController
             }
 
             $redirectUrl = self::defaultScheduleRedirectUrl() . '?scheduled=' . $classId;
-            self::logClassSchedule([
+            $liveLog = [
                 'event' => 'class_scheduled',
                 'class_id' => $classId,
                 'teacher_id' => $teacherId,
@@ -1045,8 +1079,14 @@ class ClassController
                 'meeting_link' => $meetLink,
                 'email_sent' => $mailStatus === 'success',
                 'email_status' => $mailStatus,
+                'email_result' => $mailResult,
                 'redirect_url' => $redirectUrl,
-            ]);
+                'controller_response' => 'success',
+            ];
+            self::logClassSchedule($liveLog);
+            if (function_exists('logClassScheduleLive')) {
+                logClassScheduleLive($liveLog);
+            }
             self::respondScheduleJson([
                 'success' => true,
                 'message' => $message,
@@ -1077,14 +1117,13 @@ class ClassController
 
     private static function defaultScheduleRedirectUrl(): string
     {
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
         $target = strtolower(trim((string) ($_POST['redirect_to'] ?? 'calendar')));
 
         if ($target === 'classes') {
-            return $base . '/classes';
+            return function_exists('appRelativeUrl') ? appRelativeUrl('/classes') : ((defined('BASE_PATH') ? BASE_PATH : '') . '/classes');
         }
 
-        return $base . '/admin/calendar';
+        return function_exists('appRelativeUrl') ? appRelativeUrl('/admin/calendar') : ((defined('BASE_PATH') ? BASE_PATH : '') . '/admin/calendar');
     }
 
     /**
@@ -1114,7 +1153,11 @@ class ClassController
             $payload['ok'] = !empty($payload['success']);
         }
 
-        self::logClassSchedule(array_merge(['event' => 'schedule_json_response'], $payload));
+        $logPayload = array_merge(['event' => 'schedule_json_response', 'http_status' => $httpStatus], $payload);
+        self::logClassSchedule($logPayload);
+        if (function_exists('logClassScheduleLive')) {
+            logClassScheduleLive($logPayload);
+        }
 
         echo json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }

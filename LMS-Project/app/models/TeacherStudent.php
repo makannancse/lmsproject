@@ -25,6 +25,7 @@ class TeacherStudent
              INNER JOIN teacher_students ts ON ts.student_id = u.id
              WHERE ts.teacher_id = :tid
                AND u.role = "student"
+               AND u.status = "active"
              ORDER BY u.name ASC'
         );
         $stmt->execute(['tid' => $teacherId]);

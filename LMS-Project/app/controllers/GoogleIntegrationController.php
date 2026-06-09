@@ -33,16 +33,73 @@ class GoogleIntegrationController
         }
 
         try {
-            $url = (new GoogleOAuthService())->buildAuthUrl($teacherId);
+            $oauth = new GoogleOAuthService();
+            $url = $oauth->buildAuthUrl($teacherId);
+            if (function_exists('logGoogleAuth')) {
+                logGoogleAuth([
+                    'event' => 'oauth_connect_redirect',
+                    'teacher_id' => $teacherId,
+                    'actor_role' => $actorRole,
+                    'redirect_uri' => $oauth->configuredRedirectUri(),
+                    'google_auth_url' => $url,
+                ]);
+            }
             header('Location: ' . $url, true, 302);
+            exit;
         } catch (\Throwable $e) {
+            if (function_exists('logGoogleAuth')) {
+                logGoogleAuth([
+                    'event' => 'oauth_connect_failed',
+                    'teacher_id' => $teacherId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
             self::json(['error' => $e->getMessage()], 500);
         }
     }
 
     public static function authGoogle(): void
     {
-        self::connectGoogle();
+        Auth::requireRole(['admin', 'teacher']);
+        Auth::startSession();
+
+        $actor = Auth::user() ?: [];
+        $actorRole = (string) ($actor['role'] ?? '');
+        $actorId = (int) ($actor['id'] ?? 0);
+        $teacherId = (int) ($_GET['teacher_id'] ?? $_POST['teacher_id'] ?? $actorId);
+        if ($teacherId <= 0) {
+            $_SESSION['flash_warning'] = 'Teacher id is required to connect Google.';
+            redirectTo($actorRole === 'admin' ? '/admin' : '/teacher');
+        }
+        if ($actorRole === 'teacher' && $actorId !== $teacherId) {
+            $_SESSION['flash_warning'] = 'You can connect only your own Google account.';
+            redirectTo('/teacher');
+        }
+
+        try {
+            $oauth = new GoogleOAuthService();
+            $url = $oauth->buildAuthUrl($teacherId);
+            if (function_exists('logGoogleAuth')) {
+                logGoogleAuth([
+                    'event' => 'oauth_redirect_to_google',
+                    'teacher_id' => $teacherId,
+                    'actor_role' => $actorRole,
+                    'redirect_uri' => $oauth->configuredRedirectUri(),
+                    'google_auth_url' => $url,
+                ]);
+            }
+            header('Location: ' . $url, true, 302);
+            exit;
+        } catch (\Throwable $e) {
+            if (function_exists('logGoogleAuth')) {
+                logGoogleAuth([
+                    'event' => 'oauth_auth_url_failed',
+                    'teacher_id' => $teacherId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+            self::redirectAfterOAuth(0, 'Google connection failed: ' . $e->getMessage(), true);
+        }
     }
 
     public static function callback(): void
@@ -50,8 +107,17 @@ class GoogleIntegrationController
         Auth::startSession();
         $code = (string) ($_GET['code'] ?? '');
         $state = (string) ($_GET['state'] ?? '');
+        if (function_exists('logGoogleAuth')) {
+            logGoogleAuth([
+                'event' => 'oauth_callback_received',
+                'has_code' => $code !== '',
+                'has_state' => $state !== '',
+                'callback_url' => (string) ($_SERVER['REQUEST_URI'] ?? ''),
+                'user_role' => (string) ($_SESSION['role'] ?? ''),
+            ]);
+        }
         if ($code === '' || $state === '') {
-            self::json(['error' => 'Missing code/state'], 422);
+            self::redirectAfterOAuth(0, 'Google connection failed: missing authorization code.', true);
             return;
         }
 
@@ -62,8 +128,14 @@ class GoogleIntegrationController
             if (!$profile['recording_supported']) {
                 $message .= ' Meet scheduling works with your Gmail account. Cloud recording and Drive sync require Google Workspace.';
             }
-            self::redirectAfterOAuth($result['teacher_id'], $message);
+            self::redirectAfterOAuth((int) ($result['teacher_id'] ?? 0), $message);
         } catch (\Throwable $e) {
+            if (function_exists('logGoogleAuth')) {
+                logGoogleAuth([
+                    'event' => 'oauth_callback_failed',
+                    'error' => $e->getMessage(),
+                ]);
+            }
             self::redirectAfterOAuth(0, 'Google connection failed: ' . $e->getMessage(), true);
         }
     }
@@ -93,8 +165,7 @@ class GoogleIntegrationController
 
         (new GoogleOAuthService())->prepareReconnect($teacherId);
         $_SESSION['flash_success'] = 'Google account disconnected.';
-        header('Location: ' . ($actorRole === 'admin' ? self::appBasePath() . '/admin' : self::appBasePath() . '/teacher'));
-        exit;
+        redirectTo($actorRole === 'admin' ? '/admin' : '/teacher');
     }
 
     public static function createClass(): void
@@ -262,24 +333,23 @@ class GoogleIntegrationController
         $role = (string) ($actor['role'] ?? 'teacher');
         $_SESSION[$isError ? 'flash_warning' : 'flash_success'] = $message;
 
-        $base = self::appBasePath();
-        $target = $role === 'admin' ? ($base . '/admin') : ($base . '/teacher');
+        $path = $role === 'admin' ? '/admin' : '/teacher';
         if ($role === 'admin' && $teacherId > 0) {
-            $target .= '#teacher-google-connections';
+            $path .= '#teacher-google-connections';
         }
 
-        header('Location: ' . $target);
-        exit;
-    }
-
-    private static function appBasePath(): string
-    {
-        $path = (string) parse_url((string) env('APP_URL', ''), PHP_URL_PATH);
-        if ($path !== '') {
-            return rtrim($path, '/');
+        if (function_exists('logGoogleAuth')) {
+            logGoogleAuth([
+                'event' => 'oauth_final_redirect',
+                'teacher_id' => $teacherId,
+                'user_role' => $role,
+                'is_error' => $isError,
+                'final_destination' => appUrl($path),
+                'relative_destination' => appRelativeUrl($path),
+            ]);
         }
 
-        return defined('BASE_PATH') ? BASE_PATH : '';
+        redirectTo($path);
     }
 
     private static function extractGoogleMeetCode(?string $meetingLink): ?string

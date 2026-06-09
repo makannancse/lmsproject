@@ -1,0 +1,4 @@
+{"event":"update_request","user_id":7,"post_keys":["user_id","first_name","last_name","email","phone","timezone","status","parent_email","subject","assigned_teacher_id","default_payment_amount"],"admin_id":1,"timestamp":"2026-06-09 09:11:07"}
+{"event":"update_success","user_id":7,"email":"nandhinibalakrishnan2020@gmail.com","role":"student","admin_id":1,"timestamp":"2026-06-09 09:11:07"}
+{"event":"update_request","user_id":3,"post_keys":["user_id","first_name","last_name","email","phone","timezone","status"],"admin_id":1,"timestamp":"2026-06-09 09:11:27"}
+{"event":"update_success","user_id":3,"email":"kannanandhu99@gmail.com","role":"teacher","admin_id":1,"timestamp":"2026-06-09 09:11:27"}

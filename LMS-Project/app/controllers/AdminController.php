@@ -78,13 +78,277 @@ class AdminController
             $role = 'student';
         }
 
-        $users = User::allByRole($role);
+        $query = trim((string) ($_GET['q'] ?? ''));
+        $status = trim((string) ($_GET['status'] ?? ''));
+        $statusFilter = in_array($status, ['active', 'inactive'], true) ? $status : null;
+
+        $users = User::search($role, $query !== '' ? $query : null, $statusFilter);
 
         View::render('admin/users/index', [
             'pageTitle' => 'Users',
             'role' => $role,
             'users' => $users,
+            'searchQuery' => $query,
+            'statusFilter' => $statusFilter ?? '',
         ]);
+    }
+
+    public static function editUserForm(): void
+    {
+        Auth::requireRole(['admin']);
+        $base = defined('BASE_PATH') ? BASE_PATH : '';
+
+        $userId = (int) ($_GET['id'] ?? 0);
+        $user = User::findById($userId);
+        if ($user === null) {
+            $_SESSION['flash_error'] = 'User not found.';
+            redirectTo('/admin/users');
+        }
+
+        $role = (string) ($user['role'] ?? 'student');
+        $profile = User::profileForUser($userId, $role) ?? $user;
+        $nameParts = User::splitName((string) ($user['name'] ?? ''));
+
+        $teachers = User::allTeachers(true);
+        $timezoneOptions = supportedSchedulingTimezones();
+
+        View::render('admin/users/edit', [
+            'pageTitle' => 'Edit user',
+            'user' => $profile,
+            'editUserId' => $userId,
+            'role' => $role,
+            'firstName' => $nameParts['first_name'],
+            'lastName' => $nameParts['last_name'],
+            'teachers' => $teachers,
+            'timezoneOptions' => $timezoneOptions,
+            'errors' => [],
+            'old' => [],
+        ]);
+    }
+
+    public static function updateUser(): void
+    {
+        Auth::requireRole(['admin']);
+        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $pdo = Database::connection();
+
+        $userId = (int) ($_POST['user_id'] ?? 0);
+        if (function_exists('logUserEdit')) {
+            logUserEdit([
+                'event' => 'update_request',
+                'user_id' => $userId,
+                'post_keys' => array_keys($_POST),
+                'admin_id' => Auth::userId(),
+            ]);
+        }
+        if ($userId <= 0) {
+            $_SESSION['flash_error'] = 'Invalid user id.';
+            redirectTo('/admin/users');
+        }
+
+        $user = User::findById($userId);
+        if ($user === null) {
+            if (function_exists('logUserEdit')) {
+                logUserEdit([
+                    'event' => 'user_not_found',
+                    'user_id' => $userId,
+                    'admin_id' => Auth::userId(),
+                ]);
+            }
+            $_SESSION['flash_error'] = 'User not found.';
+            redirectTo('/admin/users');
+        }
+
+        $role = (string) ($user['role'] ?? '');
+        $firstName = trim((string) ($_POST['first_name'] ?? ''));
+        $lastName = trim((string) ($_POST['last_name'] ?? ''));
+        $name = User::combineName($firstName, $lastName);
+        $email = trim((string) ($_POST['email'] ?? ''));
+        $phone = trim((string) ($_POST['phone'] ?? ''));
+        $timezone = normalizeTimezone((string) ($_POST['timezone'] ?? APP_TIMEZONE), APP_TIMEZONE);
+        $status = strtolower(trim((string) ($_POST['status'] ?? 'active')));
+        if (!in_array($status, ['active', 'inactive'], true)) {
+            $status = 'active';
+        }
+
+        $errors = [];
+        if ($name === '') {
+            $errors[] = 'Name is required.';
+        }
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errors[] = 'A valid email is required.';
+        }
+
+        if (User::emailInUseByOtherUser($email, $userId)) {
+            $errors[] = 'Email is already in use.';
+            if (function_exists('logUserEdit')) {
+                logUserEdit([
+                    'event' => 'email_duplicate_rejected',
+                    'user_id' => $userId,
+                    'email' => $email,
+                ]);
+            }
+        }
+
+        $old = $_POST;
+        $old['first_name'] = $firstName;
+        $old['last_name'] = $lastName;
+        if (!empty($errors)) {
+            $profile = User::profileForUser($userId, $role) ?? $user;
+            View::render('admin/users/edit', [
+                'pageTitle' => 'Edit user',
+                'user' => $profile,
+                'editUserId' => $userId,
+                'role' => $role,
+                'firstName' => $firstName,
+                'lastName' => $lastName,
+                'teachers' => User::allTeachers(true),
+                'timezoneOptions' => supportedSchedulingTimezones(),
+                'errors' => $errors,
+                'old' => $old,
+            ]);
+            return;
+        }
+
+        $pdo->beginTransaction();
+        try {
+            User::updateCore($userId, [
+                'name' => $name,
+                'email' => $email,
+                'phone' => $phone !== '' ? $phone : null,
+                'timezone' => $timezone,
+                'status' => $status,
+            ]);
+
+            if ($role === 'student') {
+                $parentEmail = trim((string) ($_POST['parent_email'] ?? ''));
+                $subject = trim((string) ($_POST['subject'] ?? ''));
+                $paymentAmount = parseInrAmount($_POST['default_payment_amount'] ?? 0);
+                $assignedTeacherId = (int) ($_POST['assigned_teacher_id'] ?? 0);
+
+                $exists = $pdo->prepare('SELECT id FROM students WHERE user_id = :uid LIMIT 1');
+                $exists->execute(['uid' => $userId]);
+                if ($exists->fetch()) {
+                    $pdo->prepare(
+                        'UPDATE students
+                         SET parent_email = :parent_email,
+                             subject = :subject,
+                             default_payment_amount = :amount,
+                             updated_at = CURRENT_TIMESTAMP
+                         WHERE user_id = :uid'
+                    )->execute([
+                        'uid' => $userId,
+                        'parent_email' => $parentEmail !== '' ? $parentEmail : null,
+                        'subject' => $subject !== '' ? $subject : null,
+                        'amount' => $paymentAmount,
+                    ]);
+                } else {
+                    $pdo->prepare(
+                        'INSERT INTO students (user_id, parent_email, subject, default_payment_amount)
+                         VALUES (:uid, :parent_email, :subject, :amount)'
+                    )->execute([
+                        'uid' => $userId,
+                        'parent_email' => $parentEmail !== '' ? $parentEmail : null,
+                        'subject' => $subject !== '' ? $subject : null,
+                        'amount' => $paymentAmount,
+                    ]);
+                }
+
+                $pdo->prepare('DELETE FROM teacher_students WHERE student_id = :sid')->execute(['sid' => $userId]);
+                if ($assignedTeacherId > 0 && User::isActive(User::findById($assignedTeacherId))) {
+                    $pdo->prepare(
+                        'INSERT INTO teacher_students (teacher_id, student_id) VALUES (:tid, :sid)'
+                    )->execute(['tid' => $assignedTeacherId, 'sid' => $userId]);
+                }
+            }
+
+            $pdo->commit();
+        } catch (\Throwable $e) {
+            $pdo->rollBack();
+            if (function_exists('logUserEdit')) {
+                logUserEdit([
+                    'event' => 'update_failed',
+                    'user_id' => $userId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+            $_SESSION['flash_error'] = 'Could not update user: ' . $e->getMessage();
+            redirectTo('/admin/users/edit?id=' . $userId);
+        }
+
+        if (function_exists('logUserEdit')) {
+            logUserEdit([
+                'event' => 'update_success',
+                'user_id' => $userId,
+                'email' => $email,
+                'role' => $role,
+                'admin_id' => Auth::userId(),
+            ]);
+        }
+        if (function_exists('writeStructuredLog')) {
+            writeStructuredLog('user_management.log', [
+                'event' => 'user_updated',
+                'user_id' => $userId,
+                'role' => $role,
+                'admin_id' => Auth::userId(),
+            ]);
+        }
+
+        $_SESSION['flash_success'] = 'User updated successfully.';
+        redirectTo('/admin/users?role=' . urlencode($role));
+    }
+
+    public static function toggleUserStatus(): void
+    {
+        Auth::requireRole(['admin']);
+        $base = defined('BASE_PATH') ? BASE_PATH : '';
+
+        $userId = (int) ($_POST['user_id'] ?? 0);
+        $action = strtolower(trim((string) ($_POST['action'] ?? '')));
+        $role = trim((string) ($_POST['role'] ?? 'student'));
+
+        $user = User::findById($userId);
+        if ($user === null) {
+            $_SESSION['flash_error'] = 'User not found.';
+            redirectTo('/admin/users?role=' . urlencode($role));
+        }
+
+        $currentUserId = (int) (Auth::user()['id'] ?? 0);
+        if ($userId === $currentUserId && $action === 'deactivate') {
+            $_SESSION['flash_error'] = 'You cannot deactivate your own account.';
+            redirectTo('/admin/users?role=' . urlencode((string) ($user['role'] ?? $role)));
+        }
+
+        $newStatus = $action === 'activate' ? 'active' : 'inactive';
+        try {
+            User::setStatus($userId, $newStatus);
+        } catch (\Throwable $e) {
+            if (function_exists('writeStructuredLog')) {
+                writeStructuredLog('user_management.log', [
+                    'event' => 'toggle_status_failed',
+                    'user_id' => $userId,
+                    'action' => $action,
+                    'error' => $e->getMessage(),
+                    'admin_id' => Auth::userId(),
+                ]);
+            }
+            $_SESSION['flash_error'] = 'Could not update user status: ' . $e->getMessage();
+            redirectTo('/admin/users?role=' . urlencode((string) ($user['role'] ?? $role)));
+        }
+
+        if (function_exists('writeStructuredLog')) {
+            writeStructuredLog('user_management.log', [
+                'event' => 'toggle_status',
+                'user_id' => $userId,
+                'new_status' => $newStatus,
+                'admin_id' => Auth::userId(),
+            ]);
+        }
+
+        $_SESSION['flash_success'] = $newStatus === 'active'
+            ? 'User activated successfully.'
+            : 'User deactivated successfully.';
+        redirectTo('/admin/users?role=' . urlencode((string) ($user['role'] ?? $role)));
     }
 
     public static function createStudentForm(): void

@@ -496,6 +496,10 @@ class HomeworkController
     public static function studentUpload(): void
     {
         Auth::requireRole(['student']);
+        if (!Auth::isCurrentUserActive()) {
+            $_SESSION['error'] = 'This account has been deactivated. Please contact the administrator.';
+            redirectTo('/login?deactivated=1');
+        }
         $studentId = (int) (Auth::user()['id'] ?? 0);
         $base = defined('BASE_PATH') ? BASE_PATH : '';
         $pdo = Database::connection();

@@ -25,24 +25,48 @@
         window.setTimeout(cleanupModalArtifacts, 400);
     }
 
+    function appBase() {
+        if (typeof window.__APP_BASE__ === 'string') {
+            return window.__APP_BASE__;
+        }
+        return '';
+    }
+
+    function appPath(path, base) {
+        var root = typeof base === 'string' ? base : appBase();
+        if (!path) {
+            return root || '/';
+        }
+        if (path.charAt(0) !== '/') {
+            path = '/' + path;
+        }
+        return (root || '') + path;
+    }
+
     function resolveRedirectUrl(response, base) {
         if (response && response.redirect_url) {
-            return response.redirect_url;
+            var url = String(response.redirect_url);
+            if (url.charAt(0) === '/') {
+                return appPath(url, base);
+            }
+            return url;
         }
-        return (base || '') + '/admin/calendar';
+        return appPath('/admin/calendar', base);
     }
 
     function isSuccess(response) {
         return response && (response.success === true || response.ok === true);
     }
 
-    function showSuccessThenRedirect(message, redirectUrl) {
+    function showSuccessThenRedirect(message, redirectUrl, stayOnPage) {
         var navigate = function () {
             cleanupModalArtifacts();
             if (window.AppUI && typeof window.AppUI.hideLoader === 'function') {
                 window.AppUI.hideLoader();
             }
-            window.location.href = redirectUrl;
+            if (!stayOnPage) {
+                window.location.href = redirectUrl;
+            }
         };
 
         if (window.Swal && typeof window.Swal.fire === 'function') {
@@ -95,11 +119,12 @@
      */
     function handleScheduleResponse(response, options) {
         options = options || {};
-        var base = options.base || '';
+        var base = options.base || appBase();
 
         if (isSuccess(response)) {
             var msg = response.message || 'Class scheduled successfully.';
             var redirectUrl = resolveRedirectUrl(response, base);
+            var stayOnPage = !!options.stayOnPage;
 
             dismissModal(options.modalEl || null);
 
@@ -111,7 +136,14 @@
                 }
             }
 
-            return showSuccessThenRedirect(msg, redirectUrl);
+            if (stayOnPage && response.class_id) {
+                var params = new URLSearchParams(window.location.search);
+                params.set('scheduled', String(response.class_id));
+                var clean = window.location.pathname + '?' + params.toString();
+                window.history.replaceState({}, '', clean);
+            }
+
+            return showSuccessThenRedirect(msg, redirectUrl, stayOnPage);
         }
 
         var errMsg = (response && response.message) ? response.message : 'Could not schedule class.';
@@ -126,7 +158,7 @@
      */
     function submitScheduleForm(form, options) {
         options = options || {};
-        var base = options.base || '';
+        var base = options.base || appBase();
         var submitBtn = options.submitButton || form.querySelector('[type="submit"], button[id$="Submit"]');
         var modalEl = options.modalEl || null;
 
@@ -150,7 +182,7 @@
             fd.append('calendar_ajax', '1');
         }
 
-        return fetch(base + '/classes', {
+        return fetch(appPath('/classes', base), {
             method: 'POST',
             body: fd,
             credentials: 'same-origin',

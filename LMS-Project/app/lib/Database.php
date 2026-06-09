@@ -23,12 +23,24 @@ class Database
                 \PDO::ATTR_EMULATE_PREPARES => false,
             ];
 
-            self::$pdo = new \PDO(
-                $dsn,
-                env('DB_USERNAME', 'root'),
-                env('DB_PASSWORD', ''),
-                $options
-            );
+            try {
+                self::$pdo = new \PDO(
+                    $dsn,
+                    (string) env('DB_USERNAME', 'root'),
+                    (string) env('DB_PASSWORD', ''),
+                    $options
+                );
+            } catch (\PDOException $e) {
+                $user = (string) env('DB_USERNAME', 'root');
+                $db = (string) env('DB_DATABASE', 'lms_db');
+                $hint = 'Check DB_USERNAME and DB_PASSWORD in .env (MySQL login, not LMS admin). '
+                    . 'WAMP default is usually root with an empty password.';
+                throw new \PDOException(
+                    'Database connection failed for user "' . $user . '" on database "' . $db . '". ' . $hint . ' Original: ' . $e->getMessage(),
+                    (int) $e->getCode(),
+                    $e
+                );
+            }
         }
 
         self::ensureRuntimeSchemaCompatibility(self::$pdo);
@@ -256,6 +268,34 @@ class Database
             'google_user_id',
             'ALTER TABLE teacher_google_accounts
              ADD COLUMN google_user_id VARCHAR(64) NULL AFTER google_person_id'
+        );
+        self::ensureColumnExists(
+            $pdo,
+            $databaseName,
+            'users',
+            'status',
+            'ALTER TABLE users ADD COLUMN status ENUM("active","inactive") NOT NULL DEFAULT "active" AFTER timezone'
+        );
+        self::ensureColumnExists(
+            $pdo,
+            $databaseName,
+            'users',
+            'phone',
+            'ALTER TABLE users ADD COLUMN phone VARCHAR(32) NULL AFTER email'
+        );
+        self::ensureColumnExists(
+            $pdo,
+            $databaseName,
+            'students',
+            'subject',
+            'ALTER TABLE students ADD COLUMN subject VARCHAR(255) NULL AFTER parent_email'
+        );
+        self::ensureColumnExists(
+            $pdo,
+            $databaseName,
+            'students',
+            'default_payment_amount',
+            'ALTER TABLE students ADD COLUMN default_payment_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER subject'
         );
 
         $pdo->exec(

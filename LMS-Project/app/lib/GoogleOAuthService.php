@@ -75,7 +75,18 @@ class GoogleOAuthService
         $_SESSION['google_oauth_state'] = $state;
 
         $client->setState($state);
-        return $client->createAuthUrl();
+        $authUrl = $client->createAuthUrl();
+        if (function_exists('logGoogleAuth')) {
+            logGoogleAuth([
+                'event' => 'oauth_auth_url_built',
+                'teacher_id' => $teacherId,
+                'redirect_uri' => $this->configuredRedirectUri(),
+                'oauth_url' => $authUrl,
+                'user_role' => (string) ($_SESSION['role'] ?? ''),
+            ]);
+        }
+
+        return $authUrl;
     }
 
     /**
@@ -209,6 +220,16 @@ class GoogleOAuthService
             'recording_supported' => $profile['recording_supported'],
             'workspace_domain' => $this->workspaceDomain(),
         ]);
+
+        if (function_exists('logGoogleAuth')) {
+            logGoogleAuth([
+                'event' => 'oauth_callback_success',
+                'teacher_id' => $teacherId,
+                'email' => $email,
+                'refresh_token_saved' => true,
+                'user_role' => (string) ($_SESSION['role'] ?? ''),
+            ]);
+        }
 
         return ['teacher_id' => $teacherId, 'email' => $email, 'refresh_token_saved' => true];
     }
@@ -365,28 +386,11 @@ class GoogleOAuthService
 
     public function configuredRedirectUri(): string
     {
-        $configured = trim((string) env('GOOGLE_REDIRECT_URI', ''));
-        if ($configured === '') {
-            return $this->defaultRedirectUri();
+        if (function_exists('googleOAuthRedirectUri')) {
+            return googleOAuthRedirectUri();
         }
 
-        $path = (string) parse_url($configured, PHP_URL_PATH);
-        if ($path === '' || str_ends_with(rtrim($path, '/'), '/auth/google/callback')) {
-            return $configured;
-        }
-
-        return $this->defaultRedirectUri();
-    }
-
-    private function defaultRedirectUri(): string
-    {
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
-        $appUrl = rtrim((string) env('APP_URL', 'http://localhost'), '/');
-        if ($base !== '' && str_ends_with($appUrl, $base)) {
-            return $appUrl . '/auth/google/callback';
-        }
-
-        return $appUrl . $base . '/auth/google/callback';
+        return appUrl('/auth/google/callback');
     }
 
     private function buildHttpClient(): GuzzleClient

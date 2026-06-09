@@ -240,9 +240,31 @@ $timezoneOptions = calendarTimezoneOptions(resolveUserTimezone(Auth::user() ?: n
         return tzEl && tzEl.value ? tzEl.value : 'UTC';
     }
     function syncScheduleTimezone() {
+        var calTz = calendarTimezoneValue();
         var tzField = document.getElementById('cal_timezone');
         if (tzField) {
-            tzField.value = calendarTimezoneValue();
+            tzField.value = calTz;
+        }
+        var calTzSelect = document.getElementById('calendarTimezone');
+        if (calTzSelect && calTzSelect.value !== calTz) {
+            calTzSelect.value = calTz;
+        }
+    }
+
+    function openScheduleModalFromSlot(start, end) {
+        if (!start) return;
+        if (!end || end <= start) {
+            end = new Date(start.getTime() + 60 * 60 * 1000);
+        }
+        syncScheduleTimezone();
+        var tz = calendarTimezoneValue();
+        document.getElementById('cal_start').value = toTimezoneDatetimeLocal(start, tz);
+        document.getElementById('cal_end').value = toTimezoneDatetimeLocal(end, tz);
+        document.getElementById('cal_title').value = '';
+        document.getElementById('cal_description').value = '';
+        var schedModal = document.getElementById('calScheduleModal');
+        if (schedModal) {
+            bootstrap.Modal.getOrCreateInstance(schedModal).show();
         }
     }
 
@@ -356,34 +378,26 @@ $timezoneOptions = calendarTimezoneOptions(resolveUserTimezone(Auth::user() ?: n
         },
         select: function (info) {
             if (!canSchedule) return;
-            var start = info.start;
-            var end = info.end;
-            if (!end || end <= start) {
-                end = new Date(start.getTime() + 60 * 60 * 1000);
-            }
-            syncScheduleTimezone();
-            var tz = calendarTimezoneValue();
-            document.getElementById('cal_start').value = toTimezoneDatetimeLocal(start, tz);
-            document.getElementById('cal_end').value = toTimezoneDatetimeLocal(end, tz);
-            document.getElementById('cal_title').value = '';
-            document.getElementById('cal_description').value = '';
-            var m = new bootstrap.Modal(document.getElementById('calScheduleModal'));
-            m.show();
+            openScheduleModalFromSlot(info.start, info.end);
             calendar.unselect();
         },
         dateClick: function (info) {
             if (!canSchedule) return;
-            if (info.view.type !== 'dayGridMonth') return;
-            var tz = calendarTimezoneValue();
-            var baseDate = new Date(info.date.getTime());
-            var startValue = toTimezoneDatetimeLocal(baseDate, tz).slice(0, 10) + 'T09:00';
-            var endValue = toTimezoneDatetimeLocal(baseDate, tz).slice(0, 10) + 'T10:00';
-            syncScheduleTimezone();
-            document.getElementById('cal_start').value = startValue;
-            document.getElementById('cal_end').value = endValue;
-            document.getElementById('cal_title').value = '';
-            document.getElementById('cal_description').value = '';
-            new bootstrap.Modal(document.getElementById('calScheduleModal')).show();
+            if (info.view.type === 'dayGridMonth') {
+                syncScheduleTimezone();
+                var tz = calendarTimezoneValue();
+                var day = toTimezoneDatetimeLocal(info.date, tz).slice(0, 10);
+                document.getElementById('cal_start').value = day + 'T09:00';
+                document.getElementById('cal_end').value = day + 'T10:00';
+                document.getElementById('cal_title').value = '';
+                document.getElementById('cal_description').value = '';
+                var schedModal = document.getElementById('calScheduleModal');
+                if (schedModal) {
+                    bootstrap.Modal.getOrCreateInstance(schedModal).show();
+                }
+                return;
+            }
+            openScheduleModalFromSlot(info.date, new Date(info.date.getTime() + 60 * 60 * 1000));
         }
     });
 
@@ -422,6 +436,16 @@ $timezoneOptions = calendarTimezoneOptions(resolveUserTimezone(Auth::user() ?: n
             emptyNoticeId: 'cal_student_map_notice',
             selectedIds: []
         });
+        var schedModalEl = document.getElementById('calScheduleModal');
+        if (schedModalEl) {
+            schedModalEl.addEventListener('shown.bs.modal', function () {
+                syncScheduleTimezone();
+                var teacherEl = document.getElementById('cal_teacher_id');
+                if (teacherEl && teacherEl.value) {
+                    teacherEl.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            });
+        }
     }
 
     var openScheduleBtn = document.getElementById('calOpenScheduleBtn');
@@ -504,6 +528,7 @@ $timezoneOptions = calendarTimezoneOptions(resolveUserTimezone(Auth::user() ?: n
                     base: base,
                     submitButton: submitBtn,
                     modalEl: document.getElementById('calScheduleModal'),
+                    stayOnPage: true,
                     onCalendarRefresh: function () {
                         if (typeof calendar !== 'undefined' && calendar) {
                             calendar.refetchEvents();
