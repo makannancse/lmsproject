@@ -2,13 +2,13 @@
 
 use function htmlspecialchars as h;
 
-$base = defined('BASE_PATH') ? BASE_PATH : '';
+$base = appWebPath();
 $calendarRole = $calendarRole ?? 'teacher';
 $canSchedule = !empty($canSchedule);
 $teachers = $teachers ?? [];
 $students = $students ?? [];
 $classTypes = $classTypes ?? [];
-$eventsUrl = $base . '/calendar/events';
+$eventsUrl = path('calendar/events');
 $timezoneOptions = calendarTimezoneOptions(resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE));
 ?>
 
@@ -181,6 +181,9 @@ $timezoneOptions = calendarTimezoneOptions(resolveUserTimezone(Auth::user() ?: n
                         </select>
                         <div class="form-text">Only mapped students appear. Ctrl/Cmd + click for multiple.</div>
                     </div>
+                    <div class="row g-2">
+                        <?php $prefix = 'cal_'; $old = []; require dirname(__DIR__) . '/partials/recurrence-fields.php'; ?>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -193,8 +196,8 @@ $timezoneOptions = calendarTimezoneOptions(resolveUserTimezone(Auth::user() ?: n
 <?php endif; ?>
 
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.js"></script>
-<script src="<?= h($base . '/assets/js/schedule-class-form.js') ?>"></script>
-<script src="<?= h($base . '/assets/js/class-schedule-submit.js') ?>"></script>
+<script src="<?= h(asset('js/schedule-class-form.js')) ?>"></script>
+<script src="<?= h(asset('js/class-schedule-submit.js')) ?>"></script>
 <script>
 (function () {
     var base = <?= json_encode($base, JSON_UNESCAPED_SLASHES) ?>;

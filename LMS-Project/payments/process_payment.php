@@ -17,11 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $teacherId = (int) ($_POST['teacher_id'] ?? 0);
 $statusFilter = trim((string) ($_POST['status'] ?? ''));
-$basePath = rtrim((string) (defined('BASE_PATH') ? BASE_PATH : ''), '/');
-$redirectBase = $basePath . '/admin/payments';
 if ($teacherId <= 0) {
-    header('Location: ' . $redirectBase . '?success=invalid_teacher');
-    exit;
+    redirect('admin/payments?success=invalid_teacher');
 }
 
 if (isset($_POST['mark_paid'])) {
@@ -30,8 +27,7 @@ if (isset($_POST['mark_paid'])) {
         createTeacherPaymentEntry($teacherId, (float) $snapshot['pending_amount'], 'Marked paid from dashboard');
     }
     $suffix = $statusFilter !== '' ? ('&status=' . urlencode($statusFilter)) : '';
-    header('Location: ' . $redirectBase . '?success=paid' . $suffix);
-    exit;
+    redirect('admin/payments?success=paid' . $suffix);
 }
 
 if (isset($_POST['add_payment'])) {
@@ -43,9 +39,7 @@ if (isset($_POST['add_payment'])) {
         createTeacherPaymentEntry($teacherId, $amount, $remarks);
     }
     $suffix = $statusFilter !== '' ? ('&status=' . urlencode($statusFilter)) : '';
-    header('Location: ' . $redirectBase . '?success=payment_added' . $suffix);
-    exit;
+    redirect('admin/payments?success=payment_added' . $suffix);
 }
 
-header('Location: ' . $redirectBase . '?success=no_action');
-exit;
+redirect('admin/payments?success=no_action');

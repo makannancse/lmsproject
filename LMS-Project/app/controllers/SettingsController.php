@@ -56,6 +56,10 @@ class SettingsController
             'smtpEncryption' => $smtpEncryption,
             'mailFrom' => $mailFrom,
             'mailFromName' => $mailFromName,
+            'adminNotificationEmail' => SystemConfig::get('admin_notification_email', ''),
+            'notifyAdminClassScheduled' => SystemConfig::get('notify_admin_class_scheduled', '1'),
+            'notifyAdminReschedule' => SystemConfig::get('notify_admin_reschedule', '1'),
+            'notifyTeacherStudentAssigned' => SystemConfig::get('notify_teacher_student_assigned', '1'),
         ]);
     }
 
@@ -139,7 +143,11 @@ class SettingsController
             SystemConfig::set('mail_from_name', $mailFromName);
         }
 
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
-        header('Location: ' . $base . '/settings');
+        SystemConfig::set('admin_notification_email', trim($_POST['admin_notification_email'] ?? ''));
+        SystemConfig::set('notify_admin_class_scheduled', isset($_POST['notify_admin_class_scheduled']) ? '1' : '0');
+        SystemConfig::set('notify_admin_reschedule', isset($_POST['notify_admin_reschedule']) ? '1' : '0');
+        SystemConfig::set('notify_teacher_student_assigned', isset($_POST['notify_teacher_student_assigned']) ? '1' : '0');
+
+        redirectTo('/settings');
     }
 }

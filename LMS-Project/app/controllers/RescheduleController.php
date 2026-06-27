@@ -8,9 +8,41 @@ require_once dirname(__DIR__) . '/lib/Database.php';
 require_once dirname(__DIR__) . '/lib/GoogleCalendarMeetingService.php';
 require_once dirname(__DIR__) . '/models/ClassSession.php';
 require_once dirname(__DIR__) . '/models/RescheduleRequest.php';
+require_once dirname(__DIR__) . '/lib/NotificationMailer.php';
 
 class RescheduleController
 {
+    /**
+     * @param array<string, mixed> $class
+     * @param array<string, mixed> $req
+     */
+    private static function notifyAdminReschedule(array $class, array $req, string $requestedByLabel, string $actionLabel = 'Request'): void
+    {
+        $pdo = Database::connection();
+        $teacherName = '';
+        $studentName = '';
+        $tStmt = $pdo->prepare('SELECT name FROM users WHERE id = :id LIMIT 1');
+        $tStmt->execute(['id' => (int) ($req['teacher_id'] ?? $class['teacher_id'] ?? 0)]);
+        $teacherName = (string) ($tStmt->fetchColumn() ?: '');
+        $sStmt = $pdo->prepare('SELECT name FROM users WHERE id = :id LIMIT 1');
+        $sStmt->execute(['id' => (int) ($req['student_id'] ?? 0)]);
+        $studentName = (string) ($sStmt->fetchColumn() ?: '');
+
+        $originalDate = formatClassScheduledAt($class, 'Y-m-d h:i A T');
+        $requestedDate = trim((string) ($req['requested_date'] ?? '')) . ' '
+            . trim((string) ($req['requested_time'] ?? ''))
+            . ' (' . (string) ($req['new_timezone'] ?? $req['old_timezone'] ?? APP_TIMEZONE) . ')';
+
+        NotificationMailer::notifyAdminReschedule([
+            'action_label' => $actionLabel,
+            'class_title' => (string) ($class['title'] ?? 'Class'),
+            'teacher_name' => $teacherName,
+            'student_name' => $studentName,
+            'original_date' => $originalDate,
+            'requested_date' => $requestedDate,
+            'requested_by' => $requestedByLabel,
+        ]);
+    }
     /** Student: list enrolled upcoming classes + request form */
     public static function studentIndex(): void
     {
@@ -45,7 +77,7 @@ class RescheduleController
         Auth::requireRole(['student']);
         $user = Auth::user();
         $studentId = (int) ($user['id'] ?? 0);
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $base = appWebPath();
 
         $classId = (int) ($_POST['class_id'] ?? 0);
         $reqDate = trim($_POST['requested_date'] ?? '');
@@ -53,7 +85,7 @@ class RescheduleController
         $reason = trim($_POST['reason'] ?? '');
 
         if ($classId <= 0 || $reqDate === '' || $reqTime === '') {
-            header('Location: ' . $base . '/student/reschedule');
+            redirectTo('/student/reschedule');
             return;
         }
 
@@ -66,7 +98,7 @@ class RescheduleController
         $stmt->execute(['cid' => $classId, 'sid' => $studentId]);
         $class = $stmt->fetch();
         if (!$class) {
-            header('Location: ' . $base . '/student/reschedule');
+            redirectTo('/student/reschedule');
             return;
         }
 
@@ -90,8 +122,17 @@ class RescheduleController
             'reason' => $reason ?: null,
         ]);
 
+        self::notifyAdminReschedule($class, [
+            'teacher_id' => (int) $class['teacher_id'],
+            'student_id' => $studentId,
+            'requested_date' => $reqDate,
+            'requested_time' => strlen($reqTime) === 5 ? $reqTime . ':00' : $reqTime,
+            'old_timezone' => $oldTimezone,
+            'new_timezone' => $newTimezone,
+        ], 'Student', 'Request');
+
         $_SESSION['flash_success'] = 'Reschedule request submitted.';
-        header('Location: ' . $base . '/student/reschedule');
+        redirectTo('/student/reschedule');
     }
 
     public static function teacherIndex(): void
@@ -125,37 +166,37 @@ class RescheduleController
         Auth::requireRole(['teacher']);
         $user = Auth::user();
         $teacherId = (int) ($user['id'] ?? 0);
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $base = appWebPath();
 
         $requestId = (int) ($_POST['request_id'] ?? 0);
         $decision = $_POST['decision'] ?? '';
         $comment = trim($_POST['teacher_comment'] ?? '');
 
         if ($requestId <= 0 || !in_array($decision, ['approved', 'rejected'], true)) {
-            header('Location: ' . $base . '/teacher/reschedule');
+            redirectTo('/teacher/reschedule');
             return;
         }
 
         self::processDecision($requestId, $decision, $teacherId, false, $comment, null);
 
         $_SESSION['flash_success'] = $decision === 'approved' ? 'Request approved. Class updated.' : 'Request rejected.';
-        header('Location: ' . $base . '/teacher/reschedule');
+        redirectTo('/teacher/reschedule');
     }
 
     public static function adminDecide(): void
     {
         Auth::requireRole(['admin']);
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $base = appWebPath();
         $requestId = (int) ($_POST['request_id'] ?? 0);
         $decision = (string) ($_POST['decision'] ?? '');
         $comment = trim((string) ($_POST['admin_comment'] ?? ''));
         if ($requestId <= 0 || !in_array($decision, ['approved', 'rejected'], true)) {
-            header('Location: ' . $base . '/admin/reschedule');
+            redirectTo('/admin/reschedule');
             return;
         }
         self::processDecision($requestId, $decision, 0, true, null, $comment);
         $_SESSION['flash_success'] = $decision === 'approved' ? 'Request approved by admin.' : 'Request rejected by admin.';
-        header('Location: ' . $base . '/admin/reschedule');
+        redirectTo('/admin/reschedule');
     }
 
     public static function teacherInitiateForm(): void
@@ -196,7 +237,7 @@ class RescheduleController
         $user = Auth::user();
         $role = (string) ($user['role'] ?? '');
         $teacherId = (int) ($_POST['teacher_id'] ?? ($user['id'] ?? 0));
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $base = appWebPath();
 
         $pair = trim($_POST['class_student'] ?? '');
         $reqDate = trim($_POST['requested_date'] ?? '');
@@ -218,7 +259,7 @@ class RescheduleController
         }
 
         if ($classId <= 0 || $studentId <= 0 || $reqDate === '' || $reqTime === '') {
-            header('Location: ' . $base . '/teacher/reschedule/new');
+            redirectTo('/teacher/reschedule/new');
             return;
         }
 
@@ -234,7 +275,7 @@ class RescheduleController
         $chk->execute($chkParams);
         $class = $chk->fetch();
         if (!$class) {
-            header('Location: ' . $base . '/teacher/reschedule/new');
+            redirectTo('/teacher/reschedule/new');
             return;
         }
 
@@ -267,8 +308,17 @@ class RescheduleController
         $requestId = (int) $pdo->lastInsertId();
         self::processDecision($requestId, 'approved', (int) ($user['id'] ?? 0), $role === 'admin', null, null, true);
 
+        self::notifyAdminReschedule($class, [
+            'teacher_id' => $teacherId,
+            'student_id' => $studentId,
+            'requested_date' => $reqDate,
+            'requested_time' => strlen($reqTime) === 5 ? $reqTime . ':00' : $reqTime,
+            'old_timezone' => $oldTimezone,
+            'new_timezone' => $newTimezone,
+        ], $role === 'admin' ? 'Admin' : 'Teacher', 'Reschedule');
+
         $_SESSION['flash_success'] = 'Class rescheduled successfully.';
-        header('Location: ' . $base . (($role === 'admin') ? '/admin/reschedule' : '/teacher/reschedule'));
+        redirectTo(($role === 'admin') ? '/admin/reschedule' : '/teacher/reschedule');
     }
 
     private static function processDecision(
@@ -365,6 +415,7 @@ class RescheduleController
                              meeting_live_status = "pending",
                              meeting_participant_count = NULL,
                              teacher_joined_at = NULL,
+                             teacher_join_delay_minutes = NULL,
                              student_joined_at = NULL,
                              actual_start_time = NULL,
                              actual_end_time = NULL,
@@ -393,6 +444,10 @@ class RescheduleController
                         'start_time_utc' => $newStartUtc->format('Y-m-d H:i:s'),
                         'end_time_utc' => $newEndUtc->format('Y-m-d H:i:s'),
                     ]);
+
+                    if (!$alreadyApproved) {
+                        self::notifyAdminReschedule($class, $req, 'System', 'Approved');
+                    }
                 }
             }
             $pdo->commit();

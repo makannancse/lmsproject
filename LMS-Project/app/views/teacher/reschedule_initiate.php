@@ -2,7 +2,7 @@
 
 use function htmlspecialchars as h;
 
-$base = defined('BASE_PATH') ? BASE_PATH : '';
+$base = appWebPath();
 $isAdmin = !empty($isAdmin);
 $postUrl = $isAdmin ? '/admin/reschedule/new' : '/teacher/reschedule/new';
 $backUrl = $isAdmin ? '/admin/reschedule' : '/teacher/reschedule';

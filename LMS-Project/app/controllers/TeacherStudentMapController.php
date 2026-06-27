@@ -55,7 +55,7 @@ class TeacherStudentMapController
     public static function store(): void
     {
         Auth::requireRole(['admin']);
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $base = appWebPath();
         $pdo = Database::connection();
 
         $teacherId = (int) ($_POST['teacher_id'] ?? 0);
@@ -115,11 +115,31 @@ class TeacherStudentMapController
         } catch (\Throwable $e) {
             $pdo->rollBack();
             $_SESSION['flash_warning'] = 'Could not save mapping: ' . $e->getMessage();
-            header('Location: ' . $base . '/admin/teacher-students?teacher_id=' . $teacherId);
+            redirectTo('/admin/teacher-students?teacher_id=' . $teacherId);
             return;
         }
 
+        require_once dirname(__DIR__) . '/lib/NotificationMailer.php';
+        $teacherRow = $pdo->prepare('SELECT name, email FROM users WHERE id = :id LIMIT 1');
+        $teacherRow->execute(['id' => $teacherId]);
+        $teacher = $teacherRow->fetch() ?: [];
+        $studentStmt = $pdo->prepare(
+            'SELECT u.name, s.subject FROM users u LEFT JOIN students s ON s.user_id = u.id WHERE u.id = :id LIMIT 1'
+        );
+        $assignedDate = date('Y-m-d');
+        foreach ($studentIds as $sid) {
+            $studentStmt->execute(['id' => $sid]);
+            $student = $studentStmt->fetch() ?: [];
+            NotificationMailer::notifyTeacherStudentAssigned(
+                (string) ($teacher['email'] ?? ''),
+                (string) ($teacher['name'] ?? 'Teacher'),
+                (string) ($student['name'] ?? 'Student'),
+                (string) ($student['subject'] ?? ''),
+                $assignedDate
+            );
+        }
+
         $_SESSION['flash_success'] = 'Teacher–student mapping saved.';
-        header('Location: ' . $base . '/admin/teacher-students?teacher_id=' . $teacherId);
+        redirectTo('/admin/teacher-students?teacher_id=' . $teacherId);
     }
 }

@@ -44,12 +44,11 @@ class MeetingTrackingController
         $userId = (int) ($user['id'] ?? 0);
         $classId = (int) ($_POST['class_id'] ?? 0);
         $event = trim((string) ($_POST['event'] ?? ''));
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $base = appWebPath();
 
         if ($classId <= 0 || $event === '') {
             $_SESSION['flash_warning'] = 'Invalid meeting tracking request.';
-            header('Location: ' . $base . '/dashboard');
-            exit;
+            redirectTo('/dashboard');
         }
 
         if ($role !== 'admin' && !ClassSession::findByIdForUser($classId, $userId, $role)) {
@@ -130,12 +129,12 @@ class MeetingTrackingController
         } catch (\Throwable $e) {
             $_SESSION['flash_warning'] = $e->getMessage();
             if ($event === 'teacher-start' && $classId > 0) {
-                header('Location: ' . $base . '/join-class?class_id=' . $classId);
+                redirectTo('/join-class?class_id=' . $classId);
                 exit;
             }
         }
 
-        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? ($base . '/dashboard')));
+        redirect($_SERVER['HTTP_REFERER'] ?? url('dashboard'));
         exit;
     }
 

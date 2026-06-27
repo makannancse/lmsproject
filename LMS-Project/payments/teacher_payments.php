@@ -12,7 +12,7 @@ Auth::requireRole(['admin']);
 $statusFilter = (string) ($_GET['status'] ?? '');
 $flash = (string) ($_GET['success'] ?? '');
 
-$appBase = rtrim((string) (defined('BASE_PATH') ? BASE_PATH : ''), '/');
+$appBase = rtrim((string) appWebPath(), '/');
 $paymentsRouteBase = $appBase . '/admin/payments';
 
 $teacherRows = db()->query('SELECT id FROM users WHERE role = "teacher"')->fetchAll() ?: [];

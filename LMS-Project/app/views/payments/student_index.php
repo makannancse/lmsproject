@@ -4,7 +4,7 @@ use function htmlspecialchars as h;
 
 $statusFilter = $statusFilter ?? '';
 $payments = $payments ?? [];
-$base = defined('BASE_PATH') ? BASE_PATH : '';
+$base = appWebPath();
 ?>
 
 <div class="d-flex justify-content-between align-items-center mb-3">

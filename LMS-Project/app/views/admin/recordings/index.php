@@ -2,7 +2,7 @@
 
 use function htmlspecialchars as h;
 
-$base = defined('BASE_PATH') ? BASE_PATH : '';
+$base = appWebPath();
 $filters = $filters ?? ['q' => '', 'teacher_id' => 0, 'student_id' => 0];
 $recordings = $recordings ?? [];
 $teachers = $teachers ?? [];

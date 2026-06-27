@@ -45,10 +45,9 @@ $item = static function (string $href, string $icon, string $label) use ($base, 
         <?php $item('/teacher/homework', 'fa-solid fa-book-open', 'Homework'); ?>
         <?php $item('/admin/reports', 'fa-solid fa-file-lines', 'Reports'); ?>
         <?php $item('/admin/payments', 'fa-solid fa-wallet', 'Payments'); ?>
+        <?php $item('/admin/feedback', 'fa-solid fa-comment-dots', 'Feedback'); ?>
         <?php $item('/admin/student-payments', 'fa-solid fa-indian-rupee-sign', 'Student Payments'); ?>
         <?php $item('/admin/recordings', 'fa-solid fa-video', 'Recordings'); ?>
-        <?php $item('/admin/meeting-sync-debug', 'fa-solid fa-bug', 'Meeting Sync Debug'); ?>
-        <?php $item('/settings', 'fa-solid fa-gear', 'Settings'); ?>
     <?php elseif (Auth::isTeacher()): ?>
         <?php $item('/teacher/calendar', 'fa-solid fa-calendar-days', 'Calendar'); ?>
         <?php $item('/teacher/reschedule', 'fa-solid fa-clock-rotate-left', 'Reschedule'); ?>
@@ -60,6 +59,7 @@ $item = static function (string $href, string $icon, string $label) use ($base, 
         <?php $item('/student/reschedule', 'fa-solid fa-clock-rotate-left', 'Reschedule'); ?>
         <?php $item('/student/homework', 'fa-solid fa-book-open', 'Homework'); ?>
         <?php $item('/student/reports', 'fa-solid fa-file-lines', 'Reports'); ?>
+        <?php $item('/student/feedback', 'fa-solid fa-comment-dots', 'Feedback'); ?>
         <?php $item('/student/payments', 'fa-solid fa-indian-rupee-sign', 'Payments'); ?>
     <?php endif; ?>
 </nav>

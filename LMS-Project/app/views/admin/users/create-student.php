@@ -4,7 +4,7 @@ use function htmlspecialchars as h;
 
 $errors = $errors ?? [];
 $old = $old ?? [];
-$base = defined('BASE_PATH') ? BASE_PATH : '';
+$base = appWebPath();
 
 ?>
 
@@ -42,29 +42,28 @@ $base = defined('BASE_PATH') ? BASE_PATH : '';
                         <div class="form-text">Required so report PDFs can be emailed to the family.</div>
                     </div>
                     <div class="mb-3">
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" value="1" id="auto_generate_password" name="auto_generate_password" <?= !empty($old['auto_generate_password']) ? 'checked' : '' ?>>
-                            <label class="form-check-label" for="auto_generate_password">Auto Generate Password</label>
-                        </div>
-                        <label class="form-label" for="password">Password</label>
+                        <label class="form-label" for="password">Password <span class="text-danger">*</span></label>
                         <div class="input-group">
-                            <input type="password" id="password" name="password" class="form-control" minlength="8" <?= empty($old['auto_generate_password']) ? 'required' : '' ?>>
+                            <input type="password" id="password" name="password" class="form-control" minlength="8" required>
                             <button class="btn btn-outline-secondary" type="button" data-toggle-password="#password">Show</button>
                         </div>
-                        <div class="form-text">Minimum 8 characters.</div>
-                        <div class="small text-muted mt-1" id="password_strength">Strength: Not set</div>
+                        <div class="form-text">Minimum 8 characters. Sent to the user by email after creation.</div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label" for="confirm_password">Confirm Password</label>
+                        <label class="form-label" for="confirm_password">Confirm Password <span class="text-danger">*</span></label>
                         <div class="input-group">
-                            <input type="password" id="confirm_password" name="confirm_password" class="form-control" minlength="8" <?= empty($old['auto_generate_password']) ? 'required' : '' ?>>
+                            <input type="password" id="confirm_password" name="confirm_password" class="form-control" minlength="8" required>
                             <button class="btn btn-outline-secondary" type="button" data-toggle-password="#confirm_password">Show</button>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label" for="timezone">Timezone</label>
-                        <input type="text" id="timezone" name="timezone" class="form-control"
-                               value="<?= h($old['timezone'] ?? APP_TIMEZONE) ?>">
+                        <?php
+                        $fieldId = 'timezone';
+                        $fieldName = 'timezone';
+                        $selectedValue = (string) ($old['timezone'] ?? APP_TIMEZONE);
+                        $required = false;
+                        require dirname(__DIR__, 2) . '/partials/timezone-select.php';
+                        ?>
                     </div>
                     <div class="mb-3">
                         <label class="form-label" for="country">Country</label>
@@ -81,42 +80,6 @@ $base = defined('BASE_PATH') ? BASE_PATH : '';
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    var autoGenerate = document.getElementById('auto_generate_password');
-    var password = document.getElementById('password');
-    var confirmPassword = document.getElementById('confirm_password');
-    var strength = document.getElementById('password_strength');
-
-    function scorePassword(value) {
-        var score = 0;
-        if (value.length >= 8) score++;
-        if (/[A-Z]/.test(value) && /[a-z]/.test(value)) score++;
-        if (/\d/.test(value)) score++;
-        if (/[^A-Za-z0-9]/.test(value)) score++;
-        if (score >= 4) return 'Strong';
-        if (score >= 2) return 'Medium';
-        if (value.length > 0) return 'Weak';
-        return 'Not set';
-    }
-
-    function syncPasswordMode() {
-        var disabled = autoGenerate.checked;
-        password.disabled = disabled;
-        confirmPassword.disabled = disabled;
-        password.required = !disabled;
-        confirmPassword.required = !disabled;
-        if (disabled) {
-            password.value = '';
-            confirmPassword.value = '';
-            strength.textContent = 'Strength: Auto generated on save';
-        } else {
-            strength.textContent = 'Strength: ' + scorePassword(password.value);
-        }
-    }
-
-    autoGenerate.addEventListener('change', syncPasswordMode);
-    password.addEventListener('input', function () {
-        strength.textContent = 'Strength: ' + scorePassword(password.value);
-    });
     document.querySelectorAll('[data-toggle-password]').forEach(function (btn) {
         btn.addEventListener('click', function () {
             var target = document.querySelector(btn.getAttribute('data-toggle-password'));
@@ -125,7 +88,5 @@ document.addEventListener('DOMContentLoaded', function () {
             btn.textContent = target.type === 'password' ? 'Show' : 'Hide';
         });
     });
-
-    syncPasswordMode();
 });
 </script>

@@ -2,10 +2,10 @@
 
 use function htmlspecialchars as h;
 
-$base = $base ?? (defined('BASE_PATH') ? BASE_PATH : '');
+$base = appWebPath();
 $localBootstrapJs = '/assets/js/bootstrap.bundle.min.js';
 $bootstrapJs = file_exists(dirname(__DIR__) . '/public' . $localBootstrapJs)
-    ? $localBootstrapJs
+    ? path('assets/js/bootstrap.bundle.min.js')
     : 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js';
 $flashSuccess = $_SESSION['flash_success'] ?? null;
 if ($flashSuccess !== null) {
@@ -71,6 +71,7 @@ if (is_array($flashSessionQueue)) {
         ];
     }
 }
+$appUrlJs = rtrim((string) (defined('APP_URL') ? APP_URL : ''), '/');
 ?>
 <div id="appLoader" class="app-loader-overlay d-none" aria-hidden="true" aria-live="polite">
     <div class="app-loader-card card shadow-lg border-0 p-4 text-center">
@@ -82,9 +83,10 @@ if (is_array($flashSessionQueue)) {
 <script src="<?= h($bootstrapJs) ?>"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>window.__APP_FLASHES__ = <?= json_encode($flashQueue, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;</script>
+<script>window.APP_URL = <?= json_encode($appUrlJs, JSON_UNESCAPED_SLASHES) ?>;</script>
 <script>window.__APP_BASE__ = <?= json_encode($base, JSON_UNESCAPED_SLASHES) ?>;</script>
-<script src="<?= h($base . '/assets/js/app.js') ?>"></script>
-<script src="<?= h($base . '/assets/js/alerts.js') ?>"></script>
+<script src="<?= h(asset('js/app.js')) ?>"></script>
+<script src="<?= h(asset('js/alerts.js')) ?>"></script>
 <?php
 if (!class_exists('Auth', false)) {
     require_once dirname(__DIR__) . '/app/lib/Auth.php';
@@ -95,15 +97,16 @@ if (Auth::check()):
 <script>
 window.__SESSION_KEEPALIVE__ = <?= json_encode([
     'base' => $base,
+    'appUrl' => $appUrlJs,
     'timeoutSeconds' => Auth::SESSION_TIMEOUT_SECONDS,
 ], JSON_UNESCAPED_SLASHES) ?>;
 window.__MEET_STATUS_POLL__ = <?= json_encode([
-    'url' => $base . '/meeting/sync-ongoing',
+    'url' => path('meeting/sync-ongoing'),
     'intervalSeconds' => $meetPollInterval,
 ], JSON_UNESCAPED_SLASHES) ?>;
 </script>
-<script src="<?= h($base . '/assets/js/session-keepalive.js') ?>"></script>
-<script src="<?= h($base . '/assets/js/meet-status-poll.js') ?>"></script>
+<script src="<?= h(asset('js/session-keepalive.js')) ?>"></script>
+<script src="<?= h(asset('js/meet-status-poll.js')) ?>"></script>
 <?php endif; ?>
 </body>
 </html>

@@ -96,4 +96,58 @@ class TeacherStudent
 
         return (int) $stmt->fetchColumn();
     }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public static function assignedStudentsDetailed(int $teacherId): array
+    {
+        if ($teacherId <= 0) {
+            return [];
+        }
+
+        $pdo = Database::connection();
+        $stmt = $pdo->prepare(
+            'SELECT u.id, u.name, u.email, u.timezone, u.status,
+                    s.subject, ts.created_at AS assigned_at
+             FROM teacher_students ts
+             INNER JOIN users u ON u.id = ts.student_id
+             LEFT JOIN students s ON s.user_id = u.id
+             WHERE ts.teacher_id = :tid
+             ORDER BY u.name ASC'
+        );
+        $stmt->execute(['tid' => $teacherId]);
+
+        return $stmt->fetchAll() ?: [];
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public static function assignedTeachersForStudent(int $studentId): array
+    {
+        if ($studentId <= 0) {
+            return [];
+        }
+
+        $pdo = Database::connection();
+        $stmt = $pdo->prepare(
+            'SELECT u.id, u.name, u.email, u.timezone, u.status,
+                    s.subject, cm.class_name AS class_name
+             FROM teacher_students ts
+             INNER JOIN users u ON u.id = ts.teacher_id
+             LEFT JOIN students s ON s.user_id = ts.student_id
+             LEFT JOIN class_master cm ON cm.id = (
+                 SELECT cs.class_master_id FROM class_sessions cs
+                 INNER JOIN enrollments e ON e.class_id = cs.id AND e.student_id = ts.student_id
+                 WHERE cs.teacher_id = ts.teacher_id
+                 ORDER BY cs.start_datetime DESC LIMIT 1
+             )
+             WHERE ts.student_id = :sid
+             ORDER BY u.name ASC'
+        );
+        $stmt->execute(['sid' => $studentId]);
+
+        return $stmt->fetchAll() ?: [];
+    }
 }

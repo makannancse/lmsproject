@@ -32,8 +32,8 @@ class StudentPaymentController
         if ($paymentId > 0) {
             StudentPayment::markPaid($paymentId);
         }
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
-        header('Location: ' . $base . '/admin/student-payments');
+        $base = appWebPath();
+        redirectTo('/admin/student-payments');
     }
 
     public static function studentIndex(): void

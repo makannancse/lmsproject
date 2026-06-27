@@ -2,7 +2,7 @@
 
 use function htmlspecialchars as h;
 
-$base = defined('BASE_PATH') ? BASE_PATH : '';
+$base = appWebPath();
 $pb = $payoutBreakdown ?? ['pending' => 0, 'paid' => 0, 'total' => 0, 'completed_classes' => 0];
 $googleAccount = $googleAccount ?? null;
 $googleStatus = is_array($googleAccount) ? (string) ($googleAccount['status'] ?? 'disconnected') : 'disconnected';
@@ -101,6 +101,47 @@ $teacherTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
         </div>
     </div>
 
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="h6 text-muted text-uppercase mb-3">Assigned Students</h2>
+                <?php $assignedStudents = $assignedStudents ?? []; ?>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Subject</th>
+                            <th>Timezone</th>
+                            <th>Status</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php if ($assignedStudents === []): ?>
+                            <tr><td colspan="4" class="text-muted small">No students mapped to you yet.</td></tr>
+                        <?php else: ?>
+                            <?php foreach ($assignedStudents as $student): ?>
+                                <tr>
+                                    <td><?= h((string) ($student['name'] ?? '')) ?></td>
+                                    <td><?= h((string) ($student['subject'] ?? '—')) ?></td>
+                                    <td><?= h((string) ($student['timezone'] ?? '—')) ?></td>
+                                    <td>
+                                        <?php if (strtolower((string) ($student['status'] ?? 'active')) === 'active'): ?>
+                                            <span class="badge text-bg-success">Active</span>
+                                        <?php else: ?>
+                                            <span class="badge text-bg-secondary">Inactive</span>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="col-12 col-xl-7">
         <div class="card shadow-sm h-100">
             <div class="card-body">
@@ -131,10 +172,14 @@ $teacherTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
                                             <div class="small text-muted"><?= h(formatClassActualTimezoneLabel($cls, $teacherTimezone)) ?></div>
                                         <?php endif; ?>
                                     </td>
-                                    <td><span class="badge <?= h(classStatusBadgeClass((string) ($cls['status'] ?? 'scheduled'))) ?> text-uppercase"><?= h((string) ($cls['status'] ?? 'scheduled')) ?></span></td>
+                                    <td><span class="badge <?= h(classStatusBadgeClass((string) ($cls['status'] ?? 'scheduled'))) ?> text-uppercase"><?= h((string) ($cls['status'] ?? 'scheduled')) ?></span><?= teacherLateJoinBadgeHtml($cls) ?></td>
                                     <td>
                                         <div class="d-flex flex-wrap gap-2">
-                                            <a href="<?= h($base . '/join-class?class_id=' . (int) ($cls['id'] ?? 0)) ?>" class="btn btn-sm btn-primary" target="_blank" rel="noopener">Start as Host</a>
+                                            <?php $meetLink = trim((string) ($cls['meeting_link'] ?? '')); ?>
+                                            <a href="<?= h(path('join-class?class_id=' . (int) ($cls['id'] ?? 0))) ?>" class="btn btn-sm btn-primary" target="_blank" rel="noopener">Join Meeting</a>
+                                            <?php if ($meetLink !== ''): ?>
+                                                <a href="<?= h($meetLink) ?>" class="btn btn-sm btn-outline-primary" target="_blank" rel="noopener">Open Meet Link</a>
+                                            <?php endif; ?>
                                             <form method="post"
                                                   action="<?= h($base . '/meeting/track') ?>"
                                                   class="d-inline"

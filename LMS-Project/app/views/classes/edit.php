@@ -2,7 +2,7 @@
 
 use function htmlspecialchars as h;
 
-$base = defined('BASE_PATH') ? BASE_PATH : '';
+$base = appWebPath();
 $class = $class ?? [];
 $errors = $errors ?? [];
 
@@ -77,6 +77,24 @@ if (!empty($class['start_datetime'])) {
                             <input type="url" class="form-control" name="meeting_link" id="meeting_link" value="<?= h((string) ($class['meeting_link'] ?? '')) ?>">
                         </div>
                     </div>
+
+                    <?php if (!empty($isRecurringSeries)): ?>
+                        <div class="mb-3 border rounded p-3 bg-light">
+                            <label class="form-label fw-semibold">Apply changes to</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="edit_scope" id="edit_scope_current" value="current" checked>
+                                <label class="form-check-label" for="edit_scope_current">This occurrence only</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="edit_scope" id="edit_scope_all" value="all_future">
+                                <label class="form-check-label" for="edit_scope_all">This and future occurrences</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="edit_scope" id="edit_scope_series" value="entire_series">
+                                <label class="form-check-label" for="edit_scope_series">Entire series</label>
+                            </div>
+                        </div>
+                    <?php endif; ?>
 
                     <button type="submit" class="btn btn-primary">Save Changes</button>
                     <a href="<?= h($base . '/classes') ?>" class="btn btn-link">Cancel</a>

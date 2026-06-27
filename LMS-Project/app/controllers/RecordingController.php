@@ -43,8 +43,8 @@ class RecordingController
             $_SESSION['flash_success'] = 'Recording visibility will apply when the file syncs from Google Drive.';
         }
 
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
-        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? ($base . '/admin/recordings')));
+        $base = appWebPath();
+        redirect($_SERVER['HTTP_REFERER'] ?? url('admin/recordings'));
         exit;
     }
 
@@ -56,11 +56,11 @@ class RecordingController
         $recordingTitle = trim((string) ($_POST['recording_title'] ?? ''));
         $duration = (int) ($_POST['recording_duration'] ?? 0);
         $visible = (string) ($_POST['visible_to_student'] ?? 'no');
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $base = appWebPath();
 
         if ($classId <= 0 || $recordingUrl === '') {
             $_SESSION['flash_warning'] = 'Recording URL is required.';
-            header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? ($base . '/admin/recordings')));
+            redirect($_SERVER['HTTP_REFERER'] ?? url('admin/recordings'));
             exit;
         }
 
@@ -68,7 +68,7 @@ class RecordingController
         $class = $service->getClassById($classId);
         if ($class === null) {
             $_SESSION['flash_warning'] = 'Class not found.';
-            header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? ($base . '/admin/recordings')));
+            redirect($_SERVER['HTTP_REFERER'] ?? url('admin/recordings'));
             exit;
         }
 
@@ -102,7 +102,7 @@ class RecordingController
         ]);
 
         $_SESSION['flash_success'] = 'Recording saved successfully.';
-        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? ($base . '/admin/recordings')));
+        redirect($_SERVER['HTTP_REFERER'] ?? url('admin/recordings'));
         exit;
     }
 }

@@ -36,8 +36,8 @@ class ClassMasterController
         $status = $_POST['status'] ?? 'active';
 
         if ($name === '' || !in_array($status, ['active', 'inactive'], true)) {
-            $base = defined('BASE_PATH') ? BASE_PATH : '';
-            header('Location: ' . $base . '/admin/class-types/create');
+            $base = appWebPath();
+            redirectTo('/admin/class-types/create');
             return;
         }
 
@@ -46,8 +46,8 @@ class ClassMasterController
         );
         $stmt->execute(['n' => $name, 'd' => $description ?: null, 's' => $status]);
 
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
-        header('Location: ' . $base . '/admin/class-types');
+        $base = appWebPath();
+        redirectTo('/admin/class-types');
     }
 
     public static function editForm(): void
@@ -78,8 +78,8 @@ class ClassMasterController
         $status = $_POST['status'] ?? 'active';
 
         if ($id <= 0 || $name === '' || !in_array($status, ['active', 'inactive'], true)) {
-            $base = defined('BASE_PATH') ? BASE_PATH : '';
-            header('Location: ' . $base . '/admin/class-types');
+            $base = appWebPath();
+            redirectTo('/admin/class-types');
             return;
         }
 
@@ -89,7 +89,7 @@ class ClassMasterController
         );
         $stmt->execute(['n' => $name, 'd' => $description ?: null, 's' => $status, 'id' => $id]);
 
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
-        header('Location: ' . $base . '/admin/class-types');
+        $base = appWebPath();
+        redirectTo('/admin/class-types');
     }
 }

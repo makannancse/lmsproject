@@ -2,7 +2,7 @@
 
 use function htmlspecialchars as h;
 
-$base = defined('BASE_PATH') ? BASE_PATH : '';
+$base = appWebPath();
 $role = $role ?? 'student';
 $users = $users ?? [];
 $searchQuery = $searchQuery ?? '';
@@ -123,6 +123,21 @@ $statusFilter = $statusFilter ?? '';
                                             <input type="hidden" name="action" value="activate">
                                             <input type="hidden" name="role" value="<?= h($role) ?>">
                                             <button type="submit" class="btn btn-sm btn-outline-success">Activate</button>
+                                        </form>
+                                    <?php endif; ?>
+                                    <?php if (in_array($role, ['student', 'teacher'], true)): ?>
+                                        <form method="post"
+                                              action="<?= h($base . '/admin/users/delete') ?>"
+                                              class="d-inline no-app-loader"
+                                              data-confirm="1"
+                                              data-confirm-title="Delete Permanently?"
+                                              data-confirm-text="This will permanently remove the user and related records. This cannot be undone."
+                                              data-confirm-button="Delete Permanently"
+                                              data-confirm-cancel="Cancel"
+                                              data-confirm-icon="error">
+                                            <input type="hidden" name="user_id" value="<?= $uid ?>">
+                                            <input type="hidden" name="role" value="<?= h($role) ?>">
+                                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                                         </form>
                                     <?php endif; ?>
                                 </div>

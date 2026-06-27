@@ -32,21 +32,34 @@
         return '';
     }
 
-    function appPath(path, base) {
-        var root = typeof base === 'string' ? base : appBase();
-        if (!path) {
-            return root || '/';
+    function appRootUrl() {
+        if (typeof window.APP_URL === 'string' && window.APP_URL) {
+            return String(window.APP_URL).replace(/\/$/, '');
         }
-        if (path.charAt(0) !== '/') {
-            path = '/' + path;
+        return '';
+    }
+
+    function appPath(route, base) {
+        var segment = route || '';
+        if (segment.charAt(0) !== '/') {
+            segment = '/' + segment;
         }
-        return (root || '') + path;
+        var rootUrl = appRootUrl();
+        if (rootUrl) {
+            return rootUrl + segment;
+        }
+        var webPath = typeof base === 'string' ? base : appBase();
+        return (webPath || '') + segment;
     }
 
     function resolveRedirectUrl(response, base) {
         if (response && response.redirect_url) {
             var url = String(response.redirect_url);
             if (url.charAt(0) === '/') {
+                var webPath = (typeof base === 'string' ? base : appBase()) || '';
+                if (webPath && (url === webPath || url.indexOf(webPath + '/') === 0)) {
+                    return url;
+                }
                 return appPath(url, base);
             }
             return url;
@@ -72,9 +85,9 @@
         if (window.Swal && typeof window.Swal.fire === 'function') {
             return window.Swal.fire({
                 icon: 'success',
-                title: 'Success',
-                text: message || 'Class scheduled successfully.',
-                timer: 2000,
+                title: 'Class Scheduled Successfully',
+                text: message || 'Meeting invitation has been sent.',
+                timer: 2500,
                 timerProgressBar: true,
                 showConfirmButton: false,
                 allowOutsideClick: false,
@@ -122,7 +135,7 @@
         var base = options.base || appBase();
 
         if (isSuccess(response)) {
-            var msg = response.message || 'Class scheduled successfully.';
+            var msg = response.message || 'Meeting invitation has been sent.';
             var redirectUrl = resolveRedirectUrl(response, base);
             var stayOnPage = !!options.stayOnPage;
 

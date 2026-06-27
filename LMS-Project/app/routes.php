@@ -34,13 +34,17 @@ $router = new Router();
 Auth::startSession();
 
 // Normalize base path: all redirects and form actions should respect BASE_PATH
-$base = defined('BASE_PATH') ? BASE_PATH : '';
+$base = appWebPath();
 
 $router->get('/', function () use ($base) {
-    header('Location: ' . $base . '/login');
+    redirectTo('/login');
 });
 $router->get('/login', [AuthController::class, 'showLogin']);
 $router->post('/login', [AuthController::class, 'login']);
+$router->get('/forgot-password', [AuthController::class, 'showForgotPassword']);
+$router->post('/forgot-password', [AuthController::class, 'sendForgotPassword']);
+$router->get('/reset-password', [AuthController::class, 'showResetPassword']);
+$router->post('/reset-password', [AuthController::class, 'resetPassword']);
 $router->get('/logout', [AuthController::class, 'logout']);
 $router->get('/ajax/keepalive', [KeepAliveController::class, 'ping']);
 
@@ -73,6 +77,7 @@ $router->post('/admin/teacher-students', [TeacherStudentMapController::class, 's
 $router->get('/admin/users/create-student', [AdminController::class, 'createStudentForm']);
 $router->get('/admin/users/create-teacher', [AdminController::class, 'createTeacherForm']);
 $router->post('/admin/users', [AdminController::class, 'storeUser']);
+$router->post('/admin/users/delete', [AdminController::class, 'deleteUser']);
 $router->get('/reminders/send', [ReminderController::class, 'sendUpcoming']);
 
 // Join tracking redirects to meeting link
@@ -87,12 +92,8 @@ $router->get('/admin/class-types/create', [ClassMasterController::class, 'create
 $router->post('/admin/class-types', [ClassMasterController::class, 'store']);
 $router->get('/admin/class-types/edit', [ClassMasterController::class, 'editForm']);
 $router->post('/admin/class-types/update', [ClassMasterController::class, 'update']);
-$router->get('/admin/payments', function (): void {
-    require_once dirname(__DIR__) . '/payments/teacher_payments.php';
-});
-$router->post('/admin/payments/process', function (): void {
-    require_once dirname(__DIR__) . '/payments/process_payment.php';
-});
+$router->get('/admin/payments', [AdminController::class, 'teacherPayments']);
+$router->post('/admin/payments/process', [AdminController::class, 'processTeacherPayment']);
 $router->get('/admin/payments/details', function (): void {
     require_once dirname(__DIR__) . '/payments/payment_details.php';
 });
@@ -156,5 +157,7 @@ $router->get('/homework/download', [HomeworkController::class, 'download']);
 $router->get('/teacher/feedback', [FeedbackController::class, 'teacherIndex']);
 $router->get('/teacher/feedback/create', [FeedbackController::class, 'teacherCreateForm']);
 $router->post('/teacher/feedback', [FeedbackController::class, 'teacherStore']);
+$router->get('/student/feedback', [FeedbackController::class, 'studentIndex']);
+$router->get('/admin/feedback', [FeedbackController::class, 'adminIndex']);
 
 $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);

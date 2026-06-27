@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/lib/Auth.php';
 require_once dirname(__DIR__) . '/lib/View.php';
 require_once dirname(__DIR__) . '/lib/Mailer.php';
+require_once dirname(__DIR__) . '/lib/EmailTemplate.php';
 require_once dirname(__DIR__) . '/models/StudentReport.php';
 require_once dirname(__DIR__) . '/lib/ReportLog.php';
 require_once dirname(__DIR__, 2) . '/reports/generate_report_pdf.php';
@@ -46,7 +47,7 @@ class ReportController
         Auth::requireRole(['teacher', 'admin']);
         $user = Auth::user();
         $role = (string) ($user['role'] ?? '');
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $base = appWebPath();
 
         $studentId = (int) ($_POST['student_id'] ?? 0);
         $teacherId = $role === 'admin' ? (int) ($_POST['teacher_id'] ?? 0) : (int) ($user['id'] ?? 0);
@@ -174,8 +175,10 @@ class ReportController
         } elseif (empty($pdfInfo['ok'])) {
             ReportLog::line('Email skipped: PDF not generated for report id ' . $reportId);
         } else {
-            $subjectLine = 'Student Performance Report';
-            $body = '<p>Please find attached the student report card.</p>';
+            $subjectLine = EmailTemplate::subject('default', 'Student Performance Report');
+            $intro = '<p>Please find attached the student report card from '
+                . htmlspecialchars(EmailTemplate::brandName(), ENT_QUOTES, 'UTF-8') . '.</p>';
+            $body = EmailTemplate::wrap('Report Card', $intro, [], null, null, true);
             $mailResult = Mailer::send($parentEmail, $subjectLine, $body, true, [[
                 'path' => (string) $pdfInfo['absolute_path'],
                 'name' => 'report_' . $reportId . '.pdf',
@@ -205,7 +208,7 @@ class ReportController
             $parts[] = 'Email failed — see logs/mail_error.log and logs/mail.log.';
         }
         $_SESSION['flash_success'] = implode(' ', $parts);
-        header('Location: ' . $base . ($role === 'admin' ? '/admin/reports' : '/teacher/reports'));
+        redirectTo($role === 'admin' ? '/admin/reports' : '/teacher/reports');
     }
 
     public static function adminIndex(): void
@@ -328,11 +331,11 @@ class ReportController
     public static function importStore(): void
     {
         Auth::requireRole(['admin']);
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $base = appWebPath();
 
         if (!isset($_FILES['csv']) || (int) ($_FILES['csv']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
             $_SESSION['flash_warning'] = 'Please upload a valid CSV file.';
-            header('Location: ' . $base . '/admin/reports/import');
+            redirectTo('/admin/reports/import');
             return;
         }
 
@@ -340,7 +343,7 @@ class ReportController
         $fp = fopen($tmp, 'rb');
         if ($fp === false) {
             $_SESSION['flash_warning'] = 'Could not read CSV file.';
-            header('Location: ' . $base . '/admin/reports/import');
+            redirectTo('/admin/reports/import');
             return;
         }
 
@@ -348,7 +351,7 @@ class ReportController
         if (!is_array($header)) {
             fclose($fp);
             $_SESSION['flash_warning'] = 'CSV header is missing.';
-            header('Location: ' . $base . '/admin/reports/import');
+            redirectTo('/admin/reports/import');
             return;
         }
 
@@ -363,7 +366,7 @@ class ReportController
             if (!isset($map[$col])) {
                 fclose($fp);
                 $_SESSION['flash_warning'] = 'CSV missing required column: ' . $col;
-                header('Location: ' . $base . '/admin/reports/import');
+                redirectTo('/admin/reports/import');
                 return;
             }
         }
@@ -406,7 +409,7 @@ class ReportController
         fclose($fp);
 
         $_SESSION['flash_success'] = 'Import completed. Added ' . $count . ' report(s).';
-        header('Location: ' . $base . '/admin/reports');
+        redirectTo('/admin/reports');
     }
 
     private static function validateChoice(string $value, array $allowed, string $label): array

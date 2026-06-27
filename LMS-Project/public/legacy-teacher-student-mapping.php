@@ -10,6 +10,4 @@ require_once dirname(__DIR__) . '/app/lib/Auth.php';
 
 Auth::startSession();
 
-$base = defined('BASE_PATH') ? BASE_PATH : '';
-header('Location: ' . $base . '/admin/teacher-students', true, 302);
-exit;
+redirectTo('admin/teacher-students');

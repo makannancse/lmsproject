@@ -7,6 +7,4 @@ require_once __DIR__ . '/../app/lib/Auth.php';
 
 Auth::startSession();
 
-$base = defined('BASE_PATH') ? BASE_PATH : '';
-header('Location: ' . $base . '/teacher/homework', true, 302);
-exit;
+redirectTo('teacher/homework');

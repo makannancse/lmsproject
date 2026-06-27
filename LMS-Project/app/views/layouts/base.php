@@ -1,7 +1,7 @@
 <?php
-$base = defined('BASE_PATH') ? BASE_PATH : '';
+$base = appWebPath();
 $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: '';
-$loginPath = rtrim($base . '/login', '/');
+$loginPath = rtrim(path('login'), '/');
 $isLoginPage = rtrim($currentPath, '/') === $loginPath;
 $includeRoot = dirname(__DIR__, 3) . '/includes';
 require $includeRoot . '/header.php';

@@ -12,19 +12,19 @@ class DashboardController
         Auth::requireRole(['admin', 'teacher', 'student']);
         $user = Auth::user();
         $role = $user['role'] ?? 'user';
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $base = appWebPath();
 
         // Simple role-based redirect to dedicated dashboards
         if ($role === 'admin') {
-            header('Location: ' . $base . '/admin');
+            redirectTo('/admin');
             return;
         }
         if ($role === 'teacher') {
-            header('Location: ' . $base . '/teacher');
+            redirectTo('/teacher');
             return;
         }
         if ($role === 'student') {
-            header('Location: ' . $base . '/student');
+            redirectTo('/student');
             return;
         }
 

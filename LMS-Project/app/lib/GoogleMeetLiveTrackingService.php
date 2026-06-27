@@ -15,6 +15,7 @@ require_once dirname(__DIR__) . '/models/MeetingActivityLog.php';
 require_once dirname(__DIR__) . '/models/TeacherGoogleAccount.php';
 require_once dirname(__DIR__) . '/models/TeacherPayout.php';
 require_once dirname(__DIR__) . '/lib/MeetingSyncDebugService.php';
+require_once dirname(__DIR__) . '/lib/helpers.php';
 
 class GoogleMeetLiveTrackingService
 {
@@ -945,6 +946,15 @@ class GoogleMeetLiveTrackingService
         $mergedCompletedAt = $mergedEnd !== null ? $this->latestUtc($existingCompletedAt, $mergedEnd) : $existingCompletedAt;
         $durationMinutes = $this->durationMinutesBetween($mergedStart, $mergedEnd);
 
+        $teacherJoinDelayMinutes = null;
+        if ($mergedTeacherJoin !== null) {
+            $delayRow = $class;
+            $delayRow['teacher_joined_at'] = $mergedTeacherJoin;
+            if (function_exists('teacherJoinDelayMinutes')) {
+                $teacherJoinDelayMinutes = teacherJoinDelayMinutes($delayRow);
+            }
+        }
+
         $previousStatus = (string) ($class['status'] ?? 'scheduled');
         $status = $previousStatus;
         $hostJoinEvidence = $mergedTeacherJoin !== null || $existingTeacherJoin !== null;
@@ -979,6 +989,7 @@ class GoogleMeetLiveTrackingService
                  meeting_live_status = :meeting_live_status,
                  meeting_participant_count = :meeting_participant_count,
                  teacher_joined_at = :teacher_joined_at,
+                 teacher_join_delay_minutes = COALESCE(:teacher_join_delay_minutes, teacher_join_delay_minutes),
                  student_joined_at = :student_joined_at,
                  actual_start_time = :actual_start_time,
                  actual_end_time = :actual_end_time,
@@ -997,6 +1008,7 @@ class GoogleMeetLiveTrackingService
             'meeting_live_status' => in_array($liveStatus, ['pending', 'active', 'ended', 'sync_error'], true) ? $liveStatus : 'pending',
             'meeting_participant_count' => $participantCount > 0 ? $participantCount : null,
             'teacher_joined_at' => $mergedTeacherJoin,
+            'teacher_join_delay_minutes' => $teacherJoinDelayMinutes,
             'student_joined_at' => $mergedStudentJoin,
             'actual_start_time' => $mergedStart,
             'actual_end_time' => $mergedEnd,
@@ -1011,6 +1023,15 @@ class GoogleMeetLiveTrackingService
 
         if ($status === 'completed') {
             TeacherPayout::ensureForCompletedClass($classId);
+            if (!empty($class['recurring_occurrence_id']) || !empty($class['recurring_series_id'])) {
+                require_once dirname(__DIR__) . '/lib/RecurringSeriesService.php';
+                $freshStmt = $pdo->prepare('SELECT * FROM class_sessions WHERE id = :id LIMIT 1');
+                $freshStmt->execute(['id' => $classId]);
+                $freshClass = $freshStmt->fetch();
+                if ($freshClass) {
+                    RecurringSeriesService::syncOccurrenceFromClassSession($classId, $freshClass);
+                }
+            }
         }
 
         $resultStatus = 'unchanged';

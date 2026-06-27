@@ -2,7 +2,7 @@
 
 use function htmlspecialchars as h;
 
-$base = defined('BASE_PATH') ? BASE_PATH : '';
+$base = appWebPath();
 $studentBannerFsPath = dirname(__DIR__, 3) . '/public/assets/images/student-banner.jpg';
 $defaultBannerFsPath = dirname(__DIR__, 3) . '/public/assets/images/banner.jpg';
 $hasBanner = is_file($studentBannerFsPath) || is_file($defaultBannerFsPath);
@@ -23,17 +23,27 @@ $studentTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
     </div>
 
 
-    <div class="col-12 col-md-4">
-        <div class="card dashboard-stat-card h-100">
-            <div class="card-body d-flex align-items-center gap-3">
-                <span class="stat-icon bg-primary text-white"><i class="fa-solid fa-calendar-days"></i></span>
-                <div>
-                    <h2 class="h6 text-muted text-uppercase mb-1 small">Upcoming Classes</h2>
-                    <p class="display-6 fw-semibold mb-0 lh-1"><?= count($upcomingClasses ?? []) ?></p>
-                </div>
+    <div class="col-12 col-lg-4">
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <h2 class="h6 text-muted text-uppercase mb-3">Assigned Teacher</h2>
+                <?php $assignedTeachers = $assignedTeachers ?? []; ?>
+                <?php if ($assignedTeachers === []): ?>
+                    <p class="text-muted small mb-0">No teacher has been assigned yet.</p>
+                <?php else: ?>
+                    <?php foreach ($assignedTeachers as $teacher): ?>
+                        <div class="mb-3 pb-3 border-bottom">
+                            <div class="fw-semibold"><?= h((string) ($teacher['name'] ?? '')) ?></div>
+                            <div class="small text-muted">Subject: <?= h((string) ($teacher['subject'] ?? '—')) ?></div>
+                            <div class="small text-muted">Class: <?= h((string) ($teacher['class_name'] ?? '—')) ?></div>
+                            <div class="small"><a href="mailto:<?= h((string) ($teacher['email'] ?? '')) ?>"><?= h((string) ($teacher['email'] ?? '')) ?></a></div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </div>
         </div>
     </div>
+
     <div class="col-12 col-lg-8">
         <div class="banner-card mb-3">
             <?php if ($hasBanner): ?>
@@ -44,49 +54,6 @@ $studentTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
             <div class="overlay">
                 <h2>Welcome Back</h2>
                 <p>Continue your learning journey</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-12 col-lg-8">
-        <div class="card dashboard-stat-card mb-3">
-            <div class="card-body">
-                <h2 class="h6 text-muted text-uppercase mb-3">Your Schedule</h2>
-                <div class="table-responsive">
-                    <table class="table table-sm align-middle mb-0">
-                        <thead>
-                        <tr>
-                            <th>Title</th>
-                            <th>Instructor</th>
-                            <th>Start</th>
-                            <th>Status</th>
-                            <th>Join</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <?php if (empty($upcomingClasses)): ?>
-                            <tr><td colspan="5" class="text-muted small">No upcoming or in-progress classes.</td></tr>
-                        <?php else: ?>
-                            <?php foreach ($upcomingClasses as $cls): ?>
-                                <tr>
-                                    <td><?= h((string) ($cls['title'] ?? '')) ?></td>
-                                    <td><?= h((string) ($cls['teacher_name'] ?? '-')) ?></td>
-                                    <td>
-                                        <div><?= h(formatUtcForTimezone(classStartUtcValue($cls), $studentTimezone, 'd M Y h:i A T')) ?></div>
-                                        <div class="small text-muted"><?= h(formatClassScheduledAt($cls, 'd M Y h:i A T')) ?></div>
-                                        <div class="small text-muted"><?= h(formatClassScheduledTimezoneLabel($cls)) ?></div>
-                                        <?php if (classActualStartUtcValue($cls) !== null): ?>
-                                            <div class="small text-muted mt-1">Actual start: <?= h(formatClassActualAt($cls, 'start', $studentTimezone)) ?></div>
-                                            <div class="small text-muted"><?= h(formatClassActualTimezoneLabel($cls, $studentTimezone)) ?></div>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td><span class="badge <?= h(classStatusBadgeClass((string) ($cls['status'] ?? 'scheduled'))) ?> text-uppercase"><?= h((string) ($cls['status'] ?? 'scheduled')) ?></span></td>
-                                    <td><a href="<?= h($base . '/join-class?class_id=' . (int) ($cls['id'] ?? 0)) ?>" class="btn btn-sm btn-primary" target="_blank" rel="noopener noreferrer">Join Class</a></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
             </div>
         </div>
 

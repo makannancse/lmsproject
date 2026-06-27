@@ -82,8 +82,33 @@ class User
         }
 
         if ($query !== null && trim($query) !== '') {
-            $sql .= ' AND (u.name LIKE :q OR u.email LIKE :q OR u.phone LIKE :q)';
-            $params['q'] = '%' . trim($query) . '%';
+            $like = '%' . trim($query) . '%';
+            $nameParts = preg_split('/\s+/', trim($query), 2) ?: [];
+            $firstPart = (string) ($nameParts[0] ?? '');
+            $lastPart = (string) ($nameParts[1] ?? '');
+
+            if (self::usersTableHasPhoneColumn($pdo)) {
+                $sql .= ' AND (
+                    u.name LIKE :q_name OR u.email LIKE :q_email OR IFNULL(u.phone, \'\') LIKE :q_phone
+                    OR SUBSTRING_INDEX(u.name, \' \', 1) LIKE :q_first
+                    OR SUBSTRING_INDEX(u.name, \' \', -1) LIKE :q_last
+                )';
+                $params['q_name'] = $like;
+                $params['q_email'] = $like;
+                $params['q_phone'] = $like;
+                $params['q_first'] = '%' . $firstPart . '%';
+                $params['q_last'] = $lastPart !== '' ? ('%' . $lastPart . '%') : $like;
+            } else {
+                $sql .= ' AND (
+                    u.name LIKE :q_name OR u.email LIKE :q_email
+                    OR SUBSTRING_INDEX(u.name, \' \', 1) LIKE :q_first
+                    OR SUBSTRING_INDEX(u.name, \' \', -1) LIKE :q_last
+                )';
+                $params['q_name'] = $like;
+                $params['q_email'] = $like;
+                $params['q_first'] = '%' . $firstPart . '%';
+                $params['q_last'] = $lastPart !== '' ? ('%' . $lastPart . '%') : $like;
+            }
         }
 
         $sql .= ' ORDER BY u.name ASC';
@@ -257,5 +282,85 @@ class User
         ]);
 
         return (bool) $stmt->fetchColumn();
+    }
+
+    private static function usersTableHasPhoneColumn(\PDO $pdo): bool
+    {
+        static $cached = null;
+        if ($cached !== null) {
+            return $cached;
+        }
+        try {
+            $stmt = $pdo->query("SHOW COLUMNS FROM users LIKE 'phone'");
+            $cached = (bool) $stmt->fetch();
+        } catch (\Throwable) {
+            $cached = false;
+        }
+
+        return $cached;
+    }
+
+    /**
+     * Permanently remove a student or teacher and related records (admin only).
+     */
+    public static function permanentlyDelete(int $userId, string $expectedRole): void
+    {
+        if ($userId <= 0 || !in_array($expectedRole, ['student', 'teacher'], true)) {
+            throw new \InvalidArgumentException('Invalid delete request.');
+        }
+
+        $user = self::findById($userId);
+        if ($user === null || (string) ($user['role'] ?? '') !== $expectedRole) {
+            throw new \RuntimeException('User not found.');
+        }
+
+        $pdo = Database::connection();
+        $pdo->beginTransaction();
+        try {
+            if ($expectedRole === 'student') {
+                $pdo->prepare('DELETE FROM homework_submissions WHERE student_id = :id')->execute(['id' => $userId]);
+                $pdo->prepare('DELETE FROM homework_assigned_students WHERE student_id = :id')->execute(['id' => $userId]);
+                $pdo->prepare('DELETE FROM feedback WHERE student_id = :id')->execute(['id' => $userId]);
+                $pdo->prepare('DELETE FROM enrollments WHERE student_id = :id')->execute(['id' => $userId]);
+                $pdo->prepare('DELETE FROM teacher_students WHERE student_id = :id')->execute(['id' => $userId]);
+                $pdo->prepare('DELETE FROM student_payments WHERE student_id = :id')->execute(['id' => $userId]);
+                $pdo->prepare('DELETE FROM students WHERE user_id = :id')->execute(['id' => $userId]);
+            } else {
+                $classIdsStmt = $pdo->prepare('SELECT id FROM class_sessions WHERE teacher_id = :id');
+                $classIdsStmt->execute(['id' => $userId]);
+                $classIds = array_map(static fn(array $r): int => (int) $r['id'], $classIdsStmt->fetchAll() ?: []);
+                if ($classIds !== []) {
+                    $in = implode(',', array_fill(0, count($classIds), '?'));
+                    $pdo->prepare("DELETE FROM enrollments WHERE class_id IN ($in)")->execute($classIds);
+                    $pdo->prepare("DELETE FROM class_recordings WHERE class_id IN ($in)")->execute($classIds);
+                    $pdo->prepare("DELETE FROM reschedule_requests WHERE class_id IN ($in)")->execute($classIds);
+                    $pdo->prepare("DELETE FROM class_attendance WHERE class_id IN ($in)")->execute($classIds);
+                }
+                $pdo->prepare('DELETE FROM class_sessions WHERE teacher_id = :id')->execute(['id' => $userId]);
+
+                $hwStmt = $pdo->prepare('SELECT id FROM homeworks WHERE teacher_id = :id');
+                $hwStmt->execute(['id' => $userId]);
+                $hwIds = array_map(static fn(array $r): int => (int) $r['id'], $hwStmt->fetchAll() ?: []);
+                if ($hwIds !== []) {
+                    $inHw = implode(',', array_fill(0, count($hwIds), '?'));
+                    $pdo->prepare("DELETE FROM homework_submissions WHERE homework_id IN ($inHw)")->execute($hwIds);
+                    $pdo->prepare("DELETE FROM homework_attachments WHERE homework_id IN ($inHw)")->execute($hwIds);
+                    $pdo->prepare("DELETE FROM homework_assigned_students WHERE homework_id IN ($inHw)")->execute($hwIds);
+                    $pdo->prepare("DELETE FROM homeworks WHERE id IN ($inHw)")->execute($hwIds);
+                }
+
+                $pdo->prepare('DELETE FROM feedback WHERE teacher_id = :id')->execute(['id' => $userId]);
+                $pdo->prepare('DELETE FROM teacher_students WHERE teacher_id = :id')->execute(['id' => $userId]);
+                $pdo->prepare('DELETE FROM teacher_google_accounts WHERE teacher_id = :id')->execute(['id' => $userId]);
+                $pdo->prepare('DELETE FROM teachers WHERE user_id = :id')->execute(['id' => $userId]);
+            }
+
+            $pdo->prepare('DELETE FROM password_reset_tokens WHERE user_id = :id')->execute(['id' => $userId]);
+            $pdo->prepare('DELETE FROM users WHERE id = :id')->execute(['id' => $userId]);
+            $pdo->commit();
+        } catch (\Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
     }
 }

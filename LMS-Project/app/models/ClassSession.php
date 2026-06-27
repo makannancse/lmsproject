@@ -154,7 +154,8 @@ class ClassSession
          INNER JOIN users u ON u.id = cs.teacher_id
          LEFT JOIN teacher_google_accounts tga ON tga.teacher_id = cs.teacher_id
          LEFT JOIN class_recordings cr ON cr.class_id = cs.id
-         WHERE cs.start_datetime < :rng_end AND cs.end_datetime > :rng_start';
+         WHERE cs.start_datetime < :rng_end AND cs.end_datetime > :rng_start
+           AND (cs.recurring_series_id IS NULL OR cs.recurring_series_id = 0)';
 
         $params = [
             'rng_start' => $rangeStartUtc,

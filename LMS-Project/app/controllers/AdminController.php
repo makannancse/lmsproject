@@ -11,6 +11,7 @@ require_once dirname(__DIR__) . '/models/TeacherPayout.php';
 require_once dirname(__DIR__) . '/models/User.php';
 require_once dirname(__DIR__) . '/models/ClassRecording.php';
 require_once dirname(__DIR__) . '/lib/Mailer.php';
+require_once dirname(__DIR__) . '/lib/EmailTemplate.php';
 require_once dirname(__DIR__, 2) . '/payments/payment_helper.php';
 
 class AdminController
@@ -39,21 +40,8 @@ class AdminController
             $totalPayoutPaid += (float) ($tp['paid_amount'] ?? 0);
         }
 
-        // Recent classes
-        $recentClassesStmt = $pdo->query(
-            'SELECT cs.*, u.name AS teacher_name, cr.recording_title, cr.recording_duration, cr.visible_to_student,
-                    tga.recording_supported AS teacher_recording_supported
-             FROM class_sessions cs
-             INNER JOIN users u ON u.id = cs.teacher_id
-             LEFT JOIN teacher_google_accounts tga ON tga.teacher_id = cs.teacher_id
-             LEFT JOIN class_recordings cr ON cr.class_id = cs.id
-             ORDER BY cs.start_datetime DESC
-             LIMIT 10'
-        );
-        $recentClasses = $recentClassesStmt->fetchAll() ?: [];
+        // Teacher Google connections only (recent sections removed per UAT)
         $teacherGoogleAccounts = TeacherGoogleAccount::allWithTeacherNames();
-        $recentRecordings = ClassRecording::listForAdmin([]);
-        $recentRecordings = array_slice($recentRecordings, 0, 6);
 
         View::render('admin/dashboard', [
             'pageTitle' => 'Admin Dashboard',
@@ -62,8 +50,6 @@ class AdminController
             'classStats' => $classStats,
             'totalPayoutPending' => $totalPayoutPending,
             'totalPayoutPaid' => $totalPayoutPaid,
-            'recentClasses' => $recentClasses,
-            'recentRecordings' => $recentRecordings,
             'teacherPayouts' => $teacherPayouts,
             'teacherGoogleAccounts' => $teacherGoogleAccounts,
         ]);
@@ -96,7 +82,7 @@ class AdminController
     public static function editUserForm(): void
     {
         Auth::requireRole(['admin']);
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $base = appWebPath();
 
         $userId = (int) ($_GET['id'] ?? 0);
         $user = User::findById($userId);
@@ -129,7 +115,7 @@ class AdminController
     public static function updateUser(): void
     {
         Auth::requireRole(['admin']);
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $base = appWebPath();
         $pdo = Database::connection();
 
         $userId = (int) ($_POST['user_id'] ?? 0);
@@ -259,6 +245,18 @@ class AdminController
                     $pdo->prepare(
                         'INSERT INTO teacher_students (teacher_id, student_id) VALUES (:tid, :sid)'
                     )->execute(['tid' => $assignedTeacherId, 'sid' => $userId]);
+
+                    require_once dirname(__DIR__) . '/lib/NotificationMailer.php';
+                    $teacher = User::findById($assignedTeacherId);
+                    if ($teacher !== null) {
+                        NotificationMailer::notifyTeacherStudentAssigned(
+                            (string) ($teacher['email'] ?? ''),
+                            (string) ($teacher['name'] ?? 'Teacher'),
+                            $name,
+                            $subject,
+                            date('Y-m-d')
+                        );
+                    }
                 }
             }
 
@@ -301,7 +299,7 @@ class AdminController
     public static function toggleUserStatus(): void
     {
         Auth::requireRole(['admin']);
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $base = appWebPath();
 
         $userId = (int) ($_POST['user_id'] ?? 0);
         $action = strtolower(trim((string) ($_POST['action'] ?? '')));
@@ -376,7 +374,6 @@ class AdminController
         $email = trim($_POST['email'] ?? '');
         $password = (string) ($_POST['password'] ?? '');
         $confirmPassword = (string) ($_POST['confirm_password'] ?? '');
-        $autoGeneratePassword = (int) ($_POST['auto_generate_password'] ?? 0) === 1;
         $role = $_POST['role'] ?? 'student';
         $timezone = normalizeTimezone((string) ($_POST['timezone'] ?? APP_TIMEZONE), APP_TIMEZONE);
         $country = trim($_POST['country'] ?? '');
@@ -403,10 +400,6 @@ class AdminController
         if (!in_array($role, ['student', 'teacher', 'admin'], true)) {
             $errors[] = 'Role is invalid.';
         }
-        if ($autoGeneratePassword) {
-            $password = self::generateSecurePassword();
-            $confirmPassword = $password;
-        }
         if ($password === '') {
             $errors[] = 'Password is required.';
         } elseif (strlen($password) < 8) {
@@ -423,7 +416,7 @@ class AdminController
             $errors[] = 'A user with this email already exists.';
         }
 
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $base = appWebPath();
         $isStudent = $role === 'student';
         $isTeacher = $role === 'teacher';
 
@@ -478,14 +471,117 @@ class AdminController
         if (!empty($mailResult['success'])) {
             $_SESSION['flash_success'] = ucfirst($role) . ' account created and credentials emailed successfully.';
         } else {
-            $warning = ucfirst($role) . ' account created, but the credential email could not be sent.';
-            if ($autoGeneratePassword) {
-                $warning .= ' Generated password: ' . $plainPassword;
-            }
-            $_SESSION['flash_warning'] = $warning;
+            $_SESSION['flash_warning'] = ucfirst($role) . ' account created, but the credential email could not be sent. Share the temporary password manually.';
         }
 
-        header('Location: ' . $base . '/admin/users?role=' . urlencode($role));
+        redirectTo('/admin/users?role=' . urlencode($role));
+    }
+
+    public static function teacherPayments(): void
+    {
+        Auth::requireRole(['admin']);
+
+        $statusFilter = (string) ($_GET['status'] ?? '');
+        $teacherRows = Database::connection()->query('SELECT id FROM users WHERE role = "teacher"')->fetchAll() ?: [];
+        foreach ($teacherRows as $tr) {
+            refreshTeacherPaymentLogs((int) ($tr['id'] ?? 0));
+        }
+
+        $rows = getAllTeacherPayoutSummaries($statusFilter);
+        $totalPayout = 0.0;
+        $totalPaid = 0.0;
+        $totalPending = 0.0;
+        foreach ($rows as $row) {
+            $totalPayout += (float) ($row['total_earnings'] ?? 0);
+            $totalPaid += (float) ($row['paid_amount'] ?? 0);
+            $totalPending += (float) ($row['pending_amount'] ?? 0);
+        }
+
+        View::render('admin/payments/index', [
+            'pageTitle' => 'Teacher Payments',
+            'rows' => $rows,
+            'statusFilter' => $statusFilter,
+            'totalPayout' => $totalPayout,
+            'totalPaid' => $totalPaid,
+            'totalPending' => $totalPending,
+        ]);
+    }
+
+    public static function processTeacherPayment(): void
+    {
+        Auth::requireRole(['admin']);
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo 'Method Not Allowed';
+            return;
+        }
+
+        $teacherId = (int) ($_POST['teacher_id'] ?? 0);
+        $statusFilter = trim((string) ($_POST['status'] ?? ''));
+
+        if ($teacherId <= 0) {
+            $_SESSION['flash_error'] = 'Invalid teacher selected.';
+            redirect('admin/payments?success=invalid_teacher');
+        }
+
+        try {
+            if (isset($_POST['mark_paid'])) {
+                $snapshot = getTeacherPayoutSummary($teacherId);
+                if ((float) $snapshot['pending_amount'] > 0) {
+                    createTeacherPaymentEntry($teacherId, (float) $snapshot['pending_amount'], 'Marked paid from dashboard');
+                }
+                $_SESSION['flash_success'] = 'Payment marked as paid successfully.';
+                $suffix = $statusFilter !== '' ? ('&status=' . urlencode($statusFilter)) : '';
+                redirect('admin/payments?success=paid' . $suffix);
+            }
+
+            if (isset($_POST['add_payment'])) {
+                $amount = parseInrAmount($_POST['advance_amount'] ?? 0);
+                $remarks = trim((string) ($_POST['remarks'] ?? 'Manual payment from dashboard'));
+                if ($amount > 0) {
+                    createTeacherPaymentEntry($teacherId, $amount, $remarks);
+                    $_SESSION['flash_success'] = 'Payment recorded successfully.';
+                } else {
+                    $_SESSION['flash_warning'] = 'Enter a valid payment amount.';
+                }
+                $suffix = $statusFilter !== '' ? ('&status=' . urlencode($statusFilter)) : '';
+                redirect('admin/payments?success=payment_added' . $suffix);
+            }
+        } catch (\Throwable $e) {
+            $_SESSION['flash_error'] = 'Payment update failed: ' . $e->getMessage();
+            redirect('admin/payments');
+        }
+
+        $_SESSION['flash_warning'] = 'No payment action was performed.';
+        redirect('admin/payments?success=no_action');
+    }
+
+    public static function deleteUser(): void
+    {
+        Auth::requireRole(['admin']);
+
+        $userId = (int) ($_POST['user_id'] ?? 0);
+        $role = trim((string) ($_POST['role'] ?? 'student'));
+        $currentUserId = (int) (Auth::user()['id'] ?? 0);
+
+        if ($userId <= 0 || !in_array($role, ['student', 'teacher'], true)) {
+            $_SESSION['flash_error'] = 'Invalid delete request.';
+            redirectTo('/admin/users?role=' . urlencode($role));
+        }
+        if ($userId === $currentUserId) {
+            $_SESSION['flash_error'] = 'You cannot delete your own account.';
+            redirectTo('/admin/users?role=' . urlencode($role));
+        }
+
+        try {
+            User::permanentlyDelete($userId, $role);
+            $_SESSION['flash_success'] = ucfirst($role) . ' deleted permanently.';
+        } catch (\Throwable $e) {
+            $_SESSION['flash_error'] = 'Delete failed: ' . $e->getMessage();
+        }
+
+        redirectTo('/admin/users?role=' . urlencode($role));
     }
 
     private static function renderUserCreateForm(string $role, array $errors, array $old): void
@@ -513,33 +609,52 @@ class AdminController
 
     private static function sendAccountCreatedEmail(string $email, string $name, string $plainPassword, string $role): array
     {
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
-        $appUrl = rtrim((string) env('APP_URL', 'http://localhost'), '/');
-        $loginUrl = ($base !== '' && str_ends_with($appUrl, $base))
-            ? ($appUrl . '/login')
-            : ($appUrl . $base . '/login');
+        $loginUrl = url('login');
         $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
         $safeEmail = htmlspecialchars($email, ENT_QUOTES, 'UTF-8');
         $safePassword = htmlspecialchars($plainPassword, ENT_QUOTES, 'UTF-8');
         $safeRole = htmlspecialchars(ucfirst($role), ENT_QUOTES, 'UTF-8');
-        $safeLoginUrl = htmlspecialchars($loginUrl, ENT_QUOTES, 'UTF-8');
 
-        $subject = 'Your LearnWise Account Created';
-        $body = '
-            <div style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.6;">
-                <h2 style="margin-bottom: 8px;">Welcome to LearnWise</h2>
-                <p>Hi ' . $safeName . ',</p>
-                <p>Your ' . $safeRole . ' account has been created.</p>
-                <table cellpadding="6" cellspacing="0" border="0" style="border-collapse: collapse;">
-                    <tr><td><strong>Login URL</strong></td><td><a href="' . $safeLoginUrl . '">' . $safeLoginUrl . '</a></td></tr>
-                    <tr><td><strong>Email</strong></td><td>' . $safeEmail . '</td></tr>
-                    <tr><td><strong>Password</strong></td><td>' . $safePassword . '</td></tr>
-                </table>
-                <p style="margin-top: 16px;">Please sign in and change your password after your first login.</p>
-                <p>Regards,<br>' . htmlspecialchars(APP_NAME, ENT_QUOTES, 'UTF-8') . ' Team</p>
-            </div>
-        ';
+        $subject = EmailTemplate::subject('welcome');
+        $intro = '<p>Hi ' . $safeName . ',</p>'
+            . '<p>Welcome to ' . htmlspecialchars(EmailTemplate::brandName(), ENT_QUOTES, 'UTF-8') . '! '
+            . 'Your ' . $safeRole . ' account has been created.</p>'
+            . '<p>Please sign in and change your password after your first login.</p>';
+        $rows = [
+            'Student Name' => $role === 'student' ? $safeName : '',
+            'Teacher Name' => $role === 'teacher' ? $safeName : '',
+            'Username' => $safeEmail,
+            'Temporary Password' => $safePassword,
+            'Login URL' => '<a href="' . htmlspecialchars($loginUrl, ENT_QUOTES, 'UTF-8') . '">'
+                . htmlspecialchars($loginUrl, ENT_QUOTES, 'UTF-8') . '</a>',
+        ];
+        if ($role === 'admin') {
+            $rows = [
+                'Name' => $safeName,
+                'Username' => $safeEmail,
+                'Temporary Password' => $safePassword,
+                'Login URL' => '<a href="' . htmlspecialchars($loginUrl, ENT_QUOTES, 'UTF-8') . '">'
+                    . htmlspecialchars($loginUrl, ENT_QUOTES, 'UTF-8') . '</a>',
+            ];
+        }
+        $rows = array_filter($rows, static fn(string $v): bool => $v !== '');
 
-        return Mailer::send($email, $subject, $body, true);
+        $body = EmailTemplate::wrap(
+            'Welcome to ' . EmailTemplate::brandName(),
+            $intro,
+            $rows,
+            'Sign In',
+            $loginUrl
+        );
+
+        $result = Mailer::send($email, $subject, $body, true);
+        EmailTemplate::logCredential(
+            $email,
+            !empty($result['success']),
+            !empty($result['success']) ? 'sent' : null,
+            $result['error'] ?? null
+        );
+
+        return $result;
     }
 }

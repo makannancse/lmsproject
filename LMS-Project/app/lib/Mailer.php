@@ -17,6 +17,7 @@ declare(strict_types=1);
  */
 
 require_once dirname(__DIR__) . '/config/config.php';
+require_once dirname(__DIR__) . '/lib/EmailTemplate.php';
 
 use PHPMailer\PHPMailer\Exception as PHPMailerException;
 use PHPMailer\PHPMailer\PHPMailer;
@@ -84,7 +85,7 @@ class Mailer
             };
 
             // From address must match the authenticated mailbox (or a configured alias) for Gmail.
-            $mail->setFrom((string) $_ENV['SMTP_USERNAME'], 'LMS Admin');
+            $mail->setFrom((string) $_ENV['SMTP_USERNAME'], EmailTemplate::brandName());
 
             $mail->addAddress($to);
             $mail->CharSet = 'UTF-8';

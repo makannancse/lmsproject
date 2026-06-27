@@ -2,7 +2,7 @@
 
 use function htmlspecialchars as h;
 
-$base = defined('BASE_PATH') ? BASE_PATH : '';
+$base = appWebPath();
 $students = $students ?? [];
 $teachers = $teachers ?? [];
 $errors = $errors ?? [];

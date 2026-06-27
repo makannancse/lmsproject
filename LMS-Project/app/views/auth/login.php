@@ -21,7 +21,7 @@ $hasBanner = is_file($studentBannerPath) || is_file($defaultBannerPath);
             <div class="login-box w-100">
                 <?php if ($hasLogo): ?>
                     <div class="text-center mb-4">
-                        <img src="<?= h(LOGO_PATH) ?>" alt="Logo" width="110" class="img-fluid">
+                        <img src="<?= h(LOGO_PATH) ?>" alt="Logo" class="app-brand-logo img-fluid">
                     </div>
                 <?php endif; ?>
                 <div class="text-center mb-4">
@@ -34,7 +34,7 @@ $hasBanner = is_file($studentBannerPath) || is_file($defaultBannerPath);
                 <?php if ($error): ?>
                     <div class="alert alert-danger small"><?= h($error) ?></div>
                 <?php endif; ?>
-                <form method="post" action="<?= BASE_PATH ?>/login" class="needs-validation login-form" novalidate>
+                <form method="post" action="<?= h(path('login')) ?>" class="needs-validation login-form" novalidate>
                     <div class="mb-3 input-group input-group-lg">
                         <span class="input-group-text"><i class="fa-regular fa-envelope"></i></span>
                         <input type="email" name="email" id="email" class="form-control form-control-lg" placeholder="Email address" required autofocus>
@@ -45,6 +45,9 @@ $hasBanner = is_file($studentBannerPath) || is_file($defaultBannerPath);
                     </div>
                     <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill">Login</button>
                 </form>
+                <div class="text-center mt-3">
+                    <a href="<?= h(path('forgot-password')) ?>" class="small text-decoration-none">Forgot Password?</a>
+                </div>
             </div>
         </div>
         <?php if ($isStudentLogin): ?>

@@ -6,6 +6,7 @@ require_once dirname(__DIR__) . '/lib/Auth.php';
 require_once dirname(__DIR__) . '/lib/View.php';
 require_once dirname(__DIR__) . '/lib/Database.php';
 require_once dirname(__DIR__) . '/models/ClassSession.php';
+require_once dirname(__DIR__) . '/models/RecurringOccurrence.php';
 require_once dirname(__DIR__) . '/models/User.php';
 require_once dirname(__DIR__) . '/models/ClassMaster.php';
 require_once dirname(__DIR__) . '/models/TeacherStudent.php';
@@ -122,6 +123,17 @@ class CalendarController
             $filterStudent
         );
 
+        $recurringRows = RecurringOccurrence::findCalendarEvents(
+            $rangeStartUtc,
+            $rangeEndUtc,
+            $role,
+            (int) ($user['id'] ?? 0),
+            $filterTeacher,
+            $filterStudent
+        );
+
+        $rows = array_merge($rows, $recurringRows);
+
         $events = [];
         foreach ($rows as $row) {
             $ev = self::rowToFullCalendarEvent($row, $role, $selectedTimezone);
@@ -176,10 +188,12 @@ class CalendarController
             $title .= ' (' . $durMin . 'm)';
         }
 
-        $startLocal = formatUtcForTimezone($startUtc, $selectedTimezone, 'd M Y h:i A T');
-        $endLocal = formatUtcForTimezone($endUtc, $selectedTimezone, 'd M Y h:i A T');
+        $startLocal = formatUtcForTimezone($startUtc, $selectedTimezone, 'd M Y g:i A');
+        $endLocal = formatUtcForTimezone($endUtc, $selectedTimezone, 'd M Y g:i A');
         $scheduledTimezone = classScheduledTimezone($row, APP_TIMEZONE);
         $scheduledTimezoneLabel = formatClassScheduledTimezoneLabel($row);
+        $scheduledStartLocal = formatUtcForTimezone($startUtc, $scheduledTimezone, 'd M Y g:i A');
+        $scheduledEndLocal = formatUtcForTimezone($endUtc, $scheduledTimezone, 'g:i A');
         $actualStartLocal = formatClassActualAt($row, 'start', $scheduledTimezone, 'd M Y h:i A T');
         $actualEndLocal = formatClassActualAt($row, 'end', $scheduledTimezone, 'd M Y h:i A T');
         $actualDuration = formatDurationMinutes(classActualDurationMinutes($row), '');
@@ -189,11 +203,11 @@ class CalendarController
             . 'Status: ' . $status . "\n"
             . 'Teacher: ' . $teacher . "\n"
             . ($students !== '' ? ('Students: ' . $students . "\n") : '')
-            . 'Start (' . $selectedTimezone . '): ' . $startLocal . "\n"
-            . 'End (' . $selectedTimezone . '): ' . $endLocal;
+            . 'Class time: ' . $scheduledStartLocal . ' – ' . $scheduledEndLocal . ' ' . $scheduledTimezoneLabel . "\n"
+            . 'Calendar view (' . $selectedTimezone . '): ' . $startLocal . ' – ' . $endLocal;
 
         $classId = (int) ($row['id'] ?? 0);
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $base = appWebPath();
         $trackJoin = $base . '/join-class?class_id=' . $classId;
         $directMeetLink = !empty($row['meeting_link']) ? (string) $row['meeting_link'] : '';
 
@@ -224,6 +238,9 @@ class CalendarController
                 'recording_enabled' => (int) ($row['recording_enabled'] ?? 0),
                 'recording_visible_to_student' => (string) ($row['visible_to_student'] ?? 'no'),
                 'class_id' => $classId,
+                'series_id' => (int) ($row['recurring_series_id'] ?? 0),
+                'occurrence_id' => (int) ($row['recurring_occurrence_id'] ?? 0),
+                'is_recurring_occurrence' => !empty($row['is_recurring_occurrence']),
                 'viewer_role' => $viewerRole,
                 'selected_timezone' => $selectedTimezone,
                 'scheduled_timezone' => $scheduledTimezone,

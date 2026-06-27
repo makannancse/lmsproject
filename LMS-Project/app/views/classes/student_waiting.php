@@ -2,7 +2,7 @@
 
 use function htmlspecialchars as h;
 
-$base = defined('BASE_PATH') ? BASE_PATH : '';
+$base = appWebPath();
 $class = $class ?? [];
 $displayTimezone = $displayTimezone ?? APP_TIMEZONE;
 $startLabel = formatUtcForTimezone(classStartUtcValue($class), $displayTimezone, 'd M Y h:i A T');

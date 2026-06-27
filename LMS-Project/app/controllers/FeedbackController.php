@@ -43,15 +43,15 @@ class FeedbackController
         Auth::requireRole(['teacher']);
         $teacherId = (int) (Auth::user()['id'] ?? 0);
         $studentId = (int) ($_GET['student_id'] ?? 0);
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $base = appWebPath();
         if ($studentId <= 0) {
-            header('Location: ' . $base . '/teacher/feedback');
+            redirectTo('/teacher/feedback');
             return;
         }
 
         if (!TeacherStudent::isMapped($teacherId, $studentId)) {
             $_SESSION['flash_warning'] = 'Pick a student from your mapped roster.';
-            header('Location: ' . $base . '/teacher/feedback');
+            redirectTo('/teacher/feedback');
             return;
         }
 
@@ -74,20 +74,20 @@ class FeedbackController
     {
         Auth::requireRole(['teacher']);
         $teacherId = (int) (Auth::user()['id'] ?? 0);
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $base = appWebPath();
 
         $studentId = (int) ($_POST['student_id'] ?? 0);
         $comments = trim($_POST['comments'] ?? '');
         $rating = (int) ($_POST['rating'] ?? 5);
 
         if ($studentId <= 0 || $comments === '' || $rating < 1 || $rating > 5) {
-            header('Location: ' . $base . '/teacher/feedback');
+            redirectTo('/teacher/feedback');
             return;
         }
 
         if (!TeacherStudent::isMapped($teacherId, $studentId)) {
             $_SESSION['flash_warning'] = 'That student is not mapped to you.';
-            header('Location: ' . $base . '/teacher/feedback');
+            redirectTo('/teacher/feedback');
             return;
         }
 
@@ -104,7 +104,51 @@ class FeedbackController
         ]);
 
         $_SESSION['flash_success'] = 'Feedback saved.';
-        header('Location: ' . $base . '/teacher/feedback');
+        redirectTo('/teacher/feedback');
     }
 
+    public static function studentIndex(): void
+    {
+        Auth::requireRole(['student']);
+        $studentId = (int) (Auth::user()['id'] ?? 0);
+        $pdo = Database::connection();
+        $stmt = $pdo->prepare(
+            'SELECT f.*, u.name AS teacher_name, s.subject
+             FROM feedback f
+             INNER JOIN users u ON u.id = f.teacher_id
+             LEFT JOIN students s ON s.user_id = f.student_id
+             WHERE f.student_id = :sid
+             ORDER BY f.created_at DESC'
+        );
+        $stmt->execute(['sid' => $studentId]);
+        $items = $stmt->fetchAll() ?: [];
+
+        View::render('feedback/student_index', [
+            'pageTitle' => 'My Feedback',
+            'items' => $items,
+        ]);
+    }
+
+    public static function adminIndex(): void
+    {
+        Auth::requireRole(['admin']);
+        $pdo = Database::connection();
+        $stmt = $pdo->query(
+            'SELECT f.*,
+                    su.name AS student_name,
+                    tu.name AS teacher_name,
+                    st.subject
+             FROM feedback f
+             INNER JOIN users su ON su.id = f.student_id
+             INNER JOIN users tu ON tu.id = f.teacher_id
+             LEFT JOIN students st ON st.user_id = f.student_id
+             ORDER BY f.created_at DESC, f.id DESC'
+        );
+        $items = $stmt->fetchAll() ?: [];
+
+        View::render('feedback/admin_index', [
+            'pageTitle' => 'Student Feedback',
+            'items' => $items,
+        ]);
+    }
 }

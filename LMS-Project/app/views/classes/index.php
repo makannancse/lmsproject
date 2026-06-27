@@ -2,7 +2,7 @@
 
 use function htmlspecialchars as h;
 
-$base = defined('BASE_PATH') ? BASE_PATH : '';
+$base = appWebPath();
 $statusFilter = $statusFilter ?? '';
 $statusOpts = ['' => 'All', 'scheduled' => 'Scheduled', 'ongoing' => 'Ongoing', 'completed' => 'Completed', 'cancelled' => 'Cancelled', 'rescheduled' => 'Rescheduled'];
 $viewerTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);

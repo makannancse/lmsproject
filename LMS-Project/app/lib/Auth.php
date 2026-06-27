@@ -180,24 +180,16 @@ class Auth
         self::startSession();
 
         if (!self::check() || !in_array(self::role(), $roles, true)) {
-            if (function_exists('redirectTo')) {
-                redirectTo('/login', 302, [
-                    'event' => 'require_role_denied',
-                    'required_roles' => $roles,
-                    'actual_role' => self::role(),
-                ]);
-            }
-            header('Location: ' . (defined('BASE_PATH') ? BASE_PATH : '') . '/login');
-            exit;
+            redirectTo('/login', 302, [
+                'event' => 'require_role_denied',
+                'required_roles' => $roles,
+                'actual_role' => self::role(),
+            ]);
         }
 
         if (!self::isCurrentUserActive()) {
             self::logout();
-            if (function_exists('redirectTo')) {
-                redirectTo('/login?deactivated=1', 302, ['event' => 'require_role_inactive']);
-            }
-            header('Location: ' . (defined('BASE_PATH') ? BASE_PATH : '') . '/login?deactivated=1');
-            exit;
+            redirectTo('/login?deactivated=1', 302, ['event' => 'require_role_inactive']);
         }
     }
 
@@ -329,7 +321,7 @@ class Auth
 
     private static function respondToExpiredSession(): void
     {
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $base = appWebPath();
 
         if (self::wantsJsonResponse()) {
             http_response_code(401);
@@ -341,8 +333,7 @@ class Auth
             exit;
         }
 
-        header('Location: ' . $base . '/login?timeout=1');
-        exit;
+        redirectTo('/login?timeout=1');
     }
 
     private static function wantsJsonResponse(): bool

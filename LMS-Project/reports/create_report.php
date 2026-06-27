@@ -7,10 +7,7 @@ require_once __DIR__ . '/../app/lib/Auth.php';
 
 Auth::startSession();
 
-$base = defined('BASE_PATH') ? BASE_PATH : '';
 if (Auth::isAdmin()) {
-    header('Location: ' . $base . '/admin/reports/create', true, 302);
-} else {
-    header('Location: ' . $base . '/teacher/reports/create', true, 302);
+    redirectTo('admin/reports/create');
 }
-exit;
+redirectTo('teacher/reports/create');

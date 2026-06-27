@@ -6,6 +6,7 @@ require_once dirname(__DIR__) . '/lib/Auth.php';
 require_once dirname(__DIR__) . '/lib/View.php';
 require_once dirname(__DIR__) . '/lib/Database.php';
 require_once dirname(__DIR__) . '/lib/Mailer.php';
+require_once dirname(__DIR__) . '/lib/EmailTemplate.php';
 
 class HomeworkController
 {
@@ -86,7 +87,7 @@ class HomeworkController
     public static function teacherStore(): void
     {
         Auth::requireRole(['teacher', 'admin']);
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $base = appWebPath();
         $user = Auth::user();
         $pdo = Database::connection();
 
@@ -191,20 +192,20 @@ class HomeworkController
         } catch (\Throwable $e) {
             $pdo->rollBack();
             $_SESSION['flash_warning'] = 'Could not assign homework: ' . $e->getMessage();
-            header('Location: ' . $base . '/teacher/homework/create');
+            redirectTo('/teacher/homework/create');
             return;
         }
 
         self::notifyAssignedStudents($pdo, $homeworkId, $title, $description, $dueDate, $dueTimezone);
 
         $_SESSION['flash_success'] = 'Homework assigned successfully.';
-        header('Location: ' . $base . '/teacher/homework');
+        redirectTo('/teacher/homework');
     }
 
     public static function teacherViewClass(): void
     {
         Auth::requireRole(['teacher', 'admin']);
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $base = appWebPath();
         $user = Auth::user();
         $homeworkId = (int) ($_GET['homework_id'] ?? 0);
         $pdo = Database::connection();
@@ -212,7 +213,7 @@ class HomeworkController
         $homework = self::fetchHomeworkForManager($homeworkId, $user);
         if (!$homework) {
             $_SESSION['flash_warning'] = 'Homework not found or not allowed.';
-            header('Location: ' . $base . '/teacher/homework');
+            redirectTo('/teacher/homework');
             return;
         }
 
@@ -227,7 +228,7 @@ class HomeworkController
     public static function teacherEditForm(): void
     {
         Auth::requireRole(['teacher', 'admin']);
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $base = appWebPath();
         $user = Auth::user();
         $homeworkId = (int) ($_GET['homework_id'] ?? 0);
         $pdo = Database::connection();
@@ -235,7 +236,7 @@ class HomeworkController
         $homework = self::fetchHomeworkForManager($homeworkId, $user);
         if (!$homework) {
             $_SESSION['flash_warning'] = 'Homework not found or not allowed.';
-            header('Location: ' . $base . '/teacher/homework');
+            redirectTo('/teacher/homework');
             return;
         }
 
@@ -256,7 +257,7 @@ class HomeworkController
     public static function teacherUpdate(): void
     {
         Auth::requireRole(['teacher', 'admin']);
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $base = appWebPath();
         $user = Auth::user();
         $pdo = Database::connection();
 
@@ -264,7 +265,7 @@ class HomeworkController
         $homework = self::fetchHomeworkForManager($homeworkId, $user);
         if (!$homework) {
             $_SESSION['flash_warning'] = 'Homework not found or not allowed.';
-            header('Location: ' . $base . '/teacher/homework');
+            redirectTo('/teacher/homework');
             return;
         }
 
@@ -353,18 +354,18 @@ class HomeworkController
         } catch (\Throwable $e) {
             $pdo->rollBack();
             $_SESSION['flash_warning'] = 'Update failed: ' . $e->getMessage();
-            header('Location: ' . $base . '/teacher/homework/edit?homework_id=' . $homeworkId);
+            redirectTo('/teacher/homework/edit?homework_id=' . $homeworkId);
             return;
         }
 
         $_SESSION['flash_success'] = 'Homework updated.';
-        header('Location: ' . $base . '/teacher/homework');
+        redirectTo('/teacher/homework');
     }
 
     public static function teacherDelete(): void
     {
         Auth::requireRole(['teacher', 'admin']);
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $base = appWebPath();
         $user = Auth::user();
         $homeworkId = (int) ($_POST['homework_id'] ?? 0);
         $pdo = Database::connection();
@@ -372,7 +373,7 @@ class HomeworkController
         $homework = self::fetchHomeworkForManager($homeworkId, $user);
         if (!$homework) {
             $_SESSION['flash_warning'] = 'Homework not found or not allowed.';
-            header('Location: ' . $base . '/teacher/homework');
+            redirectTo('/teacher/homework');
             return;
         }
 
@@ -391,18 +392,18 @@ class HomeworkController
         } catch (\Throwable $e) {
             $pdo->rollBack();
             $_SESSION['flash_warning'] = 'Delete failed: ' . $e->getMessage();
-            header('Location: ' . $base . '/teacher/homework');
+            redirectTo('/teacher/homework');
             return;
         }
 
         $_SESSION['flash_success'] = 'Homework deleted.';
-        header('Location: ' . $base . '/teacher/homework');
+        redirectTo('/teacher/homework');
     }
 
     public static function teacherSubmissions(): void
     {
         Auth::requireRole(['teacher', 'admin']);
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $base = appWebPath();
         $user = Auth::user();
         $homeworkId = (int) ($_GET['homework_id'] ?? 0);
         $pdo = Database::connection();
@@ -410,7 +411,7 @@ class HomeworkController
         $homework = self::fetchHomeworkForManager($homeworkId, $user);
         if (!$homework) {
             $_SESSION['flash_warning'] = 'Homework not found or not allowed.';
-            header('Location: ' . $base . '/teacher/homework');
+            redirectTo('/teacher/homework');
             return;
         }
 
@@ -449,20 +450,20 @@ class HomeworkController
     public static function markCompleted(): void
     {
         Auth::requireRole(['teacher', 'admin']);
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $base = appWebPath();
         $user = Auth::user();
         $homeworkId = (int) ($_POST['homework_id'] ?? 0);
         $homework = self::fetchHomeworkForManager($homeworkId, $user);
         if (!$homework) {
             $_SESSION['flash_warning'] = 'Homework not found or not allowed.';
-            header('Location: ' . $base . '/teacher/homework');
+            redirectTo('/teacher/homework');
             return;
         }
         $pdo = Database::connection();
         $pdo->prepare('UPDATE homeworks SET status = "completed", completed_at = UTC_TIMESTAMP() WHERE id = :id')
             ->execute(['id' => $homeworkId]);
         $_SESSION['flash_success'] = 'Homework marked as completed.';
-        header('Location: ' . $base . '/teacher/homework');
+        redirectTo('/teacher/homework');
     }
 
     public static function studentIndex(): void
@@ -501,13 +502,13 @@ class HomeworkController
             redirectTo('/login?deactivated=1');
         }
         $studentId = (int) (Auth::user()['id'] ?? 0);
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $base = appWebPath();
         $pdo = Database::connection();
 
         $homeworkId = (int) ($_POST['homework_id'] ?? 0);
         if ($homeworkId <= 0) {
             $_SESSION['flash_warning'] = 'Invalid homework selection.';
-            header('Location: ' . $base . '/student/homework');
+            redirectTo('/student/homework');
             return;
         }
 
@@ -521,19 +522,19 @@ class HomeworkController
         $homework = $hwStmt->fetch();
         if (!$homework) {
             $_SESSION['flash_warning'] = 'You are not assigned to this homework.';
-            header('Location: ' . $base . '/student/homework');
+            redirectTo('/student/homework');
             return;
         }
 
         $check = self::validateUploadFiles($_FILES['files'] ?? null, 'submission files');
         if (!empty($check['errors'])) {
             $_SESSION['flash_warning'] = implode(' ', $check['errors']);
-            header('Location: ' . $base . '/student/homework');
+            redirectTo('/student/homework');
             return;
         }
         if (empty($check['items'])) {
             $_SESSION['flash_warning'] = 'Please choose at least one file.';
-            header('Location: ' . $base . '/student/homework');
+            redirectTo('/student/homework');
             return;
         }
 
@@ -553,12 +554,12 @@ class HomeworkController
             }
         } catch (\Throwable $e) {
             $_SESSION['flash_warning'] = 'Upload failed: ' . $e->getMessage();
-            header('Location: ' . $base . '/student/homework');
+            redirectTo('/student/homework');
             return;
         }
 
         $_SESSION['flash_success'] = 'Submission uploaded successfully.';
-        header('Location: ' . $base . '/student/homework');
+        redirectTo('/student/homework');
     }
 
     /** Secure file download gateway for attachments/submissions by role. */
@@ -797,13 +798,16 @@ class HomeworkController
             $dueInScheduledTimezone = $dueDate !== null && trim($dueDate) !== ''
                 ? formatUtcForTimezone($dueDate, $dueTimezone, 'd M Y h:i A T')
                 : 'Not set';
-            $subj = 'New homework: ' . $title;
-            $body = '<p>Hi ' . htmlspecialchars((string) $stu['name'], ENT_QUOTES, 'UTF-8') . ',</p>'
-                . '<p><strong>' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '</strong></p>'
-                . '<p>' . nl2br(htmlspecialchars($description, ENT_QUOTES, 'UTF-8')) . '</p>'
-                . '<p><strong>Due in your timezone:</strong> ' . htmlspecialchars($dueInStudentTimezone, ENT_QUOTES, 'UTF-8') . '</p>'
-                . '<p><strong>Original due timezone:</strong> ' . htmlspecialchars($dueInScheduledTimezone, ENT_QUOTES, 'UTF-8') . '<br>'
-                . htmlspecialchars($dueTimezone, ENT_QUOTES, 'UTF-8') . '</p>';
+            $subj = EmailTemplate::subject('default', 'New Homework: ' . $title);
+            $intro = '<p>Hi ' . htmlspecialchars((string) $stu['name'], ENT_QUOTES, 'UTF-8') . ',</p>'
+                . '<p>New homework has been assigned to you.</p>';
+            $rows = [
+                'Title' => htmlspecialchars($title, ENT_QUOTES, 'UTF-8'),
+                'Description' => nl2br(htmlspecialchars($description, ENT_QUOTES, 'UTF-8')),
+                'Due (your timezone)' => htmlspecialchars($dueInStudentTimezone, ENT_QUOTES, 'UTF-8'),
+                'Due (scheduled timezone)' => htmlspecialchars($dueInScheduledTimezone . ' ' . $dueTimezone, ENT_QUOTES, 'UTF-8'),
+            ];
+            $body = EmailTemplate::wrap('Homework Assigned', $intro, $rows);
             try {
                 Mailer::send((string) $stu['email'], $subj, $body, true);
             } catch (\Throwable $e) {

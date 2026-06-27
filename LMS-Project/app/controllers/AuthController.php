@@ -148,4 +148,61 @@ class AuthController
         Auth::logout();
         redirectTo('/login', 302, ['event' => 'logout_redirect']);
     }
+
+    public static function showForgotPassword(): void
+    {
+        Auth::startSession();
+        View::render('auth/forgot-password', [
+            'pageTitle' => 'Forgot Password',
+        ]);
+    }
+
+    public static function sendForgotPassword(): void
+    {
+        Auth::startSession();
+        require_once dirname(__DIR__) . '/lib/PasswordResetService.php';
+
+        $email = trim((string) ($_POST['email'] ?? ''));
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $_SESSION['error'] = 'Please enter a valid email address.';
+            redirectTo('/forgot-password');
+        }
+
+        PasswordResetService::createTokenForEmail($email);
+        $_SESSION['flash_success'] = 'If an account exists for that email, a reset link has been sent.';
+        redirectTo('/login');
+    }
+
+    public static function showResetPassword(): void
+    {
+        Auth::startSession();
+        require_once dirname(__DIR__) . '/lib/PasswordResetService.php';
+
+        $token = trim((string) ($_GET['token'] ?? ''));
+        $check = PasswordResetService::validateToken($token);
+        View::render('auth/reset-password', [
+            'pageTitle' => 'Reset Password',
+            'token' => $token,
+            'valid' => $check['valid'],
+            'error' => $check['error'] ?? null,
+        ]);
+    }
+
+    public static function resetPassword(): void
+    {
+        Auth::startSession();
+        require_once dirname(__DIR__) . '/lib/PasswordResetService.php';
+
+        $token = trim((string) ($_POST['token'] ?? ''));
+        $password = (string) ($_POST['password'] ?? '');
+        $confirm = (string) ($_POST['confirm_password'] ?? '');
+        $result = PasswordResetService::resetPassword($token, $password, $confirm);
+        if (!$result['success']) {
+            $_SESSION['error'] = (string) ($result['error'] ?? 'Could not reset password.');
+            redirectTo('/reset-password?token=' . urlencode($token));
+        }
+
+        $_SESSION['flash_success'] = 'Your password has been updated. Please sign in.';
+        redirectTo('/login');
+    }
 }

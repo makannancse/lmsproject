@@ -23,7 +23,7 @@ $old = $old ?? [];
                 <?php endif; ?>
                 <form method="post"
                       id="scheduleClassForm"
-                      action="<?= h((defined('BASE_PATH') ? BASE_PATH : '') . '/classes') ?>"
+                      action="<?= h(appWebPath() . '/classes') ?>"
                       class="no-app-loader"
                       data-schedule-ajax="1"
                       data-loader-title="Scheduling class..."
@@ -107,7 +107,7 @@ $old = $old ?? [];
                         <label class="form-label" for="student_search">Students (mapped to teacher)</label>
                         <input type="search" id="student_search" class="form-control form-control-sm mb-2" placeholder="Search by name or email…" autocomplete="off">
                         <div id="student_map_notice" class="alert alert-warning py-2 small mb-2 <?= empty($students) ? '' : 'd-none' ?>">
-                            No students mapped to this teacher yet. Use <a href="<?= h((defined('BASE_PATH') ? BASE_PATH : '') . '/admin/teacher-students') ?>">Admin → Teacher-Students</a> to link students, then change the teacher above to refresh.
+                            No students mapped to this teacher yet. Use <a href="<?= h(appWebPath() . '/admin/teacher-students') ?>">Admin → Teacher-Students</a> to link students, then change the teacher above to refresh.
                         </div>
                         <select id="student_ids" name="student_ids[]" class="form-select" multiple size="6" <?= empty($students) ? 'disabled' : '' ?>>
                             <?php foreach ($students as $s): ?>
@@ -120,9 +120,12 @@ $old = $old ?? [];
                         </select>
                         <div class="form-text">Only students linked to the selected teacher are listed. Ctrl/Cmd + click for multiple.</div>
                     </div>
+                    <div class="row g-2 mb-3">
+                        <?php $prefix = ''; $old = $old ?? []; require dirname(__DIR__) . '/partials/recurrence-fields.php'; ?>
+                    </div>
                     <div class="d-flex flex-wrap gap-2">
                         <button type="submit" class="btn btn-primary">Create Class</button>
-                        <a href="<?= h((defined('BASE_PATH') ? BASE_PATH : '') . '/admin/calendar') ?>" class="btn btn-outline-secondary">Open calendar</a>
+                        <a href="<?= h(appWebPath() . '/admin/calendar') ?>" class="btn btn-outline-secondary">Open calendar</a>
                     </div>
                 </form>
             </div>
@@ -134,10 +137,10 @@ $selectedStudentIds = [];
 if (!empty($old['student_ids']) && is_array($old['student_ids'])) {
     $selectedStudentIds = array_map('strval', $old['student_ids']);
 }
-$scheduleFormBase = defined('BASE_PATH') ? BASE_PATH : '';
+$scheduleFormBase = appWebPath();
 ?>
-<script src="<?= h($scheduleFormBase . '/assets/js/schedule-class-form.js') ?>"></script>
-<script src="<?= h($scheduleFormBase . '/assets/js/class-schedule-submit.js') ?>"></script>
+<script src="<?= h(asset('js/schedule-class-form.js')) ?>"></script>
+<script src="<?= h(asset('js/class-schedule-submit.js')) ?>"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     var base = <?= json_encode($scheduleFormBase, JSON_UNESCAPED_SLASHES) ?>;

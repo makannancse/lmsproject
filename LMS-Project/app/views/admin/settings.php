@@ -9,7 +9,7 @@ use function htmlspecialchars as h;
         <div class="card shadow-sm">
             <div class="card-body">
                 <h1 class="h4 mb-3">System Settings</h1>
-                <form method="post" action="<?= h((defined('BASE_PATH') ? BASE_PATH : '') . '/settings') ?>">
+                <form method="post" action="<?= h(appWebPath() . '/settings') ?>">
                     <div class="mb-3">
                         <label for="payout_rate_per_hour" class="form-label">Payout Rate Per Hour (INR)</label>
                         <input type="number" step="0.01" min="0" class="form-control" id="payout_rate_per_hour"
@@ -40,7 +40,7 @@ use function htmlspecialchars as h;
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Required OAuth Redirect URI</label>
-                        <input type="text" class="form-control" value="<?= h(function_exists('googleOAuthRedirectUri') ? googleOAuthRedirectUri() : (rtrim((string) env('APP_URL', 'http://localhost'), '/') . '/auth/google/callback')) ?>" readonly>
+                        <input type="text" class="form-control" value="<?= h(googleOAuthRedirectUri()) ?>" readonly>
                         <div class="form-text">Use one shared Google OAuth app for all teachers. Add this exact URI in Google Cloud Console and use the <code>https://www.googleapis.com/auth/calendar</code> scope.</div>
                     </div>
                     <div class="mb-3">
@@ -100,6 +100,30 @@ use function htmlspecialchars as h;
                         <input type="text" class="form-control" id="mail_from_name" name="mail_from_name"
                                value="<?= h($mailFromName ?? APP_NAME) ?>" placeholder="<?= h(APP_NAME) ?>">
                     </div>
+
+                    <hr>
+                    <h2 class="h6">Notification Emails</h2>
+                    <div class="mb-3">
+                        <label for="admin_notification_email" class="form-label">Admin Notification Email</label>
+                        <input type="email" class="form-control" id="admin_notification_email" name="admin_notification_email"
+                               value="<?= h($adminNotificationEmail ?? '') ?>" placeholder="Leave blank to use first active admin">
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="notify_admin_class_scheduled" name="notify_admin_class_scheduled"
+                               <?= ($notifyAdminClassScheduled ?? '1') === '1' ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="notify_admin_class_scheduled">Email admin when classes are scheduled</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="notify_admin_reschedule" name="notify_admin_reschedule"
+                               <?= ($notifyAdminReschedule ?? '1') === '1' ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="notify_admin_reschedule">Email admin on reschedule requests</label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="notify_teacher_student_assigned" name="notify_teacher_student_assigned"
+                               <?= ($notifyTeacherStudentAssigned ?? '1') === '1' ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="notify_teacher_student_assigned">Email teacher when a student is assigned</label>
+                    </div>
+
                     <button type="submit" class="btn btn-primary">Save Settings</button>
                 </form>
             </div>

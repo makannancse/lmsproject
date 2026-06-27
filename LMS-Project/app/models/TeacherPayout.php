@@ -40,6 +40,22 @@ class TeacherPayout
             'amount' => $amount,
         ]);
 
+        $occurrenceId = (int) ($class['recurring_occurrence_id'] ?? 0);
+        if ($occurrenceId > 0 && self::hasOccurrencePayoutColumn($pdo)) {
+            $pdo->prepare(
+                'UPDATE teacher_payouts SET recurring_occurrence_id = :oid WHERE teacher_id = :tid AND class_id = :cid'
+            )->execute([
+                'oid' => $occurrenceId,
+                'tid' => (int) $class['teacher_id'],
+                'cid' => $classId,
+            ]);
+        }
+
+        if ($occurrenceId > 0) {
+            require_once dirname(__DIR__) . '/lib/RecurringSeriesService.php';
+            RecurringSeriesService::syncOccurrenceFromClassSession($classId, $class);
+        }
+
         try {
             $logStmt = $pdo->prepare(
                 'INSERT INTO teacher_payment_logs (teacher_id, class_id, amount, status, created_at)
@@ -164,5 +180,25 @@ class TeacherPayout
 
             return 0.0;
         }
+    }
+
+    private static function hasOccurrencePayoutColumn(\PDO $pdo): bool
+    {
+        static $cached = null;
+        if ($cached !== null) {
+            return $cached;
+        }
+        try {
+            $stmt = $pdo->prepare(
+                'SELECT 1 FROM information_schema.COLUMNS
+                 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = "teacher_payouts" AND COLUMN_NAME = "recurring_occurrence_id" LIMIT 1'
+            );
+            $stmt->execute();
+            $cached = (bool) $stmt->fetchColumn();
+        } catch (\Throwable $e) {
+            $cached = false;
+        }
+
+        return $cached;
     }
 }

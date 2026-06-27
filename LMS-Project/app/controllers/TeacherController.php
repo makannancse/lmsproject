@@ -9,6 +9,7 @@ require_once dirname(__DIR__) . '/models/TeacherGoogleAccount.php';
 require_once dirname(__DIR__) . '/lib/PayoutService.php';
 require_once dirname(__DIR__) . '/models/ClassRecording.php';
 require_once dirname(__DIR__) . '/lib/GoogleAccountType.php';
+require_once dirname(__DIR__) . '/models/TeacherStudent.php';
 
 class TeacherController
 {
@@ -37,11 +38,13 @@ class TeacherController
             $googleRecordingCapability = false;
         }
         $recordings = ClassRecording::listForTeacher($teacherId, 12);
+        $assignedStudents = TeacherStudent::assignedStudentsDetailed($teacherId);
 
         View::render('teacher/dashboard', [
             'pageTitle' => 'Teacher Dashboard',
             'upcomingClasses' => $upcoming,
             'completedClasses' => $completed,
+            'assignedStudents' => $assignedStudents,
             'totalPayout' => $totalPayout,
             'payoutBreakdown' => $payoutBreakdown,
             'googleAccount' => $googleAccount,

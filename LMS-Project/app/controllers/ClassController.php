@@ -18,6 +18,10 @@ require_once dirname(__DIR__) . '/models/StudentPayment.php';
 require_once dirname(__DIR__) . '/models/TeacherStudent.php';
 require_once dirname(__DIR__) . '/lib/MeetingTrackingService.php';
 require_once dirname(__DIR__) . '/lib/GoogleMeetLiveTrackingService.php';
+require_once dirname(__DIR__) . '/lib/ClassRecurrenceHelper.php';
+require_once dirname(__DIR__) . '/lib/RecurringSeriesService.php';
+require_once dirname(__DIR__) . '/lib/EmailTemplate.php';
+require_once dirname(__DIR__) . '/models/RecurringOccurrence.php';
 
 class ClassController
 {
@@ -174,26 +178,38 @@ class ClassController
         }
 
         $result = ['sent' => 0, 'failed' => 0, 'total' => count($recipients)];
+        $studentNames = array_values(array_filter(array_map(
+            static fn(array $s): string => (string) ($s['name'] ?? ''),
+            $students
+        )));
         foreach ($recipients as $recipient) {
             try {
-                $studentTimezone = $recipient['timezone'] ?? APP_TIMEZONE;
-                $startLocal = formatUtcForTimezone(classStartUtcValue($class), $studentTimezone, 'Y-m-d h:i A T');
-                $endLocal = formatUtcForTimezone(classEndUtcValue($class), $studentTimezone, 'Y-m-d h:i A T');
-                $scheduledStart = formatClassScheduledAt($class, 'Y-m-d h:i A T');
-                $scheduledTimezoneLabel = formatClassScheduledTimezoneLabel($class);
+                $classTimezone = classScheduledTimezone($class, APP_TIMEZONE);
+                $classTimezoneAbbr = schedulingTimezoneAbbreviation($classTimezone);
+                $scheduledRange = formatClassTimeRange($class);
+                $scheduledStart = formatClassScheduledAt($class, 'l M j, Y g:i A');
+                $scheduledEnd = formatClassScheduledEndAt($class, 'g:i A');
+                $recipientTimezone = normalizeTimezone((string) ($recipient['timezone'] ?? ''), $classTimezone);
+                $startLocal = formatUtcForTimezone(classStartUtcValue($class), $recipientTimezone, 'l M j, Y g:i A');
+                $endLocal = formatUtcForTimezone(classEndUtcValue($class), $recipientTimezone, 'g:i A');
+                $recipientAbbr = schedulingTimezoneAbbreviation($recipientTimezone);
+                $showRecipientLocal = $recipientTimezone !== $classTimezone;
 
                 $meetingLink = self::resolveMeetingLink($class);
-                $subject = 'Class Scheduled: ' . $class['title'];
+                $subject = EmailTemplate::subject('class_scheduled');
                 $body = self::buildClassEmailTemplate(
                     (string) ($recipient['name'] ?? 'User'),
                     (string) $class['title'],
-                    $startLocal,
-                    $endLocal,
+                    $scheduledRange,
                     $scheduledStart,
-                    $scheduledTimezoneLabel,
+                    $scheduledEnd,
+                    $classTimezoneAbbr,
+                    $showRecipientLocal ? ($startLocal . ' – ' . $endLocal . ' ' . $recipientAbbr) : '',
                     (string) $class['teacher_name'],
                     $meetingLink,
-                    (string) ($recipient['role'] ?? 'student')
+                    (string) ($recipient['role'] ?? 'student'),
+                    $studentNames,
+                    (string) $class['title']
                 );
 
                 $mailResponse = Mailer::send((string) $recipient['email'], $subject, $body, true);
@@ -223,53 +239,320 @@ class ClassController
             $result['status'] = 'failed';
         }
 
+        require_once dirname(__DIR__) . '/lib/NotificationMailer.php';
+        NotificationMailer::notifyAdminClassScheduled($class, $students);
+
         return $result;
     }
 
+    /**
+     * @param list<int> $studentIds
+     * @param list<array{start: DateTimeImmutable, end: DateTimeImmutable}> $occurrenceSlots
+     */
+    private static function storeRecurringSeries(
+        \PDO $pdo,
+        int $teacherId,
+        int $classMasterId,
+        string $title,
+        string $description,
+        float $teacherRate,
+        float $studentRate,
+        string $timezone,
+        array $studentIds,
+        array $occurrenceSlots,
+        string $frequency,
+        ?string $recurrenceEndDate,
+        ?int $occurrenceCount,
+        bool $calendarAjax,
+        string $startInput,
+        string $endInput,
+        array $recurrenceConfig = []
+    ): void {
+        $googleEventId = null;
+        try {
+            $pdo->beginTransaction();
+            $result = RecurringSeriesService::createFromSchedule(
+                $pdo,
+                $teacherId,
+                $classMasterId,
+                $title,
+                $description,
+                $teacherRate,
+                $studentRate,
+                $timezone,
+                $studentIds,
+                $occurrenceSlots,
+                $frequency,
+                $recurrenceEndDate,
+                $occurrenceCount
+            );
+            $pdo->commit();
+        } catch (\Throwable $e) {
+            $pdo->rollBack();
+            RecurringSeriesService::logRecurringSchedule([
+                'event' => 'series_failed',
+                'error' => $e->getMessage(),
+                'teacher_id' => $teacherId,
+                'frequency' => $frequency,
+                'occurrence_count' => count($occurrenceSlots),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            if ($googleEventId !== null && $googleEventId !== '') {
+                try {
+                    (new GoogleCalendarMeetingService())->deleteMeeting($teacherId, $googleEventId);
+                } catch (\Throwable $ignored) {
+                }
+            }
+            if ($calendarAjax) {
+                self::respondScheduleJson([
+                    'success' => false,
+                    'message' => 'Could not save recurring series: ' . $e->getMessage(),
+                    'errors' => [$e->getMessage()],
+                ], 500);
+                return;
+            }
+            throw $e;
+        }
+
+        $seriesId = (int) $result['series_id'];
+        $classId = (int) $result['class_session_id'];
+        $occurrenceCountTotal = (int) $result['occurrence_count'];
+        $meetLink = $result['meet_link'] ?? null;
+        $googleEventId = $result['google_event_id'] ?? null;
+
+        logTimezoneFix([
+            'event' => 'recurring_series_scheduled',
+            'series_id' => $seriesId,
+            'class_id' => $classId,
+            'teacher_id' => $teacherId,
+            'timezone' => $timezone,
+            'occurrence_count' => $occurrenceCountTotal,
+        ]);
+
+        $mailResult = self::sendRecurringSeriesNotification($seriesId);
+        $mailStatus = $mailResult['status'] ?? 'failed';
+        $notices = [];
+        if ($mailStatus === 'failed') {
+            $notices[] = 'Notification email failed. Check logs.';
+        }
+
+        if ($calendarAjax) {
+            $message = $mailStatus === 'success'
+                ? ($occurrenceCountTotal . ' class occurrences scheduled. One meeting invitation has been sent.')
+                : ($occurrenceCountTotal . ' class occurrences scheduled in one recurring series.');
+            if ($notices !== []) {
+                $message .= ' ' . implode(' ', $notices);
+            }
+            self::respondScheduleJson([
+                'success' => true,
+                'message' => $message,
+                'redirect_url' => self::defaultScheduleRedirectPath() . '?series=' . $seriesId,
+                'class_id' => $classId,
+                'series_id' => $seriesId,
+                'occurrence_count' => $occurrenceCountTotal,
+                'warnings' => $notices,
+                'google_meet_created' => $meetLink !== null && $meetLink !== '',
+                'email_sent' => $mailStatus === 'success',
+            ]);
+            return;
+        }
+
+        if ($mailStatus === 'success') {
+            $_SESSION['flash_success'] = $occurrenceCountTotal . ' occurrences scheduled. One meeting invitation sent.';
+        } else {
+            $_SESSION['flash_warning'] = implode(' ', $notices);
+        }
+        redirectTo(self::defaultScheduleRedirectPath());
+    }
+
+    /**
+     * @return array{sent:int,failed:int,total:int,status:string}
+     */
+    public static function sendRecurringSeriesNotification(int $seriesId): array
+    {
+        $pdo = Database::connection();
+        $stmt = $pdo->prepare(
+            'SELECT rs.*, u.name AS teacher_name, u.email AS teacher_email, u.timezone AS teacher_timezone
+             FROM recurring_series rs
+             INNER JOIN users u ON u.id = rs.teacher_id
+             WHERE rs.id = :id LIMIT 1'
+        );
+        $stmt->execute(['id' => $seriesId]);
+        $series = $stmt->fetch();
+        if (!$series) {
+            return ['sent' => 0, 'failed' => 0, 'total' => 0, 'status' => 'failed'];
+        }
+
+        $studentsStmt = $pdo->prepare(
+            'SELECT u.id, u.name, u.email, u.timezone
+             FROM recurring_series_students rss
+             INNER JOIN users u ON u.id = rss.student_id
+             WHERE rss.series_id = :sid AND u.status = "active"'
+        );
+        $studentsStmt->execute(['sid' => $seriesId]);
+        $students = $studentsStmt->fetchAll() ?: [];
+
+        $occCountStmt = $pdo->prepare('SELECT COUNT(*) FROM recurring_occurrences WHERE series_id = :sid');
+        $occCountStmt->execute(['sid' => $seriesId]);
+        $totalClasses = (int) ($occCountStmt->fetchColumn() ?: 0);
+
+        $tz = (string) ($series['scheduled_timezone'] ?? $series['timezone'] ?? APP_TIMEZONE);
+        $tzAbbr = schedulingTimezoneAbbreviation($tz);
+        try {
+            $seriesTz = new DateTimeZone($tz);
+            $startDate = (new DateTimeImmutable((string) $series['start_date'], $seriesTz))->format('d-M-Y');
+            $endDate = !empty($series['end_date'])
+                ? (new DateTimeImmutable((string) $series['end_date'], $seriesTz))->format('d-M-Y')
+                : $startDate;
+            $startTime = (new DateTimeImmutable((string) $series['start_date'] . ' ' . (string) $series['start_time'], $seriesTz))->format('g:i A');
+            $endTime = (new DateTimeImmutable((string) $series['start_date'] . ' ' . (string) $series['end_time'], $seriesTz))->format('g:i A');
+        } catch (\Throwable $e) {
+            $startDate = (string) ($series['start_date'] ?? '');
+            $endDate = (string) ($series['end_date'] ?? $startDate);
+            $startTime = (string) ($series['start_time'] ?? '');
+            $endTime = (string) ($series['end_time'] ?? '');
+        }
+        $frequencyLabel = ucfirst((string) ($series['frequency'] ?? 'daily'));
+        $meetingLink = (string) ($series['meeting_link'] ?? '');
+
+        $recipients = [];
+        if (!empty($series['teacher_email'])) {
+            $recipients[] = [
+                'name' => (string) ($series['teacher_name'] ?? 'Teacher'),
+                'email' => (string) $series['teacher_email'],
+                'role' => 'teacher',
+            ];
+        }
+        foreach ($students as $student) {
+            if (!empty($student['email'])) {
+                $recipients[] = [
+                    'name' => (string) ($student['name'] ?? 'Student'),
+                    'email' => (string) $student['email'],
+                    'role' => 'student',
+                ];
+            }
+        }
+
+        $studentNames = array_values(array_filter(array_map(
+            static fn(array $s): string => (string) ($s['name'] ?? ''),
+            $students
+        )));
+
+        $result = ['sent' => 0, 'failed' => 0, 'total' => count($recipients), 'status' => 'success'];
+        $subject = EmailTemplate::subject('recurring_scheduled');
+        $recurrenceLabel = ucfirst((string) ($series['frequency'] ?? 'daily'));
+
+        foreach ($recipients as $recipient) {
+            $studentList = $studentNames !== []
+                ? implode(', ', $studentNames)
+                : (string) ($recipient['name'] ?? '');
+            $studentDisplay = ($recipient['role'] ?? '') === 'student'
+                ? (string) ($recipient['name'] ?? '')
+                : $studentList;
+            $intro = '<p>Hi ' . htmlspecialchars((string) ($recipient['name'] ?? ''), ENT_QUOTES, 'UTF-8') . ',</p>'
+                . '<p>Your recurring class series has been scheduled successfully.</p>';
+            $rows = [
+                'Student Name' => htmlspecialchars($studentDisplay, ENT_QUOTES, 'UTF-8'),
+                'Teacher Name' => htmlspecialchars((string) ($series['teacher_name'] ?? ''), ENT_QUOTES, 'UTF-8'),
+                'Subject' => htmlspecialchars((string) ($series['title'] ?? ''), ENT_QUOTES, 'UTF-8'),
+                'Recurring Type' => htmlspecialchars($recurrenceLabel, ENT_QUOTES, 'UTF-8'),
+                'Start Date' => htmlspecialchars($startDate, ENT_QUOTES, 'UTF-8'),
+                'End Date' => htmlspecialchars($endDate, ENT_QUOTES, 'UTF-8'),
+                'Time' => htmlspecialchars($startTime . ' – ' . $endTime, ENT_QUOTES, 'UTF-8'),
+                'Timezone' => htmlspecialchars($tzAbbr, ENT_QUOTES, 'UTF-8'),
+                'Total Sessions' => (string) (int) $totalClasses,
+                'Meeting Link' => $meetingLink !== ''
+                    ? '<a href="' . htmlspecialchars($meetingLink, ENT_QUOTES, 'UTF-8') . '">' . htmlspecialchars($meetingLink, ENT_QUOTES, 'UTF-8') . '</a>'
+                    : '—',
+            ];
+            $body = EmailTemplate::wrap(
+                'Recurring Classes Scheduled Successfully',
+                $intro,
+                $rows,
+                $meetingLink !== '' ? 'Join Class' : null,
+                $meetingLink !== '' ? $meetingLink : null
+            );
+            try {
+                $mailResponse = Mailer::send((string) $recipient['email'], $subject, $body, true);
+                if (!empty($mailResponse['success'])) {
+                    $result['sent']++;
+                } else {
+                    $result['failed']++;
+                }
+            } catch (\Throwable $e) {
+                $result['failed']++;
+            }
+        }
+
+        if ($result['failed'] > 0 && $result['sent'] > 0) {
+            $result['status'] = 'partial';
+        } elseif ($result['failed'] > 0) {
+            $result['status'] = 'failed';
+        }
+
+        require_once dirname(__DIR__) . '/lib/NotificationMailer.php';
+        NotificationMailer::notifyAdminClassScheduled([
+            'title' => (string) ($series['title'] ?? ''),
+            'teacher_name' => (string) ($series['teacher_name'] ?? ''),
+            'meeting_link' => $meetingLink,
+            'start_datetime' => $startDate,
+            'scheduled_timezone' => $tz,
+            'start_time_utc' => (string) ($series['start_date'] ?? ''),
+        ], $students);
+
+        return $result;
+    }
+
+    /**
+     * @param list<string> $studentNames
+     */
     private static function buildClassEmailTemplate(
-        string $studentName,
+        string $recipientName,
         string $classTitle,
-        string $startLocal,
-        string $endLocal,
+        string $scheduledRange,
         string $scheduledStart,
-        string $scheduledTimezoneLabel,
+        string $scheduledEnd,
+        string $scheduledTimezoneAbbr,
+        string $recipientLocalRange,
         string $teacherName,
         string $meetingLink,
-        string $recipientRole = 'student'
+        string $recipientRole = 'student',
+        array $studentNames = [],
+        string $subjectLabel = ''
     ): string {
-        $safeStudentName = htmlspecialchars($studentName, ENT_QUOTES, 'UTF-8');
-        $safeClassTitle = htmlspecialchars($classTitle, ENT_QUOTES, 'UTF-8');
-        $safeStart = htmlspecialchars($startLocal, ENT_QUOTES, 'UTF-8');
-        $safeEnd = htmlspecialchars($endLocal, ENT_QUOTES, 'UTF-8');
-        $safeScheduledStart = htmlspecialchars($scheduledStart, ENT_QUOTES, 'UTF-8');
-        $safeScheduledTimezoneLabel = htmlspecialchars($scheduledTimezoneLabel, ENT_QUOTES, 'UTF-8');
-        $safeTeacherName = htmlspecialchars($teacherName, ENT_QUOTES, 'UTF-8');
-        $safeMeetingLink = htmlspecialchars($meetingLink, ENT_QUOTES, 'UTF-8');
-        $intro = $recipientRole === 'teacher'
-            ? 'Your class has been scheduled successfully.'
-            : 'Your class has been scheduled successfully.';
+        $safeRecipientName = htmlspecialchars($recipientName, ENT_QUOTES, 'UTF-8');
+        $studentList = $studentNames !== []
+            ? htmlspecialchars(implode(', ', $studentNames), ENT_QUOTES, 'UTF-8')
+            : ($recipientRole === 'student' ? $safeRecipientName : '—');
+        $safeSubject = htmlspecialchars($subjectLabel !== '' ? $subjectLabel : $classTitle, ENT_QUOTES, 'UTF-8');
         $actionLabel = $recipientRole === 'teacher' ? 'Open Class' : 'Join Class';
+        $classDate = htmlspecialchars($scheduledStart, ENT_QUOTES, 'UTF-8');
+        $timeRange = htmlspecialchars($scheduledStart . ' – ' . $scheduledEnd, ENT_QUOTES, 'UTF-8');
 
-        return '
-            <div style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.6;">
-                <h2 style="margin-bottom: 8px;">Class Scheduled</h2>
-                <p>Hi ' . $safeStudentName . ',</p>
-                <p>' . htmlspecialchars($intro, ENT_QUOTES, 'UTF-8') . '</p>
-                <table cellpadding="6" cellspacing="0" border="0" style="border-collapse: collapse;">
-                    <tr><td><strong>Class</strong></td><td>' . $safeClassTitle . '</td></tr>
-                    <tr><td><strong>Your Time</strong></td><td>' . $safeStart . ' to ' . $safeEnd . '</td></tr>
-                    <tr><td><strong>Scheduled Timezone</strong></td><td>' . $safeScheduledStart . '<br>' . $safeScheduledTimezoneLabel . '</td></tr>
-                    <tr><td><strong>Instructor</strong></td><td>' . $safeTeacherName . '</td></tr>
-                    <tr><td><strong>Google Meet link</strong></td><td><a href="' . $safeMeetingLink . '">' . $safeMeetingLink . '</a></td></tr>
-                </table>
-                <p style="margin-top: 16px;">
-                    <a href="' . $safeMeetingLink . '" style="display: inline-block; background: #0d6efd; color: #ffffff; text-decoration: none; padding: 10px 16px; border-radius: 6px;">
-                        ' . htmlspecialchars($actionLabel, ENT_QUOTES, 'UTF-8') . '
-                    </a>
-                </p>
-                <p style="margin-top: 16px;">Regards,<br>' . htmlspecialchars(APP_NAME, ENT_QUOTES, 'UTF-8') . ' Team</p>
-            </div>
-        ';
+        $intro = '<p>Hi ' . $safeRecipientName . ',</p><p>Your class has been scheduled successfully.</p>';
+        $rows = [
+            'Student Name' => $studentList,
+            'Teacher Name' => htmlspecialchars($teacherName, ENT_QUOTES, 'UTF-8'),
+            'Subject' => $safeSubject,
+            'Date' => $classDate,
+            'Time' => $timeRange,
+            'Timezone' => htmlspecialchars($scheduledTimezoneAbbr, ENT_QUOTES, 'UTF-8'),
+        ];
+        if ($recipientLocalRange !== '') {
+            $rows['Your Local Time'] = htmlspecialchars($recipientLocalRange, ENT_QUOTES, 'UTF-8');
+        }
+        if ($meetingLink !== '') {
+            $rows['Meeting Link'] = '<a href="' . htmlspecialchars($meetingLink, ENT_QUOTES, 'UTF-8') . '">'
+                . htmlspecialchars($meetingLink, ENT_QUOTES, 'UTF-8') . '</a>';
+        }
+
+        return EmailTemplate::wrap(
+            'Class Scheduled Successfully',
+            $intro,
+            $rows,
+            $meetingLink !== '' ? $actionLabel : null,
+            $meetingLink !== '' ? $meetingLink : null
+        );
     }
 
     private static function resolveMeetingLink(array $classRow): string
@@ -396,14 +679,14 @@ class ClassController
     {
         Auth::requireRole(['admin']);
         $pdo = Database::connection();
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $base = appWebPath();
 
         $classId = (int) ($_POST['class_id'] ?? 0);
         $status = $_POST['status'] ?? '';
 
         if ($classId <= 0 || !in_array($status, ['scheduled', 'ongoing', 'completed', 'cancelled', 'rescheduled'], true)) {
             $_SESSION['flash_warning'] = 'Invalid class status update request.';
-            header('Location: ' . $base . '/classes');
+            redirectTo('/classes');
             return;
         }
 
@@ -415,7 +698,7 @@ class ClassController
             } else {
                 $_SESSION['flash_warning'] = 'Google Meet has not reported the teacher session as ended yet.';
             }
-            header('Location: ' . $base . '/classes');
+            redirectTo('/classes');
             return;
         }
 
@@ -425,7 +708,7 @@ class ClassController
             'id' => $classId,
         ]);
         $_SESSION['flash_success'] = 'Class status updated.';
-        header('Location: ' . $base . '/classes');
+        redirectTo('/classes');
     }
 
     public static function completed(): void
@@ -467,8 +750,8 @@ class ClassController
             $stmt = $pdo->prepare('UPDATE class_sessions SET recording_enabled = :enabled WHERE id = :id');
             $stmt->execute(['enabled' => $enabled, 'id' => $classId]);
         }
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
-        header('Location: ' . $base . '/classes');
+        $base = appWebPath();
+        redirectTo('/classes');
     }
 
     /**
@@ -514,9 +797,9 @@ class ClassController
         $user = Auth::user();
         $role = (string) ($user['role'] ?? '');
         $classId = (int) ($_GET['id'] ?? 0);
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $base = appWebPath();
         if ($classId <= 0) {
-            header('Location: ' . $base . '/classes');
+            redirectTo('/classes');
             return;
         }
         $pdo = Database::connection();
@@ -524,7 +807,7 @@ class ClassController
         $stmt->execute(['id' => $classId]);
         $class = $stmt->fetch();
         if (!$class) {
-            header('Location: ' . $base . '/classes');
+            redirectTo('/classes');
             return;
         }
         if ($role === 'teacher' && (int) $class['teacher_id'] !== (int) ($user['id'] ?? 0)) {
@@ -537,6 +820,7 @@ class ClassController
             'pageTitle' => 'Edit Class',
             'class' => $class,
             'errors' => [],
+            'isRecurringSeries' => self::classIsInRecurrenceSeries($class, $pdo),
         ]);
     }
 
@@ -545,10 +829,10 @@ class ClassController
         Auth::requireRole(['admin', 'teacher']);
         $user = Auth::user();
         $role = (string) ($user['role'] ?? '');
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        $base = appWebPath();
         $classId = (int) ($_POST['class_id'] ?? 0);
         if ($classId <= 0) {
-            header('Location: ' . $base . '/classes');
+            redirectTo('/classes');
             return;
         }
 
@@ -557,7 +841,7 @@ class ClassController
         $stmt->execute(['id' => $classId]);
         $class = $stmt->fetch();
         if (!$class) {
-            header('Location: ' . $base . '/classes');
+            redirectTo('/classes');
             return;
         }
         if ($role === 'teacher' && (int) $class['teacher_id'] !== (int) ($user['id'] ?? 0)) {
@@ -598,6 +882,7 @@ class ClassController
                 'pageTitle' => 'Edit Class',
                 'class' => $class,
                 'errors' => $errors,
+                'isRecurringSeries' => self::classIsInRecurrenceSeries($class, $pdo),
             ]);
             return;
         }
@@ -611,88 +896,123 @@ class ClassController
         $existingMeetingCode = self::extractGoogleMeetCode((string) ($class['meeting_link'] ?? ''));
         $meetingCodeChanged = $nextMeetingCode !== $existingMeetingCode;
 
-        if (!empty($class['google_event_id']) && !empty($class['teacher_id'])) {
-            $meetingService = new GoogleCalendarMeetingService();
-            $meetingService->updateMeeting(
-                (int) $class['teacher_id'],
-                (string) $class['google_event_id'],
-                utcToTimezoneIso8601($startUtcValue, 'UTC'),
-                utcToTimezoneIso8601($endUtcValue, 'UTC'),
-                'UTC',
-                (string) ($class['title'] ?? '')
-            );
+        $editScope = (string) ($_POST['edit_scope'] ?? 'current');
+        $targetIds = [$classId];
+        $occurrenceId = (int) ($class['recurring_occurrence_id'] ?? 0);
+        if ($occurrenceId > 0 && self::classIsInRecurrenceSeries($class, $pdo)) {
+            $occurrenceScopeIds = RecurringOccurrence::idsFromScope($occurrenceId, $editScope, $pdo);
+            $mapped = [];
+            $mapStmt = $pdo->prepare('SELECT class_session_id FROM recurring_occurrences WHERE id = :id LIMIT 1');
+            foreach ($occurrenceScopeIds as $oid) {
+                $mapStmt->execute(['id' => $oid]);
+                $mappedId = (int) ($mapStmt->fetchColumn() ?: 0);
+                if ($mappedId > 0) {
+                    $mapped[] = $mappedId;
+                }
+            }
+            if ($mapped !== []) {
+                $targetIds = $mapped;
+            }
+        } elseif ($editScope === 'all_future' && self::classIsInRecurrenceSeries($class, $pdo)) {
+            $targetIds = ClassRecurrenceHelper::futureSeriesClassIds($classId, $pdo);
+            if ($targetIds === []) {
+                $targetIds = [$classId];
+            }
+        } elseif ($editScope === 'entire_series' && self::classIsInRecurrenceSeries($class, $pdo)) {
+            $targetIds = ClassRecurrenceHelper::allSeriesClassIds($classId, $pdo);
+            if ($targetIds === []) {
+                $targetIds = [$classId];
+            }
         }
 
-        $upd = $pdo->prepare(
-            'UPDATE class_sessions
-             SET start_datetime = :start_dt,
-                 scheduled_time_utc = :scheduled_time_utc,
-                 start_time_utc = :start_time_utc,
-                 end_datetime = :end_dt,
-                 end_time_utc = :end_time_utc,
-                 timezone = :timezone,
-                 scheduled_timezone = :scheduled_timezone,
-                 payout_amount = :payout,
-                 student_fee = :student_fee,
-                 meeting_link = :meeting_link,
-                 google_meeting_code = :google_meeting_code,
-                 google_meet_space_name = :google_meet_space_name,
-                 google_conference_id = :google_conference_id,
-                 meeting_live_status = :meeting_live_status,
-                 meeting_participant_count = CASE
-                     WHEN status = "completed" THEN meeting_participant_count
-                     ELSE NULL
-                 END,
-                 teacher_joined_at = CASE
-                     WHEN status = "completed" THEN teacher_joined_at
-                     ELSE NULL
-                 END,
-                 student_joined_at = CASE
-                     WHEN status = "completed" THEN student_joined_at
-                     ELSE NULL
-                 END,
-                 actual_start_time = CASE
-                     WHEN status = "completed" THEN actual_start_time
-                     ELSE NULL
-                 END,
-                 actual_end_time = CASE
-                     WHEN status = "completed" THEN actual_end_time
-                     ELSE NULL
-                 END,
-                 actual_duration = CASE
-                     WHEN status = "completed" THEN actual_duration
-                     ELSE NULL
-                 END,
-                 actual_duration_minutes = CASE
-                     WHEN status = "completed" THEN actual_duration_minutes
-                     ELSE NULL
-                 END,
-                 completed_at = CASE
-                     WHEN status = "completed" THEN completed_at
-                     ELSE NULL
-                 END,
-                 status = IF(status = "completed", "completed", "rescheduled")
-             WHERE id = :id'
-        );
-        $upd->execute([
-            'start_dt' => $startUtcValue,
-            'scheduled_time_utc' => $startUtcValue,
-            'start_time_utc' => $startUtcValue,
-            'end_dt' => $endUtcValue,
-            'end_time_utc' => $endUtcValue,
-            'timezone' => $timezone,
-            'scheduled_timezone' => $timezone,
-            'payout' => $payoutAmount,
-            'student_fee' => $studentFee,
-            'meeting_link' => $meetingLink !== '' ? $meetingLink : null,
-            'google_meeting_code' => $nextMeetingCode,
-            'google_meet_space_name' => $meetingCodeChanged ? null : ($class['google_meet_space_name'] ?? null),
-            'google_conference_id' => (string) ($class['status'] ?? '') === 'completed' ? ($class['google_conference_id'] ?? null) : null,
-            'meeting_live_status' => (string) ($class['status'] ?? '') === 'completed'
-                ? (string) ($class['meeting_live_status'] ?? 'ended')
-                : 'pending',
-            'id' => $classId,
-        ]);
+        $oldStartTs = strtotime((string) (classStartUtcValue($class) ?? $class['start_datetime']) . ' UTC');
+        $deltaSec = $startUtc->getTimestamp() - ($oldStartTs ?: $startUtc->getTimestamp());
+        $durationSec = $durationMin * 60;
+        $meetingService = new GoogleCalendarMeetingService();
+
+        foreach ($targetIds as $targetId) {
+            $tStmt = $pdo->prepare('SELECT * FROM class_sessions WHERE id = :id LIMIT 1');
+            $tStmt->execute(['id' => $targetId]);
+            $targetClass = $tStmt->fetch();
+            if (!$targetClass) {
+                continue;
+            }
+
+            if ((int) $targetId === $classId) {
+                $targetStartUtcValue = $startUtcValue;
+                $targetEndUtcValue = $endUtcValue;
+                $targetMeetingLink = $nextMeetingLink;
+                $targetMeetingCode = $nextMeetingCode;
+            } else {
+                $targetOldStartTs = strtotime((string) (classStartUtcValue($targetClass) ?? $targetClass['start_datetime']) . ' UTC');
+                $targetNewStartTs = ($targetOldStartTs ?: $startUtc->getTimestamp()) + $deltaSec;
+                $targetStartUtcValue = gmdate('Y-m-d H:i:s', $targetNewStartTs);
+                $targetEndUtcValue = gmdate('Y-m-d H:i:s', $targetNewStartTs + $durationSec);
+                $targetMeetingLink = (string) ($targetClass['meeting_link'] ?? '');
+                $targetMeetingCode = self::extractGoogleMeetCode($targetMeetingLink);
+            }
+
+            if (!empty($targetClass['google_event_id']) && !empty($targetClass['teacher_id'])) {
+                $meetingService->updateMeeting(
+                    (int) $targetClass['teacher_id'],
+                    (string) $targetClass['google_event_id'],
+                    utcToTimezoneIso8601($targetStartUtcValue, 'UTC'),
+                    utcToTimezoneIso8601($targetEndUtcValue, 'UTC'),
+                    'UTC',
+                    (string) ($targetClass['title'] ?? '')
+                );
+            }
+
+            $targetMeetingCodeChanged = $targetMeetingCode !== self::extractGoogleMeetCode((string) ($targetClass['meeting_link'] ?? ''));
+            $upd = $pdo->prepare(
+                'UPDATE class_sessions
+                 SET start_datetime = :start_dt,
+                     scheduled_time_utc = :scheduled_time_utc,
+                     start_time_utc = :start_time_utc,
+                     end_datetime = :end_dt,
+                     end_time_utc = :end_time_utc,
+                     timezone = :timezone,
+                     scheduled_timezone = :scheduled_timezone,
+                     payout_amount = :payout,
+                     student_fee = :student_fee,
+                     meeting_link = :meeting_link,
+                     google_meeting_code = :google_meeting_code,
+                     google_meet_space_name = :google_meet_space_name,
+                     google_conference_id = :google_conference_id,
+                     meeting_live_status = :meeting_live_status,
+                     meeting_participant_count = CASE WHEN status = "completed" THEN meeting_participant_count ELSE NULL END,
+                     teacher_joined_at = CASE WHEN status = "completed" THEN teacher_joined_at ELSE NULL END,
+                     teacher_join_delay_minutes = CASE WHEN status = "completed" THEN teacher_join_delay_minutes ELSE NULL END,
+                     student_joined_at = CASE WHEN status = "completed" THEN student_joined_at ELSE NULL END,
+                     actual_start_time = CASE WHEN status = "completed" THEN actual_start_time ELSE NULL END,
+                     actual_end_time = CASE WHEN status = "completed" THEN actual_end_time ELSE NULL END,
+                     actual_duration = CASE WHEN status = "completed" THEN actual_duration ELSE NULL END,
+                     actual_duration_minutes = CASE WHEN status = "completed" THEN actual_duration_minutes ELSE NULL END,
+                     completed_at = CASE WHEN status = "completed" THEN completed_at ELSE NULL END,
+                     status = IF(status = "completed", "completed", "rescheduled")
+                 WHERE id = :id'
+            );
+            $upd->execute([
+                'start_dt' => $targetStartUtcValue,
+                'scheduled_time_utc' => $targetStartUtcValue,
+                'start_time_utc' => $targetStartUtcValue,
+                'end_dt' => $targetEndUtcValue,
+                'end_time_utc' => $targetEndUtcValue,
+                'timezone' => $timezone,
+                'scheduled_timezone' => $timezone,
+                'payout' => $payoutAmount,
+                'student_fee' => $studentFee,
+                'meeting_link' => $targetMeetingLink !== '' ? $targetMeetingLink : null,
+                'google_meeting_code' => $targetMeetingCode,
+                'google_meet_space_name' => $targetMeetingCodeChanged ? null : ($targetClass['google_meet_space_name'] ?? null),
+                'google_conference_id' => (string) ($targetClass['status'] ?? '') === 'completed' ? ($targetClass['google_conference_id'] ?? null) : null,
+                'meeting_live_status' => (string) ($targetClass['status'] ?? '') === 'completed'
+                    ? (string) ($targetClass['meeting_live_status'] ?? 'ended')
+                    : 'pending',
+                'id' => $targetId,
+            ]);
+        }
+
         logTimezoneFix([
             'event' => 'class_rescheduled_to_utc',
             'class_id' => $classId,
@@ -701,6 +1021,8 @@ class ClassController
             'duration_minutes' => $durationMin,
             'start_time_utc' => $startUtcValue,
             'end_time_utc' => $endUtcValue,
+            'edit_scope' => $editScope,
+            'updated_count' => count($targetIds),
         ]);
         logTimezoneConversion([
             'event' => 'class_rescheduled_to_utc',
@@ -712,8 +1034,10 @@ class ClassController
             'end_time_utc' => $endUtcValue,
         ]);
 
-        $_SESSION['flash_success'] = 'Class updated successfully.';
-        header('Location: ' . $base . '/classes');
+        $_SESSION['flash_success'] = count($targetIds) > 1
+            ? count($targetIds) . ' classes in the series were updated.'
+            : 'Class updated successfully.';
+        redirectTo('/classes');
     }
 
     public static function store(): void
@@ -734,9 +1058,13 @@ class ClassController
                     'start_datetime' => $_POST['start_datetime'] ?? '',
                     'end_datetime' => $_POST['end_datetime'] ?? '',
                     'timezone' => $_POST['timezone'] ?? '',
+                    'recurrence_rule' => $_POST['recurrence_rule'] ?? 'none',
+                    'recurrence_end_mode' => $_POST['recurrence_end_mode'] ?? '',
+                    'recurrence_until' => $_POST['recurrence_until'] ?? '',
+                    'recurrence_count' => $_POST['recurrence_count'] ?? '',
                 ],
                 'request_uri' => (string) ($_SERVER['REQUEST_URI'] ?? ''),
-                'base_path' => defined('BASE_PATH') ? BASE_PATH : '',
+                'base_path' => appWebPath(),
             ]);
         }
 
@@ -862,42 +1190,86 @@ class ClassController
             return;
         }
 
-        $startUtc = $startDt->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H:i:s');
-        $endUtc = $endDt->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H:i:s');
-        $startUtcIso = utcToTimezoneIso8601($startUtc, 'UTC');
-        $endUtcIso = utcToTimezoneIso8601($endUtc, 'UTC');
+        $recurrence = ClassRecurrenceHelper::parseFromPost($_POST, $startDt, $endDt, $timezone);
+        $normalizedSlot = ClassRecurrenceHelper::normalizeSlotForRecurrence($startDt, $endDt, $recurrence['rule']);
+        $startDt = $normalizedSlot['start'];
+        $endDt = $normalizedSlot['end'];
+        if ($recurrence['end_date'] === null && $normalizedSlot['inferred_until'] !== null) {
+            $recurrence['end_date'] = $normalizedSlot['inferred_until'];
+        }
 
-        // Create the Google Meet event first so the availability check does not
-        // see this new class row during the same transaction.
+        $occurrenceSlots = ClassRecurrenceHelper::buildOccurrencesFromConfig($startDt, $endDt, $recurrence);
+
+        if ($recurrence['rule'] !== 'none') {
+            self::storeRecurringSeries(
+                $pdo,
+                $teacherId,
+                $classMasterId,
+                $title,
+                $description,
+                $payoutAmount,
+                $studentFee,
+                $timezone,
+                $studentIds,
+                $occurrenceSlots,
+                (string) ($recurrence['frequency_db'] ?? 'daily'),
+                $recurrence['end_date'],
+                $recurrence['count'],
+                $calendarAjax,
+                $start,
+                $end,
+                $recurrence
+            );
+            return;
+        }
+
         $meetingService = new GoogleCalendarMeetingService();
         $meetTrackingService = new GoogleMeetLiveTrackingService();
-        $googleEventId = null;
-        $meetLink = null;
-        $googleMeetSpaceName = null;
-        $googleMeetingCode = null;
-        $teacherGoogleEmail = '';
+        $attendeeEmails = self::studentEmailsForIds($studentIds);
+        $teacherGoogleRowForRec = TeacherGoogleAccount::findByTeacherId($teacherId);
+        $recordingEnabledInsert = TeacherGoogleAccount::recordingSupportedFromAccountRow($teacherGoogleRowForRec) ? 1 : 0;
+        $teacherGoogleAccount = TeacherGoogleAccount::getCredentialsForTeacher($teacherId);
+        $teacherGoogleEmailDefault = (string) ($teacherGoogleAccount['google_email'] ?? '');
+
+        $plannedMeets = [];
         try {
-            $attendeeEmails = self::studentEmailsForIds($studentIds);
+            $slot = $occurrenceSlots[0];
+            $slotStartUtc = $slot['start']->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H:i:s');
+            $slotEndUtc = $slot['end']->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H:i:s');
             $meeting = $meetingService->createMeeting(
                 $teacherId,
-                $startUtcIso,
-                $endUtcIso,
-                'UTC',
+                utcToTimezoneIso8601($slotStartUtc, $timezone),
+                utcToTimezoneIso8601($slotEndUtc, $timezone),
+                $timezone,
                 $title,
                 $attendeeEmails
             );
-            $googleEventId = $meeting['event_id'] ?? null;
-            $meetLink = $meeting['meet_link'] ?? null;
-            $googleMeetingCode = self::extractGoogleMeetCode($meetLink);
-            $teacherGoogleAccount = TeacherGoogleAccount::getCredentialsForTeacher($teacherId);
-            $teacherGoogleEmail = (string) ($meeting['organizer_email'] ?? ($teacherGoogleAccount['google_email'] ?? ''));
+            $meetLink = (string) ($meeting['meet_link'] ?? '');
+            $googleMeetSpaceName = null;
             try {
-                $spaceMeta = $meetTrackingService->describeSpaceForMeetingLink($teacherId, (string) $meetLink);
+                $spaceMeta = $meetTrackingService->describeSpaceForMeetingLink($teacherId, $meetLink);
                 $googleMeetSpaceName = is_array($spaceMeta) ? ($spaceMeta['name'] ?? null) : null;
             } catch (\Throwable $ignored) {
                 $googleMeetSpaceName = null;
             }
+            $plannedMeets[] = [
+                'start_utc' => $slotStartUtc,
+                'end_utc' => $slotEndUtc,
+                'google_event_id' => $meeting['event_id'] ?? null,
+                'meet_link' => $meetLink !== '' ? $meetLink : null,
+                'google_meeting_code' => self::extractGoogleMeetCode($meetLink),
+                'google_meet_space_name' => $googleMeetSpaceName,
+                'teacher_google_email' => (string) ($meeting['organizer_email'] ?? $teacherGoogleEmailDefault),
+            ];
         } catch (\Throwable $e) {
+            foreach ($plannedMeets as $planned) {
+                if (!empty($planned['google_event_id'])) {
+                    try {
+                        $meetingService->deleteMeeting($teacherId, (string) $planned['google_event_id']);
+                    } catch (\Throwable $ignored) {
+                    }
+                }
+            }
             $errorMessage = $e->getMessage();
             if (function_exists('logClassScheduleLive')) {
                 logClassScheduleLive([
@@ -914,95 +1286,78 @@ class ClassController
                 ], 422);
                 return;
             }
-
-            $teachers = User::allTeachers();
-            $classTypes = [];
-            try {
-                $classTypes = ClassMaster::allActive();
-            } catch (\Throwable $ignored) {
-                $classTypes = [];
-            }
             View::render('classes/create', [
                 'pageTitle' => 'Schedule Class',
-                'teachers' => $teachers,
+                'teachers' => User::allTeachers(),
                 'students' => self::studentsForScheduleForm($_POST),
-                'classTypes' => $classTypes,
+                'classTypes' => ClassMaster::allActive(),
                 'errors' => [$errorMessage],
                 'old' => $_POST,
             ]);
             return;
         }
 
+        $classId = 0;
+        $meetLink = null;
+        $googleEventId = null;
+        $teacherGoogleEmail = $teacherGoogleEmailDefault;
+        $createdEventIds = [];
         $pdo->beginTransaction();
         try {
-            $teacherGoogleRowForRec = TeacherGoogleAccount::findByTeacherId($teacherId);
-            $recordingEnabledInsert = TeacherGoogleAccount::recordingSupportedFromAccountRow($teacherGoogleRowForRec) ? 1 : 0;
-            $insertClass = $pdo->prepare(
-                'INSERT INTO class_sessions
-                    (teacher_id, class_master_id, title, description, payout_amount, student_fee, start_datetime, scheduled_time_utc, start_time_utc, end_datetime, end_time_utc, timezone, scheduled_timezone, meeting_link, teacher_google_email, google_meet_space_name, google_meeting_code, meeting_live_status, status, recording_enabled)
-                 VALUES
-                    (:teacher_id, :class_master_id, :title, :description, :payout_amount, :student_fee, :start_datetime, :scheduled_time_utc, :start_time_utc, :end_datetime, :end_time_utc, :timezone, :scheduled_timezone, :meeting_link, :teacher_google_email, :google_meet_space_name, :google_meeting_code, "pending", "scheduled", :recording_enabled)'
-            );
-            $insertClass->execute([
-                'teacher_id' => $teacherId,
-                'class_master_id' => $classMasterId > 0 ? $classMasterId : null,
-                'title' => $title,
-                'description' => $description,
-                'payout_amount' => $payoutAmount,
-                'student_fee' => $studentFee,
-                'start_datetime' => $startUtc,
-                'scheduled_time_utc' => $startUtc,
-                'start_time_utc' => $startUtc,
-                'end_datetime' => $endUtc,
-                'end_time_utc' => $endUtc,
-                'timezone' => $timezone,
-                'scheduled_timezone' => $timezone,
-                'meeting_link' => $meetLink,
-                'teacher_google_email' => $teacherGoogleEmail !== '' ? $teacherGoogleEmail : null,
-                'google_meet_space_name' => $googleMeetSpaceName,
-                'google_meeting_code' => $googleMeetingCode,
-                'recording_enabled' => $recordingEnabledInsert,
-            ]);
-            $classId = (int) $pdo->lastInsertId();
-
-            $updateMeet = $pdo->prepare(
-                'UPDATE class_sessions 
-                 SET google_event_id = :event_id,
-                     meeting_link = :meeting_link,
-                     teacher_google_email = :teacher_google_email,
-                     google_meet_space_name = :google_meet_space_name,
-                     google_meeting_code = :google_meeting_code,
-                     meeting_live_status = "pending"
-                 WHERE id = :id'
-            );
-            $updateMeet->execute([
-                'event_id' => $googleEventId,
-                'meeting_link' => $meetLink,
-                'teacher_google_email' => $teacherGoogleEmail !== '' ? $teacherGoogleEmail : null,
-                'google_meet_space_name' => $googleMeetSpaceName,
-                'google_meeting_code' => $googleMeetingCode,
-                'id' => $classId,
-            ]);
-
-            if (!empty($studentIds)) {
-                $insertEnroll = $pdo->prepare(
-                    'INSERT INTO enrollments (class_id, student_id, status)
-                     VALUES (:class_id, :student_id, "active")'
+            $recurrenceRule = null;
+            $recurrenceEndDate = null;
+            $createdClassIds = [];
+            foreach ($plannedMeets as $index => $planned) {
+                $saved = self::persistClassOccurrence(
+                    $pdo,
+                    $meetingService,
+                    $meetTrackingService,
+                    $teacherId,
+                    $classMasterId,
+                    $title,
+                    $description,
+                    $payoutAmount,
+                    $studentFee,
+                    $planned['start_utc'],
+                    $planned['end_utc'],
+                    $timezone,
+                    $studentIds,
+                    $planned['google_event_id'],
+                    $planned['meet_link'],
+                    $planned['google_meet_space_name'],
+                    $planned['google_meeting_code'],
+                    $planned['teacher_google_email'],
+                    $recordingEnabledInsert,
+                    null,
+                    null,
+                    null
                 );
-                foreach ($studentIds as $sid) {
-                    $insertEnroll->execute([
-                        'class_id' => $classId,
-                        'student_id' => $sid,
-                    ]);
-                    StudentPayment::createPendingForEnrollment($classId, $sid, $studentFee);
+                $classId = $saved['class_id'];
+                $meetLink = $saved['meet_link'];
+                $googleEventId = $saved['google_event_id'];
+                $teacherGoogleEmail = $planned['teacher_google_email'];
+                if (!empty($saved['google_event_id'])) {
+                    $createdEventIds[] = (string) $saved['google_event_id'];
                 }
+                $createdClassIds[] = (int) $saved['class_id'];
             }
-
             $pdo->commit();
         } catch (\Throwable $e) {
             $pdo->rollBack();
-            if ($googleEventId !== null) {
-                $meetingService->deleteMeeting($teacherId, (string) $googleEventId);
+            foreach ($createdEventIds as $eventId) {
+                try {
+                    $meetingService->deleteMeeting($teacherId, $eventId);
+                } catch (\Throwable $ignored) {
+                }
+            }
+            foreach ($plannedMeets as $planned) {
+                $eventId = (string) ($planned['google_event_id'] ?? '');
+                if ($eventId !== '' && !in_array($eventId, $createdEventIds, true)) {
+                    try {
+                        $meetingService->deleteMeeting($teacherId, $eventId);
+                    } catch (\Throwable $ignored) {
+                    }
+                }
             }
             if ($calendarAjax) {
                 self::logClassSchedule([
@@ -1020,6 +1375,10 @@ class ClassController
             throw $e;
         }
 
+        $startUtc = (string) ($plannedMeets[0]['start_utc'] ?? '');
+        $endUtc = (string) ($plannedMeets[0]['end_utc'] ?? '');
+        $occurrenceCount = count($plannedMeets);
+
         logTimezoneFix([
             'event' => 'class_scheduled_to_utc',
             'class_id' => $classId,
@@ -1029,6 +1388,7 @@ class ClassController
             'input_end' => $end,
             'start_time_utc' => $startUtc,
             'end_time_utc' => $endUtc,
+            'occurrence_count' => $occurrenceCount,
         ]);
         logTimezoneConversion([
             'event' => 'class_scheduled_to_utc',
@@ -1049,7 +1409,15 @@ class ClassController
             'meeting_link' => $meetLink,
         ]);
 
-        $mailResult = self::sendClassNotification($classId);
+        $mailResult = ['status' => 'success', 'sent' => 0, 'failed' => 0];
+        foreach ($createdClassIds ?? [$classId] as $notifyClassId) {
+            $singleMail = self::sendClassNotification((int) $notifyClassId);
+            if (($singleMail['status'] ?? '') !== 'success') {
+                $mailResult['status'] = $singleMail['status'] ?? 'failed';
+            }
+            $mailResult['sent'] += (int) ($singleMail['sent'] ?? 0);
+            $mailResult['failed'] += (int) ($singleMail['failed'] ?? 0);
+        }
         $mailStatus = $mailResult['status'] ?? 'failed';
         $notices = [];
         if ($mailStatus === 'partial') {
@@ -1060,15 +1428,19 @@ class ClassController
 
         if ($calendarAjax) {
             if ($mailStatus === 'success') {
-                $message = 'Class scheduled successfully. Notifications sent.';
+                $message = $occurrenceCount > 1
+                    ? ($occurrenceCount . ' recurring classes scheduled. Meeting invitations have been sent.')
+                    : 'Meeting invitation has been sent.';
             } else {
-                $message = 'Class scheduled successfully.';
+                $message = $occurrenceCount > 1
+                    ? ($occurrenceCount . ' recurring classes scheduled.')
+                    : 'Class scheduled successfully.';
             }
             if ($notices !== []) {
                 $message .= ' ' . implode(' ', $notices);
             }
 
-            $redirectUrl = self::defaultScheduleRedirectUrl() . '?scheduled=' . $classId;
+            $redirectUrl = self::defaultScheduleRedirectPath() . '?scheduled=' . $classId;
             $liveLog = [
                 'event' => 'class_scheduled',
                 'class_id' => $classId,
@@ -1111,19 +1483,24 @@ class ClassController
             $_SESSION['flash_warning'] = implode(' ', $notices);
         }
 
-        $base = defined('BASE_PATH') ? BASE_PATH : '';
-        header('Location: ' . self::defaultScheduleRedirectUrl());
+        redirectTo(self::defaultScheduleRedirectPath());
     }
 
-    private static function defaultScheduleRedirectUrl(): string
+    private static function defaultScheduleRedirectPath(): string
     {
         $target = strtolower(trim((string) ($_POST['redirect_to'] ?? 'calendar')));
 
         if ($target === 'classes') {
-            return function_exists('appRelativeUrl') ? appRelativeUrl('/classes') : ((defined('BASE_PATH') ? BASE_PATH : '') . '/classes');
+            return '/classes';
         }
 
-        return function_exists('appRelativeUrl') ? appRelativeUrl('/admin/calendar') : ((defined('BASE_PATH') ? BASE_PATH : '') . '/admin/calendar');
+        return '/admin/calendar';
+    }
+
+    /** @deprecated Use defaultScheduleRedirectPath() */
+    private static function defaultScheduleRedirectUrl(): string
+    {
+        return path(self::defaultScheduleRedirectPath());
     }
 
     /**
@@ -1160,5 +1537,128 @@ class ClassController
         }
 
         echo json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * @param array<string, mixed> $class
+     */
+    private static function classIsInRecurrenceSeries(array $class, \PDO $pdo): bool
+    {
+        if ((int) ($class['recurring_series_id'] ?? 0) > 0) {
+            return true;
+        }
+        if ((string) ($class['recurrence_rule'] ?? '') !== '' && (string) ($class['recurrence_rule'] ?? '') !== 'none') {
+            return true;
+        }
+        if ((int) ($class['recurrence_parent_id'] ?? 0) > 0) {
+            return true;
+        }
+        $chk = $pdo->prepare('SELECT 1 FROM class_sessions WHERE recurrence_parent_id = :id LIMIT 1');
+        $chk->execute(['id' => (int) ($class['id'] ?? 0)]);
+
+        return (bool) $chk->fetchColumn();
+    }
+
+    /**
+     * @param list<int> $studentIds
+     * @return array{class_id: int, google_event_id: ?string, meet_link: ?string}
+     */
+    private static function persistClassOccurrence(
+        \PDO $pdo,
+        GoogleCalendarMeetingService $meetingService,
+        GoogleMeetLiveTrackingService $meetTrackingService,
+        int $teacherId,
+        int $classMasterId,
+        string $title,
+        string $description,
+        float $payoutAmount,
+        float $studentFee,
+        string $startUtc,
+        string $endUtc,
+        string $timezone,
+        array $studentIds,
+        ?string $googleEventId,
+        ?string $meetLink,
+        ?string $googleMeetSpaceName,
+        ?string $googleMeetingCode,
+        string $teacherGoogleEmail,
+        int $recordingEnabledInsert,
+        ?int $recurrenceParentId,
+        ?string $recurrenceRule,
+        ?string $recurrenceEndDate
+    ): array {
+        $insertClass = $pdo->prepare(
+            'INSERT INTO class_sessions
+                (teacher_id, class_master_id, title, description, payout_amount, student_fee,
+                 start_datetime, scheduled_time_utc, start_time_utc, end_datetime, end_time_utc,
+                 timezone, scheduled_timezone, meeting_link, teacher_google_email, google_meet_space_name,
+                 google_meeting_code, meeting_live_status, status, recording_enabled,
+                 recurrence_parent_id, recurrence_rule, recurrence_end_date)
+             VALUES
+                (:teacher_id, :class_master_id, :title, :description, :payout_amount, :student_fee,
+                 :start_datetime, :scheduled_time_utc, :start_time_utc, :end_datetime, :end_time_utc,
+                 :timezone, :scheduled_timezone, :meeting_link, :teacher_google_email, :google_meet_space_name,
+                 :google_meeting_code, "pending", "scheduled", :recording_enabled,
+                 :recurrence_parent_id, :recurrence_rule, :recurrence_end_date)'
+        );
+        $insertClass->execute([
+            'teacher_id' => $teacherId,
+            'class_master_id' => $classMasterId > 0 ? $classMasterId : null,
+            'title' => $title,
+            'description' => $description,
+            'payout_amount' => $payoutAmount,
+            'student_fee' => $studentFee,
+            'start_datetime' => $startUtc,
+            'scheduled_time_utc' => $startUtc,
+            'start_time_utc' => $startUtc,
+            'end_datetime' => $endUtc,
+            'end_time_utc' => $endUtc,
+            'timezone' => $timezone,
+            'scheduled_timezone' => $timezone,
+            'meeting_link' => $meetLink,
+            'teacher_google_email' => $teacherGoogleEmail !== '' ? $teacherGoogleEmail : null,
+            'google_meet_space_name' => $googleMeetSpaceName,
+            'google_meeting_code' => $googleMeetingCode,
+            'recording_enabled' => $recordingEnabledInsert,
+            'recurrence_parent_id' => $recurrenceParentId,
+            'recurrence_rule' => $recurrenceRule,
+            'recurrence_end_date' => $recurrenceEndDate,
+        ]);
+        $classId = (int) $pdo->lastInsertId();
+
+        $updateMeet = $pdo->prepare(
+            'UPDATE class_sessions
+             SET google_event_id = :event_id,
+                 meeting_link = :meeting_link,
+                 teacher_google_email = :teacher_google_email,
+                 google_meet_space_name = :google_meet_space_name,
+                 google_meeting_code = :google_meeting_code,
+                 meeting_live_status = "pending"
+             WHERE id = :id'
+        );
+        $updateMeet->execute([
+            'event_id' => $googleEventId,
+            'meeting_link' => $meetLink,
+            'teacher_google_email' => $teacherGoogleEmail !== '' ? $teacherGoogleEmail : null,
+            'google_meet_space_name' => $googleMeetSpaceName,
+            'google_meeting_code' => $googleMeetingCode,
+            'id' => $classId,
+        ]);
+
+        if ($studentIds !== []) {
+            $insertEnroll = $pdo->prepare(
+                'INSERT INTO enrollments (class_id, student_id, status) VALUES (:class_id, :student_id, "active")'
+            );
+            foreach ($studentIds as $sid) {
+                $insertEnroll->execute(['class_id' => $classId, 'student_id' => $sid]);
+                StudentPayment::createPendingForEnrollment($classId, $sid, $studentFee);
+            }
+        }
+
+        return [
+            'class_id' => $classId,
+            'google_event_id' => $googleEventId,
+            'meet_link' => $meetLink,
+        ];
     }
 }

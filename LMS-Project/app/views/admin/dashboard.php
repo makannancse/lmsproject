@@ -4,6 +4,7 @@ use function htmlspecialchars as h;
 
 $recentRecordings = $recentRecordings ?? [];
 $adminTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
+unset($recentRecordings);
 ?>
 
 <div class="row g-3">
@@ -141,7 +142,7 @@ $adminTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
                                     <td><span class="badge <?= h($statusClass) ?> text-uppercase"><?= h($status) ?></span></td>
                                     <td><?= h((string) ($row['connected_at'] ?? '')) ?></td>
                                     <td>
-                                        <form method="post" action="<?= h((defined('BASE_PATH') ? BASE_PATH : '') . ($status === 'active' ? '/disconnect-google' : '/connect-google')) ?>" class="d-inline">
+                                        <form method="post" action="<?= h(appWebPath() . ($status === 'active' ? '/disconnect-google' : '/connect-google')) ?>" class="d-inline">
                                             <input type="hidden" name="teacher_id" value="<?= (int) ($row['teacher_id'] ?? 0) ?>">
                                             <button type="submit"
                                                     class="btn btn-sm <?= $status === 'active' ? 'btn-outline-danger' : 'btn-outline-primary' ?>"
@@ -155,114 +156,6 @@ $adminTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
                         <?php endif; ?>
                         </tbody>
                     </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-12 col-xl-7">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h2 class="h6 text-muted text-uppercase mb-0">Recent Classes</h2>
-                    <a href="<?= h((defined('BASE_PATH') ? BASE_PATH : '') . '/classes') ?>" class="btn btn-sm btn-outline-primary">Open Classes</a>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-sm align-middle mb-0">
-                        <thead>
-                        <tr>
-                            <th>Title</th>
-                            <th>Teacher</th>
-                            <th>Start</th>
-                            <th>Status</th>
-                            <th>Duration</th>
-                            <th>Recording</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <?php if (empty($recentClasses)): ?>
-                            <tr><td colspan="6" class="text-muted small">No classes yet.</td></tr>
-                        <?php else: ?>
-                            <?php foreach ($recentClasses as $cls): ?>
-                                <tr>
-                                    <td><?= h((string) ($cls['title'] ?? '')) ?></td>
-                                    <td><?= h((string) ($cls['teacher_name'] ?? '')) ?></td>
-                                    <td>
-                                        <div><?= h(formatUtcForTimezone(classStartUtcValue($cls), $adminTimezone, 'd M Y h:i A T')) ?></div>
-                                        <div class="small text-muted">Scheduled: <?= h(formatClassScheduledAt($cls, 'd M Y h:i A T')) ?></div>
-                                        <div class="small text-muted"><?= h(formatClassScheduledTimezoneLabel($cls)) ?></div>
-                                        <?php if (classActualStartUtcValue($cls) !== null): ?>
-                                            <div class="small text-muted mt-1">Actual start: <?= h(formatClassActualAt($cls, 'start', $adminTimezone)) ?></div>
-                                        <?php endif; ?>
-                                        <?php if (classActualEndUtcValue($cls) !== null): ?>
-                                            <div class="small text-muted">Actual end: <?= h(formatClassActualAt($cls, 'end', $adminTimezone)) ?></div>
-                                        <?php endif; ?>
-                                        <?php if (classActualStartUtcValue($cls) !== null || classActualEndUtcValue($cls) !== null): ?>
-                                            <div class="small text-muted"><?= h(formatClassActualTimezoneLabel($cls, $adminTimezone)) ?></div>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td><span class="badge <?= h(classStatusBadgeClass((string) ($cls['status'] ?? 'scheduled'))) ?> text-uppercase"><?= h((string) ($cls['status'] ?? 'scheduled')) ?></span></td>
-                                    <td class="small text-muted"><?= h(ClassSession::formatActualDuration($cls)) ?></td>
-                                    <td>
-                                        <?php if (!empty($cls['recording_url'])): ?>
-                                            <a href="<?= h((string) $cls['recording_url']) ?>" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">View Recording</a>
-                                        <?php else: ?>
-                                            <?php $recordingStatus = recordingSyncStatusForRow($cls); ?>
-                                            <span class="text-muted small"><?= h($recordingStatus === 'disabled' ? 'Recording disabled' : recordingSyncStatusText($cls)) ?></span>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-12 col-xl-5">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h2 class="h6 text-muted text-uppercase mb-0">Recent Recordings</h2>
-                    <a href="<?= h((defined('BASE_PATH') ? BASE_PATH : '') . '/admin/recordings') ?>" class="btn btn-sm btn-outline-primary">Open Recordings</a>
-                </div>
-                <div class="row g-3">
-                    <?php if ($recentRecordings === []): ?>
-                        <div class="col-12"><p class="text-muted small mb-0">No recordings synced yet.</p></div>
-                    <?php else: ?>
-                        <?php foreach ($recentRecordings as $recording): ?>
-                            <?php $recordingStatus = recordingSyncStatusForRow($recording); ?>
-                            <div class="col-12">
-                                <div class="recording-meta-card p-3">
-                                    <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
-                                        <div>
-                                            <div class="fw-semibold"><?= h((string) ($recording['recording_title'] ?? $recording['class_title'] ?? 'Recording')) ?></div>
-                                            <div class="small text-muted"><?= h((string) ($recording['teacher_name'] ?? '')) ?></div>
-                                        </div>
-                                        <span class="badge <?= h(recordingSyncStatusBadgeClass($recordingStatus)) ?> text-uppercase"><?= h(recordingSyncStatusLabel($recordingStatus)) ?></span>
-                                    </div>
-                                    <?php if (classActualStartUtcValue($recording) !== null || classActualEndUtcValue($recording) !== null): ?>
-                                        <?php if (classActualStartUtcValue($recording) !== null): ?><div class="small text-muted mb-1">Started: <?= h(formatClassActualAt($recording, 'start')) ?></div><?php endif; ?>
-                                        <?php if (classActualEndUtcValue($recording) !== null): ?><div class="small text-muted mb-1">Ended: <?= h(formatClassActualAt($recording, 'end')) ?></div><?php endif; ?>
-                                        <div class="small text-muted mb-1"><?= h(formatClassActualTimezoneLabel($recording)) ?></div>
-                                    <?php endif; ?>
-                                    <div class="small text-muted mb-2">Students: <?= h((string) ($recording['student_names'] ?? '')) ?></div>
-                                    <div class="small text-muted mb-3">Duration: <?= h(((int) ($recording['recording_duration'] ?? 0) > 0 ? (int) $recording['recording_duration'] . ' min' : 'Unknown')) ?></div>
-                                    <div class="d-flex flex-wrap gap-2">
-                                        <?php if (!empty($recording['recording_url'])): ?>
-                                            <a href="<?= h((string) $recording['recording_url']) ?>" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">View</a>
-                                        <?php endif; ?>
-                                        <?php if ($recordingStatus !== 'synced'): ?>
-                                            <span class="small text-muted"><?= h(recordingSyncStatusText($recording)) ?></span>
-                                        <?php endif; ?>
-                                        <span class="small text-muted"><?= ($recording['visible_to_student'] ?? 'no') === 'yes' ? 'Visible to student' : 'Hidden from student' ?></span>
-                                    </div>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
                 </div>
             </div>
         </div>

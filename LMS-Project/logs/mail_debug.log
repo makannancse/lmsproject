@@ -462,3 +462,3446 @@
 
 [2026-06-09 09:13:20] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection 98e67ed59e1d1-36f70a2892esm18583744a91.10 - gsmtp
 
+[2026-06-09 09:41:46] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP 41be03b00d2f7-c85df0b374fsm17597813a12.25 - gsmtp
+
+[2026-06-09 09:41:46] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-09 09:41:46] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:595f:125a:e33:e9a7]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-09 09:41:46] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-09 09:41:46] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-09 09:41:46] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-09 09:41:47] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:595f:125a:e33:e9a7]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-09 09:41:47] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-09 09:41:47] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-09 09:41:47] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-09 09:41:47] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-09 09:41:47] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-09 09:41:48] [SMTP-2] SERVER -> CLIENT: 235 2.7.0 Accepted
+
+[2026-06-09 09:41:48] [SMTP-1] CLIENT -> SERVER: MAIL FROM:<narmadha@edulearnwise.com>
+
+[2026-06-09 09:41:48] [SMTP-2] SERVER -> CLIENT: 250 2.1.0 OK 41be03b00d2f7-c85df0b374fsm17597813a12.25 - gsmtp
+
+[2026-06-09 09:41:48] [SMTP-1] CLIENT -> SERVER: RCPT TO:<narmadha@edulearnwise.com>
+
+[2026-06-09 09:41:48] [SMTP-2] SERVER -> CLIENT: 250 2.1.5 OK 41be03b00d2f7-c85df0b374fsm17597813a12.25 - gsmtp
+
+[2026-06-09 09:41:48] [SMTP-1] CLIENT -> SERVER: DATA
+
+[2026-06-09 09:41:49] [SMTP-2] SERVER -> CLIENT: 354 Go ahead 41be03b00d2f7-c85df0b374fsm17597813a12.25 - gsmtp
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER: Date: Tue, 9 Jun 2026 09:41:46 +0000
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER: To: narmadha@edulearnwise.com
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER: From: LMS Admin <narmadha@edulearnwise.com>
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER: Subject: Class Scheduled: Maths Class
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER: Message-ID: <U4b9L9Dl0vXQuA5c3AeCD0JbzNM8N8GxHNzWWI6w@localhost>
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER: X-Mailer: PHPMailer 7.0.2 (https://github.com/PHPMailer/PHPMailer)
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER: MIME-Version: 1.0
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER: Content-Type: multipart/alternative;
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:  boundary="b1=_U4b9L9Dl0vXQuA5c3AeCD0JbzNM8N8GxHNzWWI6w"
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER: Content-Transfer-Encoding: 8bit
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER: --b1=_U4b9L9Dl0vXQuA5c3AeCD0JbzNM8N8GxHNzWWI6w
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER: Content-Type: text/plain; charset=us-ascii
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER: Class Scheduled
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                 Hi LearnWise,
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                 Your class has been scheduled successfully.
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                 
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                     ClassMaths Class
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                     Your Time2026-06-09 09:41 AM UTC to 2026-06-09 10:41 AM UTC
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                     Scheduled Timezone2026-06-09 03:11 PM IST
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER: IST (Asia/Kolkata)
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                     InstructorLearnWise
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                     Google Meet linkhttps://meet.google.com/qbz-vppo-ydo
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                 
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                 
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                     
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                         Open Class
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                     
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                 
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                 Regards,
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER: LMS Team
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER: --b1=_U4b9L9Dl0vXQuA5c3AeCD0JbzNM8N8GxHNzWWI6w
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER: Content-Type: text/html; charset=us-ascii
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:             <div style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.6;">
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                 <h2 style="margin-bottom: 8px;">Class Scheduled</h2>
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                 <p>Hi LearnWise,</p>
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                 <p>Your class has been scheduled successfully.</p>
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                 <table cellpadding="6" cellspacing="0" border="0" style="border-collapse: collapse;">
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                     <tr><td><strong>Class</strong></td><td>Maths Class</td></tr>
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                     <tr><td><strong>Your Time</strong></td><td>2026-06-09 09:41 AM UTC to 2026-06-09 10:41 AM UTC</td></tr>
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                     <tr><td><strong>Scheduled Timezone</strong></td><td>2026-06-09 03:11 PM IST<br>IST (Asia/Kolkata)</td></tr>
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                     <tr><td><strong>Instructor</strong></td><td>LearnWise</td></tr>
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                     <tr><td><strong>Google Meet link</strong></td><td><a href="https://meet.google.com/qbz-vppo-ydo">https://meet.google.com/qbz-vppo-ydo</a></td></tr>
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                 </table>
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                 <p style="margin-top: 16px;">
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                     <a href="https://meet.google.com/qbz-vppo-ydo" style="display: inline-block; background: #0d6efd; color: #ffffff; text-decoration: none; padding: 10px 16px; border-radius: 6px;">
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                         Open Class
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                     </a>
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                 </p>
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:                 <p style="margin-top: 16px;">Regards,<br>LMS Team</p>
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:             </div>
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER:         
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER: --b1=_U4b9L9Dl0vXQuA5c3AeCD0JbzNM8N8GxHNzWWI6w--
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-06-09 09:41:49] [SMTP-1] CLIENT -> SERVER: .
+
+[2026-06-09 09:41:50] [SMTP-2] SERVER -> CLIENT: 250 2.0.0 OK  1780998110 41be03b00d2f7-c85df0b374fsm17597813a12.25 - gsmtp
+
+[2026-06-09 09:41:50] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-09 09:41:50] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection 41be03b00d2f7-c85df0b374fsm17597813a12.25 - gsmtp
+
+[2026-06-09 09:41:50] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d9443c01a7336-2c164f94a7fsm210035195ad.28 - gsmtp
+
+[2026-06-09 09:41:50] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-09 09:41:50] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:595f:125a:e33:e9a7]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-09 09:41:50] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-09 09:41:51] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-09 09:41:51] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-09 09:41:51] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:595f:125a:e33:e9a7]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-09 09:41:51] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-09 09:41:51] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-09 09:41:51] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-09 09:41:51] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-09 09:41:51] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-09 09:41:52] [SMTP-2] SERVER -> CLIENT: 235 2.7.0 Accepted
+
+[2026-06-09 09:41:52] [SMTP-1] CLIENT -> SERVER: MAIL FROM:<narmadha@edulearnwise.com>
+
+[2026-06-09 09:41:52] [SMTP-2] SERVER -> CLIENT: 250 2.1.0 OK d9443c01a7336-2c164f94a7fsm210035195ad.28 - gsmtp
+
+[2026-06-09 09:41:52] [SMTP-1] CLIENT -> SERVER: RCPT TO:<kannan1997cse@gmail.com>
+
+[2026-06-09 09:41:52] [SMTP-2] SERVER -> CLIENT: 250 2.1.5 OK d9443c01a7336-2c164f94a7fsm210035195ad.28 - gsmtp
+
+[2026-06-09 09:41:52] [SMTP-1] CLIENT -> SERVER: DATA
+
+[2026-06-09 09:41:53] [SMTP-2] SERVER -> CLIENT: 354 Go ahead d9443c01a7336-2c164f94a7fsm210035195ad.28 - gsmtp
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER: Date: Tue, 9 Jun 2026 09:41:50 +0000
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER: To: kannan1997cse@gmail.com
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER: From: LMS Admin <narmadha@edulearnwise.com>
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER: Subject: Class Scheduled: Maths Class
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER: Message-ID: <gyeYCVtzlvRx9IuHuhvUXERjvAqLlHj21No1JNzY6I@localhost>
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER: X-Mailer: PHPMailer 7.0.2 (https://github.com/PHPMailer/PHPMailer)
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER: MIME-Version: 1.0
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER: Content-Type: multipart/alternative;
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:  boundary="b1=_gyeYCVtzlvRx9IuHuhvUXERjvAqLlHj21No1JNzY6I"
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER: Content-Transfer-Encoding: 8bit
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER: --b1=_gyeYCVtzlvRx9IuHuhvUXERjvAqLlHj21No1JNzY6I
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER: Content-Type: text/plain; charset=us-ascii
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER: Class Scheduled
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                 Hi Test Student,
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                 Your class has been scheduled successfully.
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                 
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                     ClassMaths Class
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                     Your Time2026-06-09 09:41 AM UTC to 2026-06-09 10:41 AM UTC
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                     Scheduled Timezone2026-06-09 03:11 PM IST
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER: IST (Asia/Kolkata)
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                     InstructorLearnWise
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                     Google Meet linkhttps://meet.google.com/qbz-vppo-ydo
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                 
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                 
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                     
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                         Join Class
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                     
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                 
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                 Regards,
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER: LMS Team
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER: --b1=_gyeYCVtzlvRx9IuHuhvUXERjvAqLlHj21No1JNzY6I
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER: Content-Type: text/html; charset=us-ascii
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:             <div style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.6;">
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                 <h2 style="margin-bottom: 8px;">Class Scheduled</h2>
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                 <p>Hi Test Student,</p>
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                 <p>Your class has been scheduled successfully.</p>
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                 <table cellpadding="6" cellspacing="0" border="0" style="border-collapse: collapse;">
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                     <tr><td><strong>Class</strong></td><td>Maths Class</td></tr>
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                     <tr><td><strong>Your Time</strong></td><td>2026-06-09 09:41 AM UTC to 2026-06-09 10:41 AM UTC</td></tr>
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                     <tr><td><strong>Scheduled Timezone</strong></td><td>2026-06-09 03:11 PM IST<br>IST (Asia/Kolkata)</td></tr>
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                     <tr><td><strong>Instructor</strong></td><td>LearnWise</td></tr>
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                     <tr><td><strong>Google Meet link</strong></td><td><a href="https://meet.google.com/qbz-vppo-ydo">https://meet.google.com/qbz-vppo-ydo</a></td></tr>
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                 </table>
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                 <p style="margin-top: 16px;">
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                     <a href="https://meet.google.com/qbz-vppo-ydo" style="display: inline-block; background: #0d6efd; color: #ffffff; text-decoration: none; padding: 10px 16px; border-radius: 6px;">
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                         Join Class
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                     </a>
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                 </p>
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:                 <p style="margin-top: 16px;">Regards,<br>LMS Team</p>
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:             </div>
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER:         
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER: --b1=_gyeYCVtzlvRx9IuHuhvUXERjvAqLlHj21No1JNzY6I--
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-06-09 09:41:53] [SMTP-1] CLIENT -> SERVER: .
+
+[2026-06-09 09:41:54] [SMTP-2] SERVER -> CLIENT: 250 2.0.0 OK  1780998114 d9443c01a7336-2c164f94a7fsm210035195ad.28 - gsmtp
+
+[2026-06-09 09:41:54] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-09 09:41:54] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d9443c01a7336-2c164f94a7fsm210035195ad.28 - gsmtp
+
+[2026-06-18 06:49:16] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP 41be03b00d2f7-c866518677dsm16294899a12.19 - gsmtp
+
+[2026-06-18 06:49:16] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 06:49:16] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 06:49:16] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 06:49:16] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 06:49:16] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 06:49:17] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 06:49:17] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 06:49:17] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 06:49:17] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 06:49:18] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 06:49:18] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 06:49:19] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 41be03b00d2f7-c866518677dsm16294899a12.19 - gsmtp
+
+[2026-06-18 06:49:19] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 41be03b00d2f7-c866518677dsm16294899a12.19 - gsmtp
+
+[2026-06-18 06:49:19] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 06:49:19] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 06:49:19] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection 41be03b00d2f7-c866518677dsm16294899a12.19 - gsmtp
+
+[2026-06-18 06:49:19] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 06:49:20] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP 41be03b00d2f7-c866518677dsm16295138a12.19 - gsmtp
+
+[2026-06-18 06:49:20] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 06:49:20] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 06:49:20] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 06:49:20] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 06:49:20] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 06:49:21] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 06:49:21] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 06:49:21] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 06:49:21] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 06:49:21] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 06:49:21] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 06:49:22] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 41be03b00d2f7-c866518677dsm16295138a12.19 - gsmtp
+
+[2026-06-18 06:49:22] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 41be03b00d2f7-c866518677dsm16295138a12.19 - gsmtp
+
+[2026-06-18 06:49:22] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 06:49:22] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 06:49:22] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection 41be03b00d2f7-c866518677dsm16295138a12.19 - gsmtp
+
+[2026-06-18 06:49:22] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 06:49:22] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d9443c01a7336-2c42fca9f44sm195836355ad.37 - gsmtp
+
+[2026-06-18 06:49:22] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 06:49:23] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 06:49:23] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 06:49:23] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 06:49:23] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 06:49:24] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 06:49:24] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 06:49:24] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 06:49:24] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 06:49:24] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 06:49:24] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 06:49:25] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2c42fca9f44sm195836355ad.37 - gsmtp
+
+[2026-06-18 06:49:25] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2c42fca9f44sm195836355ad.37 - gsmtp
+
+[2026-06-18 06:49:25] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 06:49:25] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 06:49:25] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d9443c01a7336-2c42fca9f44sm195836355ad.37 - gsmtp
+
+[2026-06-18 06:49:25] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:00:56] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d2e1a72fcca58-8434b040718sm18955283b3a.51 - gsmtp
+
+[2026-06-18 07:00:56] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:00:56] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:00:56] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:00:57] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:00:57] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:00:57] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:00:57] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:00:57] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:00:57] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:00:58] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:00:58] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:00:58] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-8434b040718sm18955283b3a.51 - gsmtp
+
+[2026-06-18 07:00:58] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-8434b040718sm18955283b3a.51 - gsmtp
+
+[2026-06-18 07:00:58] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:00:58] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:00:58] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d2e1a72fcca58-8434b040718sm18955283b3a.51 - gsmtp
+
+[2026-06-18 07:00:58] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:00:59] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d9443c01a7336-2c4330782b2sm199273345ad.67 - gsmtp
+
+[2026-06-18 07:00:59] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:00:59] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:00:59] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:01:00] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:01:00] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:01:00] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:01:00] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:01:01] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:01:01] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:01:01] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:01:01] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:01:01] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2c4330782b2sm199273345ad.67 - gsmtp
+
+[2026-06-18 07:01:01] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2c4330782b2sm199273345ad.67 - gsmtp
+
+[2026-06-18 07:01:01] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:01:01] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:01:02] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d9443c01a7336-2c4330782b2sm199273345ad.67 - gsmtp
+
+[2026-06-18 07:01:02] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:01:02] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d9443c01a7336-2c4328a43c9sm190183745ad.41 - gsmtp
+
+[2026-06-18 07:01:02] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:01:02] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:01:02] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:01:02] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:01:02] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:01:03] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:01:03] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:01:03] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:01:03] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:01:03] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:01:03] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:01:04] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2c4328a43c9sm190183745ad.41 - gsmtp
+
+[2026-06-18 07:01:04] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2c4328a43c9sm190183745ad.41 - gsmtp
+
+[2026-06-18 07:01:04] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:01:04] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:01:04] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d9443c01a7336-2c4328a43c9sm190183745ad.41 - gsmtp
+
+[2026-06-18 07:01:04] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:23:24] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP 98e67ed59e1d1-37ce7cc025fsm644781a91.1 - gsmtp
+
+[2026-06-18 07:23:24] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:23:25] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:23:25] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:23:25] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:23:25] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:23:25] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:23:25] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:23:25] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:23:25] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:23:26] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:23:26] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:23:26] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 98e67ed59e1d1-37ce7cc025fsm644781a91.1 - gsmtp
+
+[2026-06-18 07:23:26] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 98e67ed59e1d1-37ce7cc025fsm644781a91.1 - gsmtp
+
+[2026-06-18 07:23:26] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:23:26] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:23:26] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection 98e67ed59e1d1-37ce7cc025fsm644781a91.1 - gsmtp
+
+[2026-06-18 07:23:26] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:23:27] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP 98e67ed59e1d1-37c521ef803sm8298844a91.11 - gsmtp
+
+[2026-06-18 07:23:27] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:23:27] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:23:27] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:23:27] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:23:27] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:23:27] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:23:27] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:23:28] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:23:28] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:23:28] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:23:28] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:23:28] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 98e67ed59e1d1-37c521ef803sm8298844a91.11 - gsmtp
+
+[2026-06-18 07:23:28] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 98e67ed59e1d1-37c521ef803sm8298844a91.11 - gsmtp
+
+[2026-06-18 07:23:28] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:23:28] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:23:29] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection 98e67ed59e1d1-37c521ef803sm8298844a91.11 - gsmtp
+
+[2026-06-18 07:23:29] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:23:29] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d2e1a72fcca58-84531dbbe7fsm3197421b3a.14 - gsmtp
+
+[2026-06-18 07:23:29] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:23:29] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:23:29] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:23:29] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:23:29] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:23:30] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:23:30] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:23:30] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:23:30] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:23:30] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:23:30] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:23:31] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-84531dbbe7fsm3197421b3a.14 - gsmtp
+
+[2026-06-18 07:23:31] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-84531dbbe7fsm3197421b3a.14 - gsmtp
+
+[2026-06-18 07:23:31] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:23:31] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:23:31] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d2e1a72fcca58-84531dbbe7fsm3197421b3a.14 - gsmtp
+
+[2026-06-18 07:23:31] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:26:40] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP 98e67ed59e1d1-37c930d7f81sm6091953a91.6 - gsmtp
+
+[2026-06-18 07:26:40] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:26:40] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:26:40] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:26:40] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:26:40] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:26:41] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:26:41] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:26:41] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:26:41] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:26:41] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:26:41] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:26:41] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 98e67ed59e1d1-37c930d7f81sm6091953a91.6 - gsmtp
+
+[2026-06-18 07:26:41] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 98e67ed59e1d1-37c930d7f81sm6091953a91.6 - gsmtp
+
+[2026-06-18 07:26:41] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:26:41] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:26:42] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection 98e67ed59e1d1-37c930d7f81sm6091953a91.6 - gsmtp
+
+[2026-06-18 07:26:42] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:26:42] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d9443c01a7336-2c6e54e8257sm15028405ad.16 - gsmtp
+
+[2026-06-18 07:26:42] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:26:43] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:26:43] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:26:43] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:26:43] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:26:43] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:26:43] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:26:43] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:26:43] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:26:44] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:26:44] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:26:44] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2c6e54e8257sm15028405ad.16 - gsmtp
+
+[2026-06-18 07:26:44] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2c6e54e8257sm15028405ad.16 - gsmtp
+
+[2026-06-18 07:26:44] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:26:44] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:26:44] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d9443c01a7336-2c6e54e8257sm15028405ad.16 - gsmtp
+
+[2026-06-18 07:26:44] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:26:45] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d2e1a72fcca58-8434ac9c016sm18397977b3a.8 - gsmtp
+
+[2026-06-18 07:26:45] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:26:45] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:26:45] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:26:45] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:26:45] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:26:45] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:26:45] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:26:46] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:26:46] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:26:46] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:26:46] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:26:46] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-8434ac9c016sm18397977b3a.8 - gsmtp
+
+[2026-06-18 07:26:46] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-8434ac9c016sm18397977b3a.8 - gsmtp
+
+[2026-06-18 07:26:46] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:26:46] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:26:47] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d2e1a72fcca58-8434ac9c016sm18397977b3a.8 - gsmtp
+
+[2026-06-18 07:26:47] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:26:47] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d2e1a72fcca58-8453b0ab93bsm1604904b3a.29 - gsmtp
+
+[2026-06-18 07:26:47] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:26:47] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:26:47] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:26:48] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:26:48] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:26:48] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:26:48] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:26:48] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:26:48] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:26:48] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:26:48] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:26:49] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-8453b0ab93bsm1604904b3a.29 - gsmtp
+
+[2026-06-18 07:26:49] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-8453b0ab93bsm1604904b3a.29 - gsmtp
+
+[2026-06-18 07:26:49] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:26:49] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:26:49] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d2e1a72fcca58-8453b0ab93bsm1604904b3a.29 - gsmtp
+
+[2026-06-18 07:26:49] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:26:49] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP 41be03b00d2f7-c86651af080sm16592998a12.29 - gsmtp
+
+[2026-06-18 07:26:49] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:26:50] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:26:50] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:26:50] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:26:50] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:26:50] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:26:50] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:26:51] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:26:51] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:26:51] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:26:51] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:26:51] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 41be03b00d2f7-c86651af080sm16592998a12.29 - gsmtp
+
+[2026-06-18 07:26:51] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 41be03b00d2f7-c86651af080sm16592998a12.29 - gsmtp
+
+[2026-06-18 07:26:51] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:26:51] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:26:51] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection 41be03b00d2f7-c86651af080sm16592998a12.29 - gsmtp
+
+[2026-06-18 07:26:51] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:26:52] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP 98e67ed59e1d1-37c521ae78csm8212789a91.4 - gsmtp
+
+[2026-06-18 07:26:52] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:26:52] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:26:52] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:26:52] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:26:52] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:26:53] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:26:53] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:26:53] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:26:53] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:26:53] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:26:53] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:26:53] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 98e67ed59e1d1-37c521ae78csm8212789a91.4 - gsmtp
+
+[2026-06-18 07:26:53] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 98e67ed59e1d1-37c521ae78csm8212789a91.4 - gsmtp
+
+[2026-06-18 07:26:53] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:26:53] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:26:54] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection 98e67ed59e1d1-37c521ae78csm8212789a91.4 - gsmtp
+
+[2026-06-18 07:26:54] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:26:54] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d9443c01a7336-2c42fbb5b79sm185236395ad.36 - gsmtp
+
+[2026-06-18 07:26:54] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:26:54] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:26:54] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:26:55] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:26:55] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:26:55] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:26:55] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:26:55] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:26:55] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:26:55] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:26:55] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:26:56] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2c42fbb5b79sm185236395ad.36 - gsmtp
+
+[2026-06-18 07:26:56] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2c42fbb5b79sm185236395ad.36 - gsmtp
+
+[2026-06-18 07:26:56] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:26:56] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:26:56] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d9443c01a7336-2c42fbb5b79sm185236395ad.36 - gsmtp
+
+[2026-06-18 07:26:56] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:26:56] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d2e1a72fcca58-8434ac9c474sm16984175b3a.2 - gsmtp
+
+[2026-06-18 07:26:56] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:26:57] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:26:57] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:26:57] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:26:57] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:26:57] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:26:57] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:26:58] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:26:58] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:26:58] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:26:58] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:26:58] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-8434ac9c474sm16984175b3a.2 - gsmtp
+
+[2026-06-18 07:26:58] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-8434ac9c474sm16984175b3a.2 - gsmtp
+
+[2026-06-18 07:26:58] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:26:58] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:26:58] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d2e1a72fcca58-8434ac9c474sm16984175b3a.2 - gsmtp
+
+[2026-06-18 07:26:58] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:26:59] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP 41be03b00d2f7-c866325e477sm15929259a12.10 - gsmtp
+
+[2026-06-18 07:26:59] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:26:59] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:26:59] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:26:59] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:26:59] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:00] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:00] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:27:00] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:27:00] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:00] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:27:00] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:01] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 41be03b00d2f7-c866325e477sm15929259a12.10 - gsmtp
+
+[2026-06-18 07:27:01] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 41be03b00d2f7-c866325e477sm15929259a12.10 - gsmtp
+
+[2026-06-18 07:27:01] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:01] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:27:01] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection 41be03b00d2f7-c866325e477sm15929259a12.10 - gsmtp
+
+[2026-06-18 07:27:01] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:01] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP 98e67ed59e1d1-37c521ae7dcsm10146884a91.2 - gsmtp
+
+[2026-06-18 07:27:01] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:01] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:01] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:27:02] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:27:02] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:02] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:02] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:27:02] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:27:02] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:03] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:27:03] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:03] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 98e67ed59e1d1-37c521ae7dcsm10146884a91.2 - gsmtp
+
+[2026-06-18 07:27:03] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 98e67ed59e1d1-37c521ae7dcsm10146884a91.2 - gsmtp
+
+[2026-06-18 07:27:03] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:03] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:27:03] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection 98e67ed59e1d1-37c521ae7dcsm10146884a91.2 - gsmtp
+
+[2026-06-18 07:27:03] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:04] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d9443c01a7336-2c42f7c651dsm188210055ad.26 - gsmtp
+
+[2026-06-18 07:27:04] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:04] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:04] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:27:04] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:27:04] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:04] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:04] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:27:05] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:27:05] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:05] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:27:05] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:05] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2c42f7c651dsm188210055ad.26 - gsmtp
+
+[2026-06-18 07:27:05] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2c42f7c651dsm188210055ad.26 - gsmtp
+
+[2026-06-18 07:27:05] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:05] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:27:06] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d9443c01a7336-2c42f7c651dsm188210055ad.26 - gsmtp
+
+[2026-06-18 07:27:06] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:06] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d2e1a72fcca58-84531dbbe7fsm3213414b3a.14 - gsmtp
+
+[2026-06-18 07:27:06] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:06] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:06] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:27:06] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:27:06] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:07] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:07] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:27:07] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:27:07] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:07] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:27:07] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:08] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-84531dbbe7fsm3213414b3a.14 - gsmtp
+
+[2026-06-18 07:27:08] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-84531dbbe7fsm3213414b3a.14 - gsmtp
+
+[2026-06-18 07:27:08] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:08] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:27:08] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d2e1a72fcca58-84531dbbe7fsm3213414b3a.14 - gsmtp
+
+[2026-06-18 07:27:08] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:08] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP 98e67ed59e1d1-37c521a959bsm8473762a91.2 - gsmtp
+
+[2026-06-18 07:27:08] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:09] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:09] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:27:09] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:27:09] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:09] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:09] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:27:09] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:27:09] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:10] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:27:10] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:10] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 98e67ed59e1d1-37c521a959bsm8473762a91.2 - gsmtp
+
+[2026-06-18 07:27:10] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 98e67ed59e1d1-37c521a959bsm8473762a91.2 - gsmtp
+
+[2026-06-18 07:27:10] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:10] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:27:10] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection 98e67ed59e1d1-37c521a959bsm8473762a91.2 - gsmtp
+
+[2026-06-18 07:27:10] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:11] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d9443c01a7336-2c42f2e59e1sm187653625ad.17 - gsmtp
+
+[2026-06-18 07:27:11] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:11] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:11] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:27:11] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:27:11] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:12] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:12] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:27:12] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:27:12] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:12] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:27:12] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:12] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2c42f2e59e1sm187653625ad.17 - gsmtp
+
+[2026-06-18 07:27:12] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2c42f2e59e1sm187653625ad.17 - gsmtp
+
+[2026-06-18 07:27:12] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:12] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:27:13] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d9443c01a7336-2c42f2e59e1sm187653625ad.17 - gsmtp
+
+[2026-06-18 07:27:13] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:13] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d9443c01a7336-2c6bbc5323csm46875515ad.45 - gsmtp
+
+[2026-06-18 07:27:13] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:13] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:13] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:27:14] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:27:14] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:14] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:14] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:27:14] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:27:14] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:14] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:27:14] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:15] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2c6bbc5323csm46875515ad.45 - gsmtp
+
+[2026-06-18 07:27:15] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2c6bbc5323csm46875515ad.45 - gsmtp
+
+[2026-06-18 07:27:15] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:15] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:27:15] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d9443c01a7336-2c6bbc5323csm46875515ad.45 - gsmtp
+
+[2026-06-18 07:27:15] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:15] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d2e1a72fcca58-8434ad0118asm17021635b3a.27 - gsmtp
+
+[2026-06-18 07:27:15] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:16] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:16] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:27:16] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:27:16] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:16] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:16] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:27:17] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:27:17] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:17] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:27:17] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:17] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-8434ad0118asm17021635b3a.27 - gsmtp
+
+[2026-06-18 07:27:17] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-8434ad0118asm17021635b3a.27 - gsmtp
+
+[2026-06-18 07:27:17] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:17] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:27:17] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d2e1a72fcca58-8434ad0118asm17021635b3a.27 - gsmtp
+
+[2026-06-18 07:27:17] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:18] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d2e1a72fcca58-8434aca3041sm18807440b3a.5 - gsmtp
+
+[2026-06-18 07:27:18] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:18] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:18] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:27:18] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:27:18] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:19] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:19] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:27:19] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:27:19] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:19] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:27:19] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:19] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-8434aca3041sm18807440b3a.5 - gsmtp
+
+[2026-06-18 07:27:19] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-8434aca3041sm18807440b3a.5 - gsmtp
+
+[2026-06-18 07:27:19] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:19] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:27:20] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d2e1a72fcca58-8434aca3041sm18807440b3a.5 - gsmtp
+
+[2026-06-18 07:27:20] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:20] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP 98e67ed59e1d1-37c521efb10sm8424747a91.9 - gsmtp
+
+[2026-06-18 07:27:20] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:20] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:20] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:27:21] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:27:21] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:21] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:21] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:27:21] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:27:21] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:21] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:27:21] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:22] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 98e67ed59e1d1-37c521efb10sm8424747a91.9 - gsmtp
+
+[2026-06-18 07:27:22] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 98e67ed59e1d1-37c521efb10sm8424747a91.9 - gsmtp
+
+[2026-06-18 07:27:22] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:22] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:27:22] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection 98e67ed59e1d1-37c521efb10sm8424747a91.9 - gsmtp
+
+[2026-06-18 07:27:22] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:22] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP 41be03b00d2f7-c8894547a3asm2653870a12.30 - gsmtp
+
+[2026-06-18 07:27:22] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:23] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:23] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:27:23] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:27:23] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:23] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:23] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:27:24] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:27:24] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:24] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:27:24] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:24] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 41be03b00d2f7-c8894547a3asm2653870a12.30 - gsmtp
+
+[2026-06-18 07:27:24] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 41be03b00d2f7-c8894547a3asm2653870a12.30 - gsmtp
+
+[2026-06-18 07:27:24] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:24] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:27:25] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection 41be03b00d2f7-c8894547a3asm2653870a12.30 - gsmtp
+
+[2026-06-18 07:27:25] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:25] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d9443c01a7336-2c432d8a039sm186594095ad.62 - gsmtp
+
+[2026-06-18 07:27:25] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:25] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:25] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:27:25] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:27:25] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:26] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:26] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:27:26] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:27:26] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:26] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:27:26] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:27] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2c432d8a039sm186594095ad.62 - gsmtp
+
+[2026-06-18 07:27:27] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2c432d8a039sm186594095ad.62 - gsmtp
+
+[2026-06-18 07:27:27] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:27] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:27:27] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d9443c01a7336-2c432d8a039sm186594095ad.62 - gsmtp
+
+[2026-06-18 07:27:27] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:27] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d2e1a72fcca58-8434ac9cfebsm16754137b3a.9 - gsmtp
+
+[2026-06-18 07:27:27] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:27] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:27] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:27:28] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:27:28] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:28] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:28] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:27:28] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:27:28] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:29] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:27:29] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:29] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-8434ac9cfebsm16754137b3a.9 - gsmtp
+
+[2026-06-18 07:27:29] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-8434ac9cfebsm16754137b3a.9 - gsmtp
+
+[2026-06-18 07:27:29] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:29] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:27:29] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d2e1a72fcca58-8434ac9cfebsm16754137b3a.9 - gsmtp
+
+[2026-06-18 07:27:29] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:30] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d9443c01a7336-2c700bee8d0sm4274485ad.9 - gsmtp
+
+[2026-06-18 07:27:30] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:30] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:30] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:27:30] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:27:30] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:30] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:30] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:27:31] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:27:31] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:31] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:27:31] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:31] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2c700bee8d0sm4274485ad.9 - gsmtp
+
+[2026-06-18 07:27:31] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2c700bee8d0sm4274485ad.9 - gsmtp
+
+[2026-06-18 07:27:31] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:31] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:27:32] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d9443c01a7336-2c700bee8d0sm4274485ad.9 - gsmtp
+
+[2026-06-18 07:27:32] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:32] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d9443c01a7336-2c4332694fdsm178102935ad.69 - gsmtp
+
+[2026-06-18 07:27:32] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:32] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:32] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:27:32] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:27:32] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:33] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:33] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:27:33] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:27:33] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:33] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:27:33] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:34] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2c4332694fdsm178102935ad.69 - gsmtp
+
+[2026-06-18 07:27:34] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2c4332694fdsm178102935ad.69 - gsmtp
+
+[2026-06-18 07:27:34] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:34] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:27:34] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d9443c01a7336-2c4332694fdsm178102935ad.69 - gsmtp
+
+[2026-06-18 07:27:34] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:34] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP 41be03b00d2f7-c8661b5ccafsm16594002a12.2 - gsmtp
+
+[2026-06-18 07:27:34] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:34] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:34] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:27:35] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:27:35] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:35] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:35] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:27:35] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:27:35] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:36] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:27:36] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:36] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 41be03b00d2f7-c8661b5ccafsm16594002a12.2 - gsmtp
+
+[2026-06-18 07:27:36] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 41be03b00d2f7-c8661b5ccafsm16594002a12.2 - gsmtp
+
+[2026-06-18 07:27:36] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:36] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:27:36] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection 41be03b00d2f7-c8661b5ccafsm16594002a12.2 - gsmtp
+
+[2026-06-18 07:27:36] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:36] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d9443c01a7336-2c6db2969b8sm22053155ad.1 - gsmtp
+
+[2026-06-18 07:27:36] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:37] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:37] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:27:37] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:27:37] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:37] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:37] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:27:37] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:27:37] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:38] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:27:38] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:38] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2c6db2969b8sm22053155ad.1 - gsmtp
+
+[2026-06-18 07:27:38] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2c6db2969b8sm22053155ad.1 - gsmtp
+
+[2026-06-18 07:27:38] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:38] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:27:38] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d9443c01a7336-2c6db2969b8sm22053155ad.1 - gsmtp
+
+[2026-06-18 07:27:38] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:39] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d2e1a72fcca58-845454f8127sm648390b3a.10 - gsmtp
+
+[2026-06-18 07:27:39] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:39] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:39] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:27:39] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:27:39] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:39] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:39] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:27:40] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:27:40] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:40] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:27:40] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:40] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-845454f8127sm648390b3a.10 - gsmtp
+
+[2026-06-18 07:27:40] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-845454f8127sm648390b3a.10 - gsmtp
+
+[2026-06-18 07:27:40] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:40] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:27:40] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d2e1a72fcca58-845454f8127sm648390b3a.10 - gsmtp
+
+[2026-06-18 07:27:40] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:41] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d2e1a72fcca58-8434b011288sm16531863b3a.44 - gsmtp
+
+[2026-06-18 07:27:41] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:41] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:41] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:27:41] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:27:41] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:42] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:42] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:27:42] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:27:42] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:42] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:27:42] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:42] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-8434b011288sm16531863b3a.44 - gsmtp
+
+[2026-06-18 07:27:42] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-8434b011288sm16531863b3a.44 - gsmtp
+
+[2026-06-18 07:27:42] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:42] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:27:43] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d2e1a72fcca58-8434b011288sm16531863b3a.44 - gsmtp
+
+[2026-06-18 07:27:43] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:43] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP 41be03b00d2f7-c8664586b3csm16092180a12.14 - gsmtp
+
+[2026-06-18 07:27:43] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:43] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:43] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:27:44] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:27:44] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:44] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:44] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:27:44] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:27:44] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:44] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:27:44] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:45] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 41be03b00d2f7-c8664586b3csm16092180a12.14 - gsmtp
+
+[2026-06-18 07:27:45] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 41be03b00d2f7-c8664586b3csm16092180a12.14 - gsmtp
+
+[2026-06-18 07:27:45] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:45] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:27:45] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection 41be03b00d2f7-c8664586b3csm16092180a12.14 - gsmtp
+
+[2026-06-18 07:27:45] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:45] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP 41be03b00d2f7-c866518677dsm16423778a12.19 - gsmtp
+
+[2026-06-18 07:27:45] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:45] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:45] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:27:46] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:27:46] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:46] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:46] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:27:46] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:27:46] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:47] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:27:47] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:47] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 41be03b00d2f7-c866518677dsm16423778a12.19 - gsmtp
+
+[2026-06-18 07:27:47] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 41be03b00d2f7-c866518677dsm16423778a12.19 - gsmtp
+
+[2026-06-18 07:27:47] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:47] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:27:47] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection 41be03b00d2f7-c866518677dsm16423778a12.19 - gsmtp
+
+[2026-06-18 07:27:47] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:47] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d2e1a72fcca58-8434afc8a9bsm17772407b3a.31 - gsmtp
+
+[2026-06-18 07:27:47] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:48] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:48] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:27:48] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:27:48] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:48] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:48] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:27:49] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:27:49] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:49] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:27:49] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:49] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-8434afc8a9bsm17772407b3a.31 - gsmtp
+
+[2026-06-18 07:27:49] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-8434afc8a9bsm17772407b3a.31 - gsmtp
+
+[2026-06-18 07:27:49] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:49] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:27:49] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d2e1a72fcca58-8434afc8a9bsm17772407b3a.31 - gsmtp
+
+[2026-06-18 07:27:49] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:50] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP 98e67ed59e1d1-37c65580d9esm6343067a91.12 - gsmtp
+
+[2026-06-18 07:27:50] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:50] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:50] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:27:50] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:27:50] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:50] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:50] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:27:51] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:27:51] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:51] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:27:51] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:51] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 98e67ed59e1d1-37c65580d9esm6343067a91.12 - gsmtp
+
+[2026-06-18 07:27:51] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 98e67ed59e1d1-37c65580d9esm6343067a91.12 - gsmtp
+
+[2026-06-18 07:27:51] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:51] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:27:52] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection 98e67ed59e1d1-37c65580d9esm6343067a91.12 - gsmtp
+
+[2026-06-18 07:27:52] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:52] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d2e1a72fcca58-8434acffd04sm18089664b3a.26 - gsmtp
+
+[2026-06-18 07:27:52] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:52] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:52] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:27:52] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:27:52] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:53] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:53] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:27:53] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:27:53] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:53] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:27:53] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:54] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-8434acffd04sm18089664b3a.26 - gsmtp
+
+[2026-06-18 07:27:54] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-8434acffd04sm18089664b3a.26 - gsmtp
+
+[2026-06-18 07:27:54] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:54] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:27:54] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d2e1a72fcca58-8434acffd04sm18089664b3a.26 - gsmtp
+
+[2026-06-18 07:27:54] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:54] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP 41be03b00d2f7-c866518677dsm16424249a12.19 - gsmtp
+
+[2026-06-18 07:27:54] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:54] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:54] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:27:55] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:27:55] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:55] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:55] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:27:55] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:27:55] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:55] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 07:27:55] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 07:27:56] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 41be03b00d2f7-c866518677dsm16424249a12.19 - gsmtp
+
+[2026-06-18 07:27:56] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 41be03b00d2f7-c866518677dsm16424249a12.19 - gsmtp
+
+[2026-06-18 07:27:56] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:56] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 07:27:56] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection 41be03b00d2f7-c866518677dsm16424249a12.19 - gsmtp
+
+[2026-06-18 07:27:56] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 07:27:56] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d9443c01a7336-2c42f7c651dsm188247715ad.26 - gsmtp
+
+[2026-06-18 07:27:56] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:57] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:57] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 07:27:57] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 07:27:57] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 07:27:57] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 07:27:57] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 07:27:57] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 07:27:57] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 08:30:42] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d2e1a72fcca58-8434b04808dsm18694605b3a.52 - gsmtp
+
+[2026-06-18 08:30:42] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 08:30:42] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 08:30:42] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 08:30:42] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 08:30:42] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 08:30:43] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 08:30:43] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 08:30:43] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 08:30:43] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 08:30:43] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 08:30:43] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 08:30:43] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-8434b04808dsm18694605b3a.52 - gsmtp
+
+[2026-06-18 08:30:43] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-8434b04808dsm18694605b3a.52 - gsmtp
+
+[2026-06-18 08:30:43] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 08:30:43] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 08:30:44] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d2e1a72fcca58-8434b04808dsm18694605b3a.52 - gsmtp
+
+[2026-06-18 08:30:44] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 08:30:44] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d9443c01a7336-2c42c43543asm188670145ad.0 - gsmtp
+
+[2026-06-18 08:30:44] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 08:30:44] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 08:30:44] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 08:30:44] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 08:30:45] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 08:30:45] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 08:30:45] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 08:30:45] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 08:30:45] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 08:30:45] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 08:30:45] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 08:30:46] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2c42c43543asm188670145ad.0 - gsmtp
+
+[2026-06-18 08:30:46] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2c42c43543asm188670145ad.0 - gsmtp
+
+[2026-06-18 08:30:46] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 08:30:46] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 08:30:46] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d9443c01a7336-2c42c43543asm188670145ad.0 - gsmtp
+
+[2026-06-18 08:30:46] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 08:30:46] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d2e1a72fcca58-845390ad1f4sm2000543b3a.41 - gsmtp
+
+[2026-06-18 08:30:46] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 08:30:46] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 08:30:46] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-18 08:30:47] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-18 08:30:47] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-18 08:30:47] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:2118:6824:3f7b:3046]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-18 08:30:47] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-18 08:30:47] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-18 08:30:47] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 08:30:48] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-18 08:30:48] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-18 08:30:48] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-845390ad1f4sm2000543b3a.41 - gsmtp
+
+[2026-06-18 08:30:48] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-845390ad1f4sm2000543b3a.41 - gsmtp
+
+[2026-06-18 08:30:48] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-18 08:30:48] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-18 08:30:48] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d2e1a72fcca58-845390ad1f4sm2000543b3a.41 - gsmtp
+
+[2026-06-18 08:30:48] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-20 14:54:44] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d2e1a72fcca58-84564e745cfsm2516186b3a.31 - gsmtp
+
+[2026-06-20 14:54:44] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-20 14:54:44] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:d96f:3cb9:5c4d:d6cd]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-20 14:54:44] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-20 14:54:44] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-20 14:54:44] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-20 14:54:45] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:d96f:3cb9:5c4d:d6cd]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-20 14:54:45] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-20 14:54:45] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-20 14:54:45] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-20 14:54:45] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-20 14:54:45] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-20 14:54:46] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-84564e745cfsm2516186b3a.31 - gsmtp
+
+[2026-06-20 14:54:46] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-84564e745cfsm2516186b3a.31 - gsmtp
+
+[2026-06-20 14:54:46] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-20 14:54:46] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-20 14:54:46] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d2e1a72fcca58-84564e745cfsm2516186b3a.31 - gsmtp
+
+[2026-06-20 14:54:46] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-20 14:54:46] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d9443c01a7336-2c743bfd9d2sm30659515ad.56 - gsmtp
+
+[2026-06-20 14:54:46] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-20 14:54:47] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:d96f:3cb9:5c4d:d6cd]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-20 14:54:47] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-20 14:54:47] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-20 14:54:47] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-20 14:54:47] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:d96f:3cb9:5c4d:d6cd]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-20 14:54:47] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-20 14:54:48] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-20 14:54:48] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-20 14:54:48] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-20 14:54:48] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-20 14:54:48] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2c743bfd9d2sm30659515ad.56 - gsmtp
+
+[2026-06-20 14:54:48] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2c743bfd9d2sm30659515ad.56 - gsmtp
+
+[2026-06-20 14:54:48] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-20 14:54:48] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-20 14:54:49] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d9443c01a7336-2c743bfd9d2sm30659515ad.56 - gsmtp
+
+[2026-06-20 14:54:49] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-20 14:54:49] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP 41be03b00d2f7-c8bc2c8de8bsm2547802a12.6 - gsmtp
+
+[2026-06-20 14:54:49] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-20 14:54:49] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:d96f:3cb9:5c4d:d6cd]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-20 14:54:49] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-20 14:54:50] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-20 14:54:50] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-20 14:54:50] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:d96f:3cb9:5c4d:d6cd]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-20 14:54:50] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-20 14:54:50] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-20 14:54:50] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-20 14:54:50] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-20 14:54:50] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-20 14:54:51] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 41be03b00d2f7-c8bc2c8de8bsm2547802a12.6 - gsmtp
+
+[2026-06-20 14:54:51] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 41be03b00d2f7-c8bc2c8de8bsm2547802a12.6 - gsmtp
+
+[2026-06-20 14:54:51] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-20 14:54:51] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-20 14:54:51] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection 41be03b00d2f7-c8bc2c8de8bsm2547802a12.6 - gsmtp
+
+[2026-06-20 14:54:51] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-20 15:11:12] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP 98e67ed59e1d1-37d4f2d2702sm2557335a91.12 - gsmtp
+
+[2026-06-20 15:11:12] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-20 15:11:12] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:d96f:3cb9:5c4d:d6cd]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-20 15:11:12] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-20 15:11:12] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-20 15:11:12] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-20 15:11:13] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:d96f:3cb9:5c4d:d6cd]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-20 15:11:13] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-20 15:11:13] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-20 15:11:13] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-20 15:11:13] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-20 15:11:13] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-20 15:11:13] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 98e67ed59e1d1-37d4f2d2702sm2557335a91.12 - gsmtp
+
+[2026-06-20 15:11:13] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 98e67ed59e1d1-37d4f2d2702sm2557335a91.12 - gsmtp
+
+[2026-06-20 15:11:13] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-20 15:11:13] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-20 15:11:14] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection 98e67ed59e1d1-37d4f2d2702sm2557335a91.12 - gsmtp
+
+[2026-06-20 15:11:14] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-20 15:12:40] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d2e1a72fcca58-84564e7480csm2529865b3a.33 - gsmtp
+
+[2026-06-20 15:12:40] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-20 15:12:40] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:d96f:3cb9:5c4d:d6cd]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-20 15:12:40] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-20 15:12:41] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-20 15:12:41] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-20 15:12:41] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:d96f:3cb9:5c4d:d6cd]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-20 15:12:41] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-20 15:12:41] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-20 15:12:41] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-20 15:12:41] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-20 15:12:41] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-20 15:12:42] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-84564e7480csm2529865b3a.33 - gsmtp
+
+[2026-06-20 15:12:42] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-84564e7480csm2529865b3a.33 - gsmtp
+
+[2026-06-20 15:12:42] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-20 15:12:42] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-20 15:12:42] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d2e1a72fcca58-84564e7480csm2529865b3a.33 - gsmtp
+
+[2026-06-20 15:12:42] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-20 15:13:30] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d2e1a72fcca58-84564e76d3csm2482987b3a.30 - gsmtp
+
+[2026-06-20 15:13:30] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-20 15:13:30] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:d96f:3cb9:5c4d:d6cd]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-20 15:13:30] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-20 15:13:30] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-20 15:13:30] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-20 15:13:31] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:d96f:3cb9:5c4d:d6cd]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-20 15:13:31] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-20 15:13:31] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-20 15:13:31] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-20 15:13:31] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-20 15:13:31] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-20 15:13:32] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-84564e76d3csm2482987b3a.30 - gsmtp
+
+[2026-06-20 15:13:32] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-84564e76d3csm2482987b3a.30 - gsmtp
+
+[2026-06-20 15:13:32] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-20 15:13:32] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-20 15:13:32] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d2e1a72fcca58-84564e76d3csm2482987b3a.30 - gsmtp
+
+[2026-06-20 15:13:32] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-20 15:13:32] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d9443c01a7336-2c743bfe4fasm26735235ad.59 - gsmtp
+
+[2026-06-20 15:13:32] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-20 15:13:33] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:d96f:3cb9:5c4d:d6cd]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-20 15:13:33] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-20 15:13:33] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-20 15:13:33] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-20 15:13:34] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:d96f:3cb9:5c4d:d6cd]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-20 15:13:34] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-20 15:13:34] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-20 15:13:34] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-20 15:13:35] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-20 15:13:35] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-20 15:13:35] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2c743bfe4fasm26735235ad.59 - gsmtp
+
+[2026-06-20 15:13:35] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2c743bfe4fasm26735235ad.59 - gsmtp
+
+[2026-06-20 15:13:35] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-20 15:13:35] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-20 15:13:36] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d9443c01a7336-2c743bfe4fasm26735235ad.59 - gsmtp
+
+[2026-06-20 15:13:36] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-20 15:13:36] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d2e1a72fcca58-84564da67a1sm2890202b3a.27 - gsmtp
+
+[2026-06-20 15:13:36] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-20 15:13:36] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:d96f:3cb9:5c4d:d6cd]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-20 15:13:36] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-20 15:13:37] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-20 15:13:37] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-20 15:13:38] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:d96f:3cb9:5c4d:d6cd]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-20 15:13:38] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-20 15:13:38] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-20 15:13:38] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-20 15:13:39] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-20 15:13:39] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-20 15:13:40] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-84564da67a1sm2890202b3a.27 - gsmtp
+
+[2026-06-20 15:13:40] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-84564da67a1sm2890202b3a.27 - gsmtp
+
+[2026-06-20 15:13:40] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-20 15:13:40] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-20 15:13:40] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d2e1a72fcca58-84564da67a1sm2890202b3a.27 - gsmtp
+
+[2026-06-20 15:13:40] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-20 15:13:41] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP 41be03b00d2f7-c8bc5a1d8acsm2588643a12.23 - gsmtp
+
+[2026-06-20 15:13:41] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-20 15:13:42] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:d96f:3cb9:5c4d:d6cd]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-20 15:13:42] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-20 15:13:42] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-20 15:13:42] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-20 15:13:42] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:d96f:3cb9:5c4d:d6cd]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-20 15:13:42] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-20 15:13:43] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-20 15:13:43] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-20 15:13:43] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-20 15:13:43] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-20 15:13:44] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 41be03b00d2f7-c8bc5a1d8acsm2588643a12.23 - gsmtp
+
+[2026-06-20 15:13:44] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 41be03b00d2f7-c8bc5a1d8acsm2588643a12.23 - gsmtp
+
+[2026-06-20 15:13:44] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-20 15:13:44] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-20 15:13:44] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection 41be03b00d2f7-c8bc5a1d8acsm2588643a12.23 - gsmtp
+
+[2026-06-20 15:13:44] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-20 15:41:27] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP 41be03b00d2f7-c8bc563c131sm3065715a12.18 - gsmtp
+
+[2026-06-20 15:41:27] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-20 15:41:27] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:d96f:3cb9:5c4d:d6cd]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-20 15:41:27] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-20 15:41:27] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-20 15:41:27] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-20 15:41:28] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:d96f:3cb9:5c4d:d6cd]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-20 15:41:28] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-20 15:41:29] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-20 15:41:29] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-20 15:41:29] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-20 15:41:29] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-20 15:41:29] [SMTP-2] SERVER -> CLIENT: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 41be03b00d2f7-c8bc563c131sm3065715a12.18 - gsmtp
+
+[2026-06-20 15:41:29] [SMTP-1] SMTP ERROR: Password command failed: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 41be03b00d2f7-c8bc563c131sm3065715a12.18 - gsmtp
+
+[2026-06-20 15:41:29] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-20 15:41:29] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-20 15:41:30] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection 41be03b00d2f7-c8bc563c131sm3065715a12.18 - gsmtp
+
+[2026-06-20 15:41:30] [SMTP-2] SMTP Error: Could not authenticate.
+[2026-06-20 15:52:56] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP 98e67ed59e1d1-37d4eede23esm2579766a91.2 - gsmtp
+
+[2026-06-20 15:52:56] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-20 15:52:56] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:d96f:3cb9:5c4d:d6cd]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-20 15:52:56] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-20 15:52:56] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-20 15:52:56] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-20 15:52:57] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:d96f:3cb9:5c4d:d6cd]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-20 15:52:57] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-20 15:52:57] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-20 15:52:57] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-20 15:52:57] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-20 15:52:57] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-20 15:52:58] [SMTP-2] SERVER -> CLIENT: 235 2.7.0 Accepted
+
+[2026-06-20 15:52:58] [SMTP-1] CLIENT -> SERVER: MAIL FROM:<admin@edulearnwise.com>
+
+[2026-06-20 15:52:58] [SMTP-2] SERVER -> CLIENT: 250 2.1.0 OK 98e67ed59e1d1-37d4eede23esm2579766a91.2 - gsmtp
+
+[2026-06-20 15:52:58] [SMTP-1] CLIENT -> SERVER: RCPT TO:<learnwiseed629@gmail.com>
+
+[2026-06-20 15:52:58] [SMTP-2] SERVER -> CLIENT: 250 2.1.5 OK 98e67ed59e1d1-37d4eede23esm2579766a91.2 - gsmtp
+
+[2026-06-20 15:52:58] [SMTP-1] CLIENT -> SERVER: DATA
+
+[2026-06-20 15:52:59] [SMTP-2] SERVER -> CLIENT: 354 Go ahead 98e67ed59e1d1-37d4eede23esm2579766a91.2 - gsmtp
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: Date: Sat, 20 Jun 2026 15:52:55 +0000
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: To: learnwiseed629@gmail.com
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: From: LearnWise <admin@edulearnwise.com>
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: Subject: Welcome to LearnWise
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: Message-ID: <NxeXeDwXnhBvnzINITNsfIZi3zASrYCO7Fa4yr6po@localhost>
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: X-Mailer: PHPMailer 7.0.2 (https://github.com/PHPMailer/PHPMailer)
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: MIME-Version: 1.0
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: Content-Type: multipart/alternative;
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER:  boundary="b1=_NxeXeDwXnhBvnzINITNsfIZi3zASrYCO7Fa4yr6po"
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: Content-Transfer-Encoding: 8bit
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: --b1=_NxeXeDwXnhBvnzINITNsfIZi3zASrYCO7Fa4yr6po
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: Content-Type: text/plain; charset=us-ascii
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: LearnWiseWelcome to LearnWiseHi Karthi,Welcome to LearnWise! Your Student account has been created.Please sign in and change your password after your first login.Student NameKarthiUsernamelearnwiseed629@gmail.comTemporary PasswordpasswordLogin URLhttp://localhost/lmsproject/LMS-Project/public/loginSign In
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER:                 
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER:                     Thank You for Choosing LearnWise
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER:                     We are committed to delivering high-quality online education and helping students achieve academic success.
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER:                 support@edulearnwise.com &nbsp;|&nbsp; +91 98765 43210http://localhost/lmsproject/LMS-Project/public &nbsp;&bull;&nbsp; &copy; 2026 LearnWise. All rights reserved.
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: --b1=_NxeXeDwXnhBvnzINITNsfIZi3zASrYCO7Fa4yr6po
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: Content-Type: text/html; charset=us-ascii
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: Content-Transfer-Encoding: quoted-printable
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: <!DOCTYPE html><html><head><meta charset=3D"UTF-8"><meta name=3D"viewport" =
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: content=3D"width=3Ddevice-width,initial-scale=3D1"></head><body style=3D"ma=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: rgin:0;padding:0;background:#f3f4f6;font-family:Arial,Helvetica,sans-serif;=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: "><table role=3D"presentation" width=3D"100%" cellspacing=3D"0" cellpadding=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: =3D"0" style=3D"background:#f3f4f6;padding:24px 12px;"><tr><td align=3D"cen=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: ter"><table role=3D"presentation" width=3D"600" cellspacing=3D"0" cellpaddi=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: ng=3D"0" style=3D"max-width:600px;width:100%;background:#ffffff;border-radi=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: us:12px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.07);"><tr><td sty=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: le=3D"background:linear-gradient(135deg,#1e40af 0%,#2563eb 100%);padding:24=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: px;text-align:center;"><img src=3D"http://localhost/lmsproject/LMS-Project/=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: public/assets/images/logo.png" alt=3D"LearnWise" style=3D"max-height:56px;m=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: argin-bottom:8px;"><p style=3D"margin:0;color:#ffffff;font-size:22px;font-w=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: eight:700;">LearnWise</p><p style=3D"margin:6px 0 0;color:#bfdbfe;font-size=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: :14px;">Welcome to LearnWise</p></td></tr><tr><td style=3D"padding:28px 24p=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: x;color:#374151;font-size:15px;line-height:1.65;"><p>Hi Karthi,</p><p>Welco=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: me to LearnWise! Your Student account has been created.</p><p>Please sign i=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: n and change your password after your first login.</p><table role=3D"presen=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: tation" width=3D"100%" cellspacing=3D"0" cellpadding=3D"0" style=3D"margin:=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: 20px 0 0;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;"><tr><=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: td style=3D"padding:8px 12px;border-bottom:1px solid #e5e7eb;color:#6b7280;=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: width:38%;vertical-align:top;">Student Name</td><td style=3D"padding:8px 12=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: px;border-bottom:1px solid #e5e7eb;color:#111827;">Karthi</td></tr><tr><td =
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: style=3D"padding:8px 12px;border-bottom:1px solid #e5e7eb;color:#6b7280;wid=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: th:38%;vertical-align:top;">Username</td><td style=3D"padding:8px 12px;bord=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: er-bottom:1px solid #e5e7eb;color:#111827;">learnwiseed629@gmail.com</td></=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: tr><tr><td style=3D"padding:8px 12px;border-bottom:1px solid #e5e7eb;color:=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: #6b7280;width:38%;vertical-align:top;">Temporary Password</td><td style=3D"=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: padding:8px 12px;border-bottom:1px solid #e5e7eb;color:#111827;">password</=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: td></tr><tr><td style=3D"padding:8px 12px;border-bottom:1px solid #e5e7eb;c=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: olor:#6b7280;width:38%;vertical-align:top;">Login URL</td><td style=3D"padd=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: ing:8px 12px;border-bottom:1px solid #e5e7eb;color:#111827;"><a href=3D"htt=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: p://localhost/lmsproject/LMS-Project/public/login">http://localhost/lmsproj=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: ect/LMS-Project/public/login</a></td></tr></table><p style=3D"text-align:ce=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: nter;margin:28px 0 8px;"><a href=3D"http://localhost/lmsproject/LMS-Project=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: /public/login" style=3D"display:inline-block;background:#2563eb;color:#ffff=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: ff;text-decoration:none;padding:14px 28px;border-radius:8px;font-weight:600=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: ;font-size:16px;">Sign In</a></p>
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER:                 <div style=3D"margin-top:28px;padding:20px;background:#f0f9=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: ff;border-radius:8px;text-align:center;">
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER:                     <p style=3D"margin:0 0 8px;font-size:18px;font-weight:7=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: 00;color:#1e40af;">Thank You for Choosing LearnWise</p>
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER:                     <p style=3D"margin:0;color:#475569;font-size:14px;line-=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: height:1.6;">We are committed to delivering high-quality online education a=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: nd helping students achieve academic success.</p>
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER:                 </div></td></tr><tr><td style=3D"background:#1f2937;padding=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: :20px 24px;text-align:center;"><img src=3D"http://localhost/lmsproject/LMS-=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: Project/public/assets/images/logo.png" alt=3D"LearnWise" style=3D"max-heigh=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: t:36px;margin-bottom:10px;opacity:0.9;"><p style=3D"margin:0 0 6px;color:#9=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: ca3af;font-size:13px;"><a href=3D"mailto:support@edulearnwise.com" style=3D=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: "color:#93c5fd;text-decoration:none;">support@edulearnwise.com</a> &nbsp;|&=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: nbsp; +91 98765 43210</p><p style=3D"margin:0;color:#6b7280;font-size:12px;=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: "><a href=3D"http://localhost/lmsproject/LMS-Project/public" style=3D"color=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: :#93c5fd;text-decoration:none;">http://localhost/lmsproject/LMS-Project/pub=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: lic</a> &nbsp;&bull;&nbsp; &copy; 2026 LearnWise. All rights reserved.</p><=
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: /td></tr></table></td></tr></table></body></html>
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: --b1=_NxeXeDwXnhBvnzINITNsfIZi3zASrYCO7Fa4yr6po--
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-06-20 15:52:59] [SMTP-1] CLIENT -> SERVER: .
+
+[2026-06-20 15:53:00] [SMTP-2] SERVER -> CLIENT: 250 2.0.0 OK  1781970780 98e67ed59e1d1-37d4eede23esm2579766a91.2 - gsmtp
+
+[2026-06-20 15:53:00] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-20 15:53:00] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection 98e67ed59e1d1-37d4eede23esm2579766a91.2 - gsmtp
+
+[2026-06-20 15:55:06] [SMTP-2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d2e1a72fcca58-84564ed3bd8sm2438437b3a.56 - gsmtp
+
+[2026-06-20 15:55:06] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-20 15:55:06] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:d96f:3cb9:5c4d:d6cd]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-20 15:55:06] [SMTP-1] CLIENT -> SERVER: STARTTLS
+
+[2026-06-20 15:55:07] [SMTP-2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[2026-06-20 15:55:07] [SMTP-1] CLIENT -> SERVER: EHLO localhost
+
+[2026-06-20 15:55:07] [SMTP-2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2405:201:e03c:10:d96f:3cb9:5c4d:d6cd]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[2026-06-20 15:55:07] [SMTP-1] CLIENT -> SERVER: AUTH LOGIN
+
+[2026-06-20 15:55:08] [SMTP-2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[2026-06-20 15:55:08] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-20 15:55:08] [SMTP-2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[2026-06-20 15:55:08] [SMTP-1] CLIENT -> SERVER: [credentials hidden]
+[2026-06-20 15:55:09] [SMTP-2] SERVER -> CLIENT: 235 2.7.0 Accepted
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: MAIL FROM:<admin@edulearnwise.com>
+
+[2026-06-20 15:55:09] [SMTP-2] SERVER -> CLIENT: 250 2.1.0 OK d2e1a72fcca58-84564ed3bd8sm2438437b3a.56 - gsmtp
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: RCPT TO:<learnwiseed629@gmail.com>
+
+[2026-06-20 15:55:09] [SMTP-2] SERVER -> CLIENT: 250 2.1.5 OK d2e1a72fcca58-84564ed3bd8sm2438437b3a.56 - gsmtp
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: DATA
+
+[2026-06-20 15:55:09] [SMTP-2] SERVER -> CLIENT: 354 Go ahead d2e1a72fcca58-84564ed3bd8sm2438437b3a.56 - gsmtp
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: Date: Sat, 20 Jun 2026 15:55:05 +0000
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: To: learnwiseed629@gmail.com
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: From: LearnWise <admin@edulearnwise.com>
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: Subject: LearnWise | Password Reset
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: Message-ID: <VSgVA1TiwLbafVLmtwGnABRMVGBvvvmflTZynQAmuhM@localhost>
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: X-Mailer: PHPMailer 7.0.2 (https://github.com/PHPMailer/PHPMailer)
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: MIME-Version: 1.0
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: Content-Type: multipart/alternative;
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER:  boundary="b1=_VSgVA1TiwLbafVLmtwGnABRMVGBvvvmflTZynQAmuhM"
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: Content-Transfer-Encoding: 8bit
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: --b1=_VSgVA1TiwLbafVLmtwGnABRMVGBvvvmflTZynQAmuhM
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: Content-Type: text/plain; charset=us-ascii
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: LearnWisePassword ResetHi Karthi,We received a request to reset your password. This link expires in 1 hour.If you did not request this, you can ignore this email.Reset Password
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER:                 
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER:                     Thank You for Choosing LearnWise
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER:                     We are committed to delivering high-quality online education and helping students achieve academic success.
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER:                 support@edulearnwise.com &nbsp;|&nbsp; +91 98765 43210http://localhost/lmsproject/LMS-Project/public &nbsp;&bull;&nbsp; &copy; 2026 LearnWise. All rights reserved.
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: --b1=_VSgVA1TiwLbafVLmtwGnABRMVGBvvvmflTZynQAmuhM
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: Content-Type: text/html; charset=us-ascii
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: Content-Transfer-Encoding: quoted-printable
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: <!DOCTYPE html><html><head><meta charset=3D"UTF-8"><meta name=3D"viewport" =
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: content=3D"width=3Ddevice-width,initial-scale=3D1"></head><body style=3D"ma=
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: rgin:0;padding:0;background:#f3f4f6;font-family:Arial,Helvetica,sans-serif;=
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: "><table role=3D"presentation" width=3D"100%" cellspacing=3D"0" cellpadding=
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: =3D"0" style=3D"background:#f3f4f6;padding:24px 12px;"><tr><td align=3D"cen=
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: ter"><table role=3D"presentation" width=3D"600" cellspacing=3D"0" cellpaddi=
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: ng=3D"0" style=3D"max-width:600px;width:100%;background:#ffffff;border-radi=
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: us:12px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.07);"><tr><td sty=
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: le=3D"background:linear-gradient(135deg,#1e40af 0%,#2563eb 100%);padding:24=
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: px;text-align:center;"><img src=3D"http://localhost/lmsproject/LMS-Project/=
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: public/assets/images/logo.png" alt=3D"LearnWise" style=3D"max-height:56px;m=
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: argin-bottom:8px;"><p style=3D"margin:0;color:#ffffff;font-size:22px;font-w=
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: eight:700;">LearnWise</p><p style=3D"margin:6px 0 0;color:#bfdbfe;font-size=
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: :14px;">Password Reset</p></td></tr><tr><td style=3D"padding:28px 24px;colo=
+
+[2026-06-20 15:55:09] [SMTP-1] CLIENT -> SERVER: r:#374151;font-size:15px;line-height:1.65;"><p>Hi Karthi,</p><p>We received=
+
+[2026-06-20 15:55:10] [SMTP-1] CLIENT -> SERVER:  a request to reset your password. This link expires in 1 hour.</p><p>If yo=
+
+[2026-06-20 15:55:10] [SMTP-1] CLIENT -> SERVER: u did not request this, you can ignore this email.</p><p style=3D"text-alig=
+
+[2026-06-20 15:55:10] [SMTP-1] CLIENT -> SERVER: n:center;margin:28px 0 8px;"><a href=3D"http://localhost/lmsproject/LMS-Pro=
+
+[2026-06-20 15:55:10] [SMTP-1] CLIENT -> SERVER: ject/public/reset-password?token=3D8094620de31d7cb2a7bf45a7753958c7d3b81e7b=
+
+[2026-06-20 15:55:10] [SMTP-1] CLIENT -> SERVER: 5b002953967aa584a355e4d3" style=3D"display:inline-block;background:#2563eb;=
+
+[2026-06-20 15:55:10] [SMTP-1] CLIENT -> SERVER: color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;font=
+
+[2026-06-20 15:55:10] [SMTP-1] CLIENT -> SERVER: -weight:600;font-size:16px;">Reset Password</a></p>
+
+[2026-06-20 15:55:10] [SMTP-1] CLIENT -> SERVER:                 <div style=3D"margin-top:28px;padding:20px;background:#f0f9=
+
+[2026-06-20 15:55:10] [SMTP-1] CLIENT -> SERVER: ff;border-radius:8px;text-align:center;">
+
+[2026-06-20 15:55:10] [SMTP-1] CLIENT -> SERVER:                     <p style=3D"margin:0 0 8px;font-size:18px;font-weight:7=
+
+[2026-06-20 15:55:10] [SMTP-1] CLIENT -> SERVER: 00;color:#1e40af;">Thank You for Choosing LearnWise</p>
+
+[2026-06-20 15:55:10] [SMTP-1] CLIENT -> SERVER:                     <p style=3D"margin:0;color:#475569;font-size:14px;line-=
+
+[2026-06-20 15:55:10] [SMTP-1] CLIENT -> SERVER: height:1.6;">We are committed to delivering high-quality online education a=
+
+[2026-06-20 15:55:10] [SMTP-1] CLIENT -> SERVER: nd helping students achieve academic success.</p>
+
+[2026-06-20 15:55:10] [SMTP-1] CLIENT -> SERVER:                 </div></td></tr><tr><td style=3D"background:#1f2937;padding=
+
+[2026-06-20 15:55:10] [SMTP-1] CLIENT -> SERVER: :20px 24px;text-align:center;"><img src=3D"http://localhost/lmsproject/LMS-=
+
+[2026-06-20 15:55:10] [SMTP-1] CLIENT -> SERVER: Project/public/assets/images/logo.png" alt=3D"LearnWise" style=3D"max-heigh=
+
+[2026-06-20 15:55:10] [SMTP-1] CLIENT -> SERVER: t:36px;margin-bottom:10px;opacity:0.9;"><p style=3D"margin:0 0 6px;color:#9=
+
+[2026-06-20 15:55:10] [SMTP-1] CLIENT -> SERVER: ca3af;font-size:13px;"><a href=3D"mailto:support@edulearnwise.com" style=3D=
+
+[2026-06-20 15:55:10] [SMTP-1] CLIENT -> SERVER: "color:#93c5fd;text-decoration:none;">support@edulearnwise.com</a> &nbsp;|&=
+
+[2026-06-20 15:55:10] [SMTP-1] CLIENT -> SERVER: nbsp; +91 98765 43210</p><p style=3D"margin:0;color:#6b7280;font-size:12px;=
+
+[2026-06-20 15:55:10] [SMTP-1] CLIENT -> SERVER: "><a href=3D"http://localhost/lmsproject/LMS-Project/public" style=3D"color=
+
+[2026-06-20 15:55:10] [SMTP-1] CLIENT -> SERVER: :#93c5fd;text-decoration:none;">http://localhost/lmsproject/LMS-Project/pub=
+
+[2026-06-20 15:55:10] [SMTP-1] CLIENT -> SERVER: lic</a> &nbsp;&bull;&nbsp; &copy; 2026 LearnWise. All rights reserved.</p><=
+
+[2026-06-20 15:55:10] [SMTP-1] CLIENT -> SERVER: /td></tr></table></td></tr></table></body></html>
+
+[2026-06-20 15:55:10] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-06-20 15:55:10] [SMTP-1] CLIENT -> SERVER: --b1=_VSgVA1TiwLbafVLmtwGnABRMVGBvvvmflTZynQAmuhM--
+
+[2026-06-20 15:55:10] [SMTP-1] CLIENT -> SERVER: 
+
+[2026-06-20 15:55:10] [SMTP-1] CLIENT -> SERVER: .
+
+[2026-06-20 15:55:10] [SMTP-2] SERVER -> CLIENT: 250 2.0.0 OK  1781970910 d2e1a72fcca58-84564ed3bd8sm2438437b3a.56 - gsmtp
+
+[2026-06-20 15:55:10] [SMTP-1] CLIENT -> SERVER: QUIT
+
+[2026-06-20 15:55:10] [SMTP-2] SERVER -> CLIENT: 221 2.0.0 closing connection d2e1a72fcca58-84564ed3bd8sm2438437b3a.56 - gsmtp
+

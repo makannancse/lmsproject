@@ -1,0 +1,70 @@
+-- Google Calendar-style recurring series (one series, many occurrences, one meet link)
+
+CREATE TABLE IF NOT EXISTS recurring_series (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    teacher_id INT UNSIGNED NOT NULL,
+    class_master_id INT UNSIGNED NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NULL,
+    subject VARCHAR(255) NULL,
+    meeting_link VARCHAR(512) NULL,
+    google_event_id VARCHAR(255) NULL,
+    google_meet_space_name VARCHAR(191) NULL,
+    google_meeting_code VARCHAR(128) NULL,
+    teacher_google_email VARCHAR(255) NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    timezone VARCHAR(64) NOT NULL DEFAULT 'UTC',
+    scheduled_timezone VARCHAR(64) NOT NULL DEFAULT 'UTC',
+    frequency ENUM('daily', 'weekly', 'monthly') NOT NULL,
+    recurrence_end_date DATE NULL,
+    occurrence_count INT UNSIGNED NULL,
+    teacher_rate DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    student_rate DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    status ENUM('active', 'cancelled', 'completed') NOT NULL DEFAULT 'active',
+    recording_enabled TINYINT(1) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_recurring_series_teacher (teacher_id),
+    INDEX idx_recurring_series_dates (start_date, end_date),
+    CONSTRAINT fk_recurring_series_teacher FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_recurring_series_class_master FOREIGN KEY (class_master_id) REFERENCES class_master(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS recurring_series_students (
+    series_id INT UNSIGNED NOT NULL,
+    student_id INT UNSIGNED NOT NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (series_id, student_id),
+    CONSTRAINT fk_rss_series FOREIGN KEY (series_id) REFERENCES recurring_series(id) ON DELETE CASCADE,
+    CONSTRAINT fk_rss_student FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS recurring_occurrences (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    series_id INT UNSIGNED NOT NULL,
+    occurrence_date DATE NOT NULL,
+    scheduled_start_utc DATETIME NOT NULL,
+    scheduled_end_utc DATETIME NOT NULL,
+    actual_start_utc DATETIME NULL,
+    actual_end_utc DATETIME NULL,
+    duration_minutes INT NULL,
+    status ENUM('scheduled', 'ongoing', 'completed', 'cancelled', 'missed', 'rescheduled') NOT NULL DEFAULT 'scheduled',
+    teacher_payment DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    class_session_id INT UNSIGNED NULL,
+    google_conference_id VARCHAR(255) NULL,
+    teacher_joined_at DATETIME NULL,
+    teacher_join_delay_minutes INT NULL,
+    student_joined_at DATETIME NULL,
+    meeting_live_status ENUM('pending', 'active', 'ended', 'sync_error') NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_series_occurrence_date (series_id, occurrence_date),
+    INDEX idx_recurring_occurrences_series (series_id),
+    INDEX idx_recurring_occurrences_start (scheduled_start_utc),
+    INDEX idx_recurring_occurrences_status (status),
+    CONSTRAINT fk_recurring_occurrences_series FOREIGN KEY (series_id) REFERENCES recurring_series(id) ON DELETE CASCADE,
+    CONSTRAINT fk_recurring_occurrences_class FOREIGN KEY (class_session_id) REFERENCES class_sessions(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -3,3 +3,4 @@
 {"event":"toggle_status","user_id":14,"new_status":"active","admin_id":1,"timestamp":"2026-06-09 09:11:15"}
 {"event":"toggle_status","user_id":14,"new_status":"inactive","admin_id":1,"timestamp":"2026-06-09 09:11:19"}
 {"event":"user_updated","user_id":3,"role":"teacher","admin_id":1,"timestamp":"2026-06-09 09:11:27"}
+{"event":"toggle_status","user_id":10,"new_status":"inactive","admin_id":1,"timestamp":"2026-06-20 15:57:37"}

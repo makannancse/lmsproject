@@ -40,22 +40,34 @@ define('APP_URL', rtrim($rawAppUrl !== '' ? $rawAppUrl : 'http://localhost', '/'
 define('APP_NAME', env('APP_NAME', 'LMS'));
 define('APP_TIMEZONE', env('APP_TIMEZONE', 'UTC'));
 
-// Base path for apps served from a subdirectory (e.g. /LMS-Project/public on WAMP).
-// Override with APP_BASE_PATH or BASE_PATH in .env when auto-detection is wrong on production.
-$scriptName = str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? ''));
-$basePath = rtrim(dirname($scriptName), '/');
-// Legacy physical /admin/index.php used to set SCRIPT_NAME to /admin — never use that as BASE_PATH.
-if (preg_match('#/admin$#', $basePath)) {
-    $basePath = preg_replace('#/admin$#', '', $basePath) ?: '';
+// BASE_PATH is the URL path prefix of the app (derived from APP_URL when possible).
+$appUrlPath = (string) parse_url(APP_URL, PHP_URL_PATH);
+$basePath = rtrim($appUrlPath, '/');
+if ($basePath === '/') {
+    $basePath = '';
 }
+
+// Optional override when APP_URL path cannot be detected (rare).
 $envBase = trim((string) env('APP_BASE_PATH', env('BASE_PATH', '')));
 if ($envBase !== '') {
     $basePath = rtrim(str_replace('\\', '/', $envBase), '/');
 }
-define('BASE_PATH', ($basePath === '' || $basePath === '/') ? '' : $basePath);
+
+// Fallback: derive from front controller when APP_URL has no path (CLI / misconfiguration).
+if ($basePath === '') {
+    $scriptName = str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? ''));
+    $scriptBase = rtrim(dirname($scriptName), '/');
+    if (preg_match('#/admin$#', $scriptBase)) {
+        $scriptBase = preg_replace('#/admin$#', '', $scriptBase) ?: '';
+    }
+    if ($scriptBase !== '' && $scriptBase !== '/') {
+        $basePath = $scriptBase;
+    }
+}
+
+define('BASE_PATH', $basePath);
 define('BASE_URL', BASE_PATH === '' ? '/' : (BASE_PATH . '/'));
-define('LOGO_PATH', BASE_URL . 'assets/images/logo.png');
-define('BANNER_PATH', BASE_URL . 'assets/images/banner.jpg');
+define('LOGO_PATH', path('assets/images/logo.png'));
+define('BANNER_PATH', path('assets/images/banner.jpg'));
 
 date_default_timezone_set(APP_TIMEZONE);
-

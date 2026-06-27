@@ -49,46 +49,102 @@ if (!function_exists('classStatusBadgeClass')) {
     }
 }
 
+if (!function_exists('normalizeUrlPath')) {
+    /**
+     * Normalize a route path segment (no leading slash in return for joining).
+     */
+    function normalizeUrlPath(string $path): string
+    {
+        return trim(str_replace('\\', '/', $path), '/');
+    }
+}
+
 if (!function_exists('appBasePath')) {
+    /**
+     * Web path prefix derived from APP_URL (e.g. /lmsproject/LMS-Project/public) or BASE_PATH fallback.
+     */
     function appBasePath(): string
     {
-        return defined('BASE_PATH') ? (string) BASE_PATH : '';
+        return appWebPath();
+    }
+}
+
+if (!function_exists('appWebPath')) {
+    function appWebPath(): string
+    {
+        static $cached = null;
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        if (defined('APP_URL') && APP_URL !== '') {
+            $parsed = parse_url((string) APP_URL);
+            $webPath = is_array($parsed) ? (string) ($parsed['path'] ?? '') : '';
+            $cached = rtrim($webPath, '/');
+
+            return $cached;
+        }
+
+        $cached = defined('BASE_PATH') ? rtrim((string) BASE_PATH, '/') : '';
+
+        return $cached;
+    }
+}
+
+if (!function_exists('url')) {
+    /**
+     * Absolute application URL from APP_URL + path.
+     * url('login') → http://localhost/.../public/login or https://www.edulearnwise.com/login
+     */
+    function url(string $path = ''): string
+    {
+        $root = rtrim((string) (defined('APP_URL') ? APP_URL : ''), '/');
+        if ($root === '' || !filter_var($root, FILTER_VALIDATE_URL)) {
+            return path($path);
+        }
+
+        $segment = normalizeUrlPath($path);
+
+        return $segment === '' ? ($root . '/') : ($root . '/' . $segment);
+    }
+}
+
+if (!function_exists('path')) {
+    /**
+     * Same-origin path (no scheme/host) for forms, links, and assets.
+     */
+    function path(string $route = ''): string
+    {
+        $webPath = appWebPath();
+        $segment = normalizeUrlPath($route);
+        if ($segment === '') {
+            return $webPath === '' ? '/' : ($webPath . '/');
+        }
+
+        return ($webPath === '' ? '' : $webPath) . '/' . $segment;
+    }
+}
+
+if (!function_exists('asset')) {
+    function asset(string $file): string
+    {
+        return path('assets/' . ltrim(normalizeUrlPath($file), 'assets/'));
     }
 }
 
 if (!function_exists('appUrl')) {
-    /**
-     * Build an absolute application URL (scheme + host + BASE_PATH + path).
-     */
+    /** @deprecated Use url() */
     function appUrl(string $path = '/'): string
     {
-        $path = $path === '' ? '/' : $path;
-        if (!str_starts_with($path, '/')) {
-            $path = '/' . $path;
-        }
-
-        $relative = appBasePath() . $path;
-        $appUrl = defined('APP_URL') ? (string) APP_URL : rtrim((string) env('APP_URL', ''), '/');
-        if ($appUrl !== '' && filter_var($appUrl, FILTER_VALIDATE_URL)) {
-            return $appUrl . $relative;
-        }
-
-        return $relative;
+        return url(normalizeUrlPath($path === '/' ? '' : ltrim($path, '/')));
     }
 }
 
 if (!function_exists('appRelativeUrl')) {
-    /**
-     * Path-only URL for same-origin redirects and form actions (always starts with /).
-     */
+    /** @deprecated Use path() */
     function appRelativeUrl(string $path = '/'): string
     {
-        $path = $path === '' ? '/' : $path;
-        if (!str_starts_with($path, '/')) {
-            $path = '/' . $path;
-        }
-
-        return appBasePath() . $path;
+        return path($path === '/' ? '' : ltrim($path, '/'));
     }
 }
 
@@ -96,14 +152,42 @@ if (!function_exists('googleOAuthRedirectUri')) {
     function googleOAuthRedirectUri(): string
     {
         $configured = trim((string) env('GOOGLE_REDIRECT_URI', ''));
-        if ($configured !== '') {
-            $path = (string) parse_url($configured, PHP_URL_PATH);
-            if ($path !== '' && str_ends_with(rtrim($path, '/'), '/auth/google/callback')) {
-                return $configured;
+        if ($configured !== '' && filter_var($configured, FILTER_VALIDATE_URL)) {
+            return $configured;
+        }
+
+        return url('auth/google/callback');
+    }
+}
+
+if (!function_exists('redirect')) {
+    /**
+     * Redirect to an absolute URL or application route path.
+     *
+     * @param array<string, mixed> $logContext
+     */
+    function redirect(string $target, int $statusCode = 302, array $logContext = []): void
+    {
+        if (str_starts_with($target, 'http://') || str_starts_with($target, 'https://')) {
+            $location = $target;
+        } else {
+            $parts = explode('?', $target, 2);
+            $location = path(ltrim($parts[0], '/'));
+            if (isset($parts[1]) && $parts[1] !== '') {
+                $location .= '?' . $parts[1];
             }
         }
 
-        return appUrl('/auth/google/callback');
+        if ($logContext !== [] && function_exists('logAdminLogin')) {
+            logAdminLogin(array_merge($logContext, [
+                'redirect_url' => $location,
+                'relative_path' => $location,
+                'http_status' => $statusCode,
+            ]));
+        }
+
+        header('Location: ' . $location, true, $statusCode);
+        exit;
     }
 }
 
@@ -141,21 +225,9 @@ if (!function_exists('redirectTo')) {
     /**
      * @param array<string, mixed> $logContext
      */
-    function redirectTo(string $path, int $statusCode = 302, array $logContext = []): void
+    function redirectTo(string $route, int $statusCode = 302, array $logContext = []): void
     {
-        $relative = appRelativeUrl($path);
-        $location = appUrl($path);
-
-        if ($logContext !== []) {
-            logAdminLogin(array_merge($logContext, [
-                'relative_path' => $relative,
-                'redirect_url' => $location,
-                'http_status' => $statusCode,
-            ]));
-        }
-
-        header('Location: ' . $location, true, $statusCode);
-        exit;
+        redirect($route, $statusCode, $logContext);
     }
 }
 
@@ -369,11 +441,19 @@ if (!function_exists('supportedSchedulingTimezones')) {
     function supportedSchedulingTimezones(): array
     {
         return [
-            ['value' => 'Asia/Kolkata', 'label' => 'Asia/Kolkata (IST)'],
-            ['value' => 'America/New_York', 'label' => 'America/New_York'],
-            ['value' => 'Europe/London', 'label' => 'Europe/London'],
-            ['value' => 'Australia/Sydney', 'label' => 'Australia/Sydney'],
-            ['value' => 'UTC', 'label' => 'UTC'],
+            ['value' => 'UTC', 'label' => 'UTC (Coordinated Universal Time)'],
+            ['value' => 'Asia/Kolkata', 'label' => 'Asia/Kolkata (IST — India)'],
+            ['value' => 'America/Los_Angeles', 'label' => 'America/Los_Angeles (PST/PDT)'],
+            ['value' => 'America/Denver', 'label' => 'America/Denver (MST/MDT)'],
+            ['value' => 'America/Chicago', 'label' => 'America/Chicago (CST/CDT)'],
+            ['value' => 'America/New_York', 'label' => 'America/New_York (EST/EDT)'],
+            ['value' => 'Europe/London', 'label' => 'Europe/London (GMT/BST — UK)'],
+            ['value' => 'Europe/Paris', 'label' => 'Europe/Paris (CET — Central Europe)'],
+            ['value' => 'Europe/Berlin', 'label' => 'Europe/Berlin (CET — Germany)'],
+            ['value' => 'Asia/Dubai', 'label' => 'Asia/Dubai (GST — UAE)'],
+            ['value' => 'Asia/Singapore', 'label' => 'Asia/Singapore (SGT)'],
+            ['value' => 'Australia/Sydney', 'label' => 'Australia/Sydney (AEST)'],
+            ['value' => 'Australia/Melbourne', 'label' => 'Australia/Melbourne (AEST)'],
         ];
     }
 }
@@ -480,13 +560,75 @@ if (!function_exists('formatClassScheduledTimezoneLabel')) {
      */
     function formatClassScheduledTimezoneLabel(?array $classRow): string
     {
-        $timezone = classScheduledTimezone($classRow, APP_TIMEZONE);
-        $abbr = formatUtcForTimezone(classStartUtcValue($classRow), $timezone, 'T');
-        if ($abbr === '') {
-            return $timezone;
+        return schedulingTimezoneAbbreviation(classScheduledTimezone($classRow, APP_TIMEZONE));
+    }
+}
+
+if (!function_exists('schedulingTimezoneAbbreviation')) {
+    function schedulingTimezoneAbbreviation(?string $timezone): string
+    {
+        $timezone = normalizeTimezone($timezone ?? APP_TIMEZONE, APP_TIMEZONE);
+        static $map = [
+            'UTC' => 'UTC',
+            'Asia/Kolkata' => 'IST',
+            'Asia/Dubai' => 'GST',
+            'America/New_York' => 'EST',
+            'America/Chicago' => 'CST',
+            'America/Denver' => 'MST',
+            'America/Los_Angeles' => 'PST',
+            'Europe/London' => 'GMT',
+            'Europe/Paris' => 'CET',
+            'Asia/Singapore' => 'SGT',
+            'Australia/Sydney' => 'AEST',
+        ];
+
+        if (isset($map[$timezone])) {
+            return $map[$timezone];
         }
 
-        return $abbr . ' (' . $timezone . ')';
+        $abbr = formatUtcForTimezone(gmdate('Y-m-d H:i:s'), $timezone, 'T');
+
+        return $abbr !== '' ? $abbr : $timezone;
+    }
+}
+
+if (!function_exists('formatClassScheduledEndAt')) {
+    /**
+     * @param array<string, mixed>|null $classRow
+     */
+    function formatClassScheduledEndAt(?array $classRow, string $format = 'd M Y h:i A'): string
+    {
+        return formatUtcForTimezone(
+            classEndUtcValue($classRow),
+            classScheduledTimezone($classRow, APP_TIMEZONE),
+            $format
+        );
+    }
+}
+
+if (!function_exists('formatClassTimeRange')) {
+    /**
+     * Human-readable scheduled class window in the class timezone (never UTC unless scheduled as UTC).
+     *
+     * @param array<string, mixed>|null $classRow
+     */
+    function formatClassTimeRange(?array $classRow, string $dateFormat = 'l M j, Y', string $timeFormat = 'g:i A'): string
+    {
+        if ($classRow === null) {
+            return '';
+        }
+
+        $timezone = classScheduledTimezone($classRow, APP_TIMEZONE);
+        $abbr = schedulingTimezoneAbbreviation($timezone);
+        $startDate = formatUtcForTimezone(classStartUtcValue($classRow), $timezone, $dateFormat);
+        $startTime = formatUtcForTimezone(classStartUtcValue($classRow), $timezone, $timeFormat);
+        $endTime = formatUtcForTimezone(classEndUtcValue($classRow), $timezone, $timeFormat);
+
+        if ($startDate === '' || $startTime === '' || $endTime === '') {
+            return '';
+        }
+
+        return $startDate . "\n" . $startTime . ' – ' . $endTime . ' ' . $abbr;
     }
 }
 
@@ -861,5 +1003,62 @@ if (!function_exists('recordingSyncStatusText')) {
         }
 
         return 'Recording sync pending.';
+    }
+}
+
+if (!function_exists('teacherJoinDelayMinutes')) {
+    /**
+     * @param array<string, mixed>|null $classRow
+     */
+    function teacherJoinDelayMinutes(?array $classRow): ?int
+    {
+        if ($classRow === null) {
+            return null;
+        }
+        if (isset($classRow['teacher_join_delay_minutes']) && $classRow['teacher_join_delay_minutes'] !== null && $classRow['teacher_join_delay_minutes'] !== '') {
+            return (int) $classRow['teacher_join_delay_minutes'];
+        }
+        $joinUtc = trim((string) ($classRow['teacher_joined_at'] ?? ''));
+        $startUtc = classStartUtcValue($classRow);
+        if ($joinUtc === '' || $startUtc === null || $startUtc === '') {
+            return null;
+        }
+        try {
+            $start = new DateTimeImmutable($startUtc, new DateTimeZone('UTC'));
+            $join = new DateTimeImmutable($joinUtc, new DateTimeZone('UTC'));
+
+            return max(0, (int) round(($join->getTimestamp() - $start->getTimestamp()) / 60));
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+}
+
+if (!function_exists('isTeacherLateJoin')) {
+    /**
+     * @param array<string, mixed>|null $classRow
+     */
+    function isTeacherLateJoin(?array $classRow, int $thresholdMinutes = 5): bool
+    {
+        $delay = teacherJoinDelayMinutes($classRow);
+
+        return $delay !== null && $delay > $thresholdMinutes;
+    }
+}
+
+if (!function_exists('teacherLateJoinBadgeHtml')) {
+    /**
+     * @param array<string, mixed>|null $classRow
+     */
+    function teacherLateJoinBadgeHtml(?array $classRow): string
+    {
+        if (!isTeacherLateJoin($classRow)) {
+            return '';
+        }
+        $delay = teacherJoinDelayMinutes($classRow);
+
+        return '<span class="badge text-bg-danger ms-1">Late Join'
+            . ($delay !== null ? ' (' . (int) $delay . ' min)' : '')
+            . '</span>';
     }
 }
