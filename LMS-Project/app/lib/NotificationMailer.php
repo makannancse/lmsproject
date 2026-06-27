@@ -141,7 +141,7 @@ class NotificationMailer
             . '<p>A student has been assigned to you.</p>';
         $rows = [
             'Student' => htmlspecialchars($studentName, ENT_QUOTES, 'UTF-8'),
-            'Subject' => htmlspecialchars($subject !== '' ? $subject : '—', ENT_QUOTES, 'UTF-8'),
+            'Class Name' => htmlspecialchars($subject !== '' ? $subject : '—', ENT_QUOTES, 'UTF-8'),
             'Assigned Date' => htmlspecialchars($assignedDate, ENT_QUOTES, 'UTF-8'),
         ];
         $body = EmailTemplate::wrap('New Student Assignment', $intro, $rows);

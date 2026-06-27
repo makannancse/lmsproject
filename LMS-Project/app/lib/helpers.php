@@ -1062,3 +1062,18 @@ if (!function_exists('teacherLateJoinBadgeHtml')) {
             . '</span>';
     }
 }
+
+if (!function_exists('renderPagination')) {
+    /**
+     * @param array<string, mixed>|null $pagination
+     * @param array<string, scalar|null> $queryParams
+     */
+    function renderPagination(?array $pagination, array $queryParams = []): void
+    {
+        if ($pagination === null || (int) ($pagination['total'] ?? 0) <= 0) {
+            return;
+        }
+
+        require dirname(__DIR__) . '/views/partials/pagination.php';
+    }
+}

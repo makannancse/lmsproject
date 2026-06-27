@@ -24,7 +24,7 @@ $items = $items ?? [];
                         <th>Date</th>
                         <th>Student</th>
                         <th>Teacher</th>
-                        <th>Subject</th>
+                        <th>Class Name</th>
                         <th>Rating</th>
                         <th>Comments</th>
                     </tr>
@@ -35,7 +35,7 @@ $items = $items ?? [];
                             <td class="small text-nowrap"><?= h((string) ($item['created_at'] ?? '')) ?></td>
                             <td><?= h((string) ($item['student_name'] ?? '')) ?></td>
                             <td><?= h((string) ($item['teacher_name'] ?? '')) ?></td>
-                            <td><?= h((string) ($item['subject'] ?? '—')) ?></td>
+                            <td><?= h((string) ($item['class_name'] ?? '—')) ?></td>
                             <td><?= h((string) ($item['rating'] ?? '—')) ?>/5</td>
                             <td class="small"><?= h((string) ($item['comments'] ?? '')) ?></td>
                         </tr>
@@ -44,5 +44,6 @@ $items = $items ?? [];
                 </table>
             </div>
         <?php endif; ?>
+        <?php renderPagination($pagination ?? null, $queryParams ?? []); ?>
     </div>
 </div>

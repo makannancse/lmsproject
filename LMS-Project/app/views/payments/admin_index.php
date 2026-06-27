@@ -82,4 +82,5 @@ $payments = $payments ?? [];
             </tbody>
         </table>
     </div>
+    <?php renderPagination($pagination ?? null, $queryParams ?? []); ?>
 </div>

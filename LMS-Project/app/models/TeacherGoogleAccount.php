@@ -238,6 +238,44 @@ class TeacherGoogleAccount
         return $stmt->fetchAll() ?: [];
     }
 
+    public static function countAllTeachers(): int
+    {
+        $pdo = Database::connection();
+
+        return (int) ($pdo->query('SELECT COUNT(*) FROM users WHERE role = "teacher"')->fetchColumn() ?: 0);
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public static function paginatedWithTeacherNames(int $limit, int $offset): array
+    {
+        $pdo = Database::connection();
+        $stmt = $pdo->prepare(
+            'SELECT u.id AS teacher_id,
+                    u.name AS teacher_name,
+                    u.email AS teacher_email,
+                    tga.google_email,
+                    tga.google_person_resource_name,
+                    tga.google_person_id,
+                    tga.account_type,
+                    tga.recording_supported,
+                    tga.connected_at,
+                    tga.token_expiry,
+                    tga.status
+             FROM users u
+             LEFT JOIN teacher_google_accounts tga ON tga.teacher_id = u.id
+             WHERE u.role = "teacher"
+             ORDER BY u.name ASC
+             LIMIT :limit OFFSET :offset'
+        );
+        $stmt->bindValue(':limit', max(1, $limit), \PDO::PARAM_INT);
+        $stmt->bindValue(':offset', max(0, $offset), \PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll() ?: [];
+    }
+
     private static function encryptNullable(?string $value): ?string
     {
         $value = $value !== null ? trim($value) : null;

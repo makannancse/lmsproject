@@ -40,7 +40,7 @@ $createUrl = $role === 'admin' ? '/admin/reports/create' : '/teacher/reports/cre
                             </select>
                         </div>
                     <?php endif; ?>
-                    <div class="col-md-2"><input type="text" class="form-control form-control-sm" name="subject" value="<?= h((string) ($filters['subject'] ?? '')) ?>" placeholder="Subject"></div>
+                    <div class="col-md-2"><input type="text" class="form-control form-control-sm" name="subject" value="<?= h((string) ($filters['subject'] ?? '')) ?>" placeholder="Class Title"></div>
                     <div class="col-md-2"><input type="date" class="form-control form-control-sm" name="from_date" value="<?= h((string) ($filters['from_date'] ?? '')) ?>"></div>
                     <div class="col-md-2"><input type="date" class="form-control form-control-sm" name="to_date" value="<?= h((string) ($filters['to_date'] ?? '')) ?>"></div>
                     <div class="col-md-12 d-flex gap-1">
@@ -56,7 +56,7 @@ $createUrl = $role === 'admin' ? '/admin/reports/create' : '/teacher/reports/cre
         <div class="card shadow-sm"><div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-striped table-hover mb-0 align-middle">
-                    <thead class="table-light"><tr><th>Subject</th><th>Student Name</th><th>Teacher Name</th><th>Performance</th><th>Date</th><th class="text-end">Action</th></tr></thead>
+                    <thead class="table-light"><tr><th>Class Title</th><th>Student Name</th><th>Teacher Name</th><th>Performance</th><th>Date</th><th class="text-end">Action</th></tr></thead>
                     <tbody>
                     <?php if (empty($rows)): ?>
                         <tr><td colspan="6" class="text-muted p-3">No report cards available.</td></tr>
@@ -93,6 +93,7 @@ $createUrl = $role === 'admin' ? '/admin/reports/create' : '/teacher/reports/cre
                 </table>
             </div>
         </div></div>
+        <?php renderPagination($pagination ?? null, $queryParams ?? []); ?>
     </div>
 </div>
 

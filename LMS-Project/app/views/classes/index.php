@@ -140,4 +140,5 @@ $viewerTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
             </div>
         </div>
     </div>
+    <?php renderPagination($pagination ?? null, $queryParams ?? []); ?>
 </div>

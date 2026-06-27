@@ -116,6 +116,7 @@ $flashCode = (string) ($_GET['success'] ?? '');
             </tbody>
         </table>
     </div>
+    <?php renderPagination($pagination ?? null, $queryParams ?? []); ?>
 </div>
 
 <?php if ($flashCode === 'paid'): ?>

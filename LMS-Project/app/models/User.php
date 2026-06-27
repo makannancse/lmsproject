@@ -118,6 +118,95 @@ class User
         return $stmt->fetchAll() ?: [];
     }
 
+    public static function countSearch(string $role, ?string $query = null, ?string $status = null): int
+    {
+        [$sql, $params] = self::buildSearchQuery($role, $query, $status, true);
+        $pdo = Database::connection();
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public static function searchPaged(
+        string $role,
+        ?string $query,
+        ?string $status,
+        int $limit,
+        int $offset
+    ): array {
+        [$sql, $params] = self::buildSearchQuery($role, $query, $status, false);
+        $sql .= ' LIMIT :limit OFFSET :offset';
+        $pdo = Database::connection();
+        $stmt = $pdo->prepare($sql);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+        $stmt->bindValue(':limit', max(1, $limit), \PDO::PARAM_INT);
+        $stmt->bindValue(':offset', max(0, $offset), \PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll() ?: [];
+    }
+
+    /**
+     * @return array{0: string, 1: array<string, scalar>}
+     */
+    private static function buildSearchQuery(string $role, ?string $query, ?string $status, bool $countOnly): array
+    {
+        if (!in_array($role, ['student', 'teacher', 'admin'], true)) {
+            $role = 'student';
+        }
+
+        $sql = $countOnly ? 'SELECT COUNT(*) FROM users u WHERE u.role = :role' : 'SELECT u.* FROM users u WHERE u.role = :role';
+        $params = ['role' => $role];
+
+        if ($status !== null && $status !== '' && in_array($status, ['active', 'inactive'], true)) {
+            $sql .= ' AND u.status = :status';
+            $params['status'] = $status;
+        }
+
+        if ($query !== null && trim($query) !== '') {
+            $like = '%' . trim($query) . '%';
+            $nameParts = preg_split('/\s+/', trim($query), 2) ?: [];
+            $firstPart = (string) ($nameParts[0] ?? '');
+            $lastPart = (string) ($nameParts[1] ?? '');
+            $pdo = Database::connection();
+
+            if (self::usersTableHasPhoneColumn($pdo)) {
+                $sql .= ' AND (
+                    u.name LIKE :q_name OR u.email LIKE :q_email OR IFNULL(u.phone, \'\') LIKE :q_phone
+                    OR SUBSTRING_INDEX(u.name, \' \', 1) LIKE :q_first
+                    OR SUBSTRING_INDEX(u.name, \' \', -1) LIKE :q_last
+                )';
+                $params['q_name'] = $like;
+                $params['q_email'] = $like;
+                $params['q_phone'] = $like;
+                $params['q_first'] = '%' . $firstPart . '%';
+                $params['q_last'] = $lastPart !== '' ? ('%' . $lastPart . '%') : $like;
+            } else {
+                $sql .= ' AND (
+                    u.name LIKE :q_name OR u.email LIKE :q_email
+                    OR SUBSTRING_INDEX(u.name, \' \', 1) LIKE :q_first
+                    OR SUBSTRING_INDEX(u.name, \' \', -1) LIKE :q_last
+                )';
+                $params['q_name'] = $like;
+                $params['q_email'] = $like;
+                $params['q_first'] = '%' . $firstPart . '%';
+                $params['q_last'] = $lastPart !== '' ? ('%' . $lastPart . '%') : $like;
+            }
+        }
+
+        if (!$countOnly) {
+            $sql .= ' ORDER BY u.name ASC';
+        }
+
+        return [$sql, $params];
+    }
+
     /**
      * @return array{first_name: string, last_name: string}
      */

@@ -16,9 +16,8 @@ $userRole = is_array($user) ? (string) ($user['role'] ?? '') : '';
             <div class="flex-grow-1 min-w-0">
                 <a class="d-flex align-items-center gap-2 text-decoration-none text-dark min-w-0" href="<?= h(path('dashboard')) ?>">
                     <?php if (is_file(dirname(__DIR__) . '/public/assets/images/logo.png')): ?>
-                        <img src="<?= h(LOGO_PATH) ?>" alt="<?= h(APP_NAME) ?>" class="app-brand-logo-sm d-none">
+                        <img src="<?= h(LOGO_PATH) ?>" class="app-brand-logo-sm">
                     <?php endif; ?>
-                    <span class="fw-semibold text-truncate"><?= h(APP_NAME) ?></span>
                 </a>
             </div>
             <div class="dropdown">

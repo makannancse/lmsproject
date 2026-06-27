@@ -9,6 +9,7 @@ require_once dirname(__DIR__) . '/lib/GoogleCalendarMeetingService.php';
 require_once dirname(__DIR__) . '/models/ClassSession.php';
 require_once dirname(__DIR__) . '/models/RescheduleRequest.php';
 require_once dirname(__DIR__) . '/lib/NotificationMailer.php';
+require_once dirname(__DIR__) . '/lib/Pagination.php';
 
 class RescheduleController
 {
@@ -51,6 +52,17 @@ class RescheduleController
         $studentId = (int) ($user['id'] ?? 0);
 
         $pdo = Database::connection();
+        $countStmt = $pdo->prepare(
+            'SELECT COUNT(*)
+             FROM class_sessions cs
+             INNER JOIN enrollments e ON e.class_id = cs.id
+             WHERE e.student_id = :sid
+               AND cs.status IN ("scheduled", "rescheduled")'
+        );
+        $countStmt->execute(['sid' => $studentId]);
+        $total = (int) ($countStmt->fetchColumn() ?: 0);
+
+        $req = Pagination::fromRequest();
         $stmt = $pdo->prepare(
             'SELECT cs.*, t.name AS teacher_name
              FROM class_sessions cs
@@ -58,10 +70,15 @@ class RescheduleController
              INNER JOIN enrollments e ON e.class_id = cs.id
              WHERE e.student_id = :sid
                AND cs.status IN ("scheduled", "rescheduled")
-             ORDER BY cs.start_datetime ASC'
+             ORDER BY cs.start_datetime ASC
+             LIMIT :limit OFFSET :offset'
         );
-        $stmt->execute(['sid' => $studentId]);
+        $stmt->bindValue(':sid', $studentId, \PDO::PARAM_INT);
+        $stmt->bindValue(':limit', $req['per_page'], \PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $req['offset'], \PDO::PARAM_INT);
+        $stmt->execute();
         $classes = $stmt->fetchAll() ?: [];
+        $pagination = Pagination::meta($total, $req['page'], $req['per_page']);
 
         $myRequests = RescheduleRequest::forStudent($studentId);
 
@@ -69,6 +86,8 @@ class RescheduleController
             'pageTitle' => 'Reschedule Requests',
             'classes' => $classes,
             'requests' => $myRequests,
+            'pagination' => $pagination,
+            'queryParams' => [],
         ]);
     }
 

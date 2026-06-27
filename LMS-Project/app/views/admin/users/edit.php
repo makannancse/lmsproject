@@ -89,11 +89,6 @@ $isStudent = $role === 'student';
                            value="<?= h($val('parent_email', $user['parent_email'] ?? '')) ?>">
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label" for="subject">Subject</label>
-                    <input type="text" name="subject" id="subject" class="form-control form-control-sm"
-                           value="<?= h($val('subject', $user['subject'] ?? '')) ?>">
-                </div>
-                <div class="col-md-6">
                     <label class="form-label" for="assigned_teacher_id">Assigned teacher</label>
                     <select name="assigned_teacher_id" id="assigned_teacher_id" class="form-select form-select-sm">
                         <option value="0">— None —</option>

@@ -48,6 +48,8 @@ $item = static function (string $href, string $icon, string $label) use ($base, 
         <?php $item('/admin/feedback', 'fa-solid fa-comment-dots', 'Feedback'); ?>
         <?php $item('/admin/student-payments', 'fa-solid fa-indian-rupee-sign', 'Student Payments'); ?>
         <?php $item('/admin/recordings', 'fa-solid fa-video', 'Recordings'); ?>
+        <?php $item('/admin/logs/audit', 'fa-solid fa-clipboard-list', 'Audit Logs'); ?>
+        <?php $item('/admin/logs/email', 'fa-solid fa-envelope-open-text', 'Email Logs'); ?>
     <?php elseif (Auth::isTeacher()): ?>
         <?php $item('/teacher/calendar', 'fa-solid fa-calendar-days', 'Calendar'); ?>
         <?php $item('/teacher/reschedule', 'fa-solid fa-clock-rotate-left', 'Reschedule'); ?>

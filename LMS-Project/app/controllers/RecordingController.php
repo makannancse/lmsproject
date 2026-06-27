@@ -8,6 +8,7 @@ require_once dirname(__DIR__) . '/lib/Database.php';
 require_once dirname(__DIR__) . '/lib/MeetingTrackingService.php';
 require_once dirname(__DIR__) . '/models/ClassRecording.php';
 require_once dirname(__DIR__) . '/models/User.php';
+require_once dirname(__DIR__) . '/lib/Pagination.php';
 
 class RecordingController
 {
@@ -19,13 +20,23 @@ class RecordingController
             'teacher_id' => (int) ($_GET['teacher_id'] ?? 0),
             'student_id' => (int) ($_GET['student_id'] ?? 0),
         ];
+        $req = Pagination::fromRequest();
+        $total = ClassRecording::countForAdmin($filters);
+        $recordings = ClassRecording::listForAdmin($filters, $req['per_page'], $req['offset']);
+        $pagination = Pagination::meta($total, $req['page'], $req['per_page']);
 
         View::render('admin/recordings/index', [
             'pageTitle' => 'Recordings',
-            'recordings' => ClassRecording::listForAdmin($filters),
+            'recordings' => $recordings,
             'filters' => $filters,
             'teachers' => User::allTeachers(),
             'students' => User::allStudents(),
+            'pagination' => $pagination,
+            'queryParams' => array_filter([
+                'q' => $filters['q'] !== '' ? $filters['q'] : null,
+                'teacher_id' => $filters['teacher_id'] > 0 ? $filters['teacher_id'] : null,
+                'student_id' => $filters['student_id'] > 0 ? $filters['student_id'] : null,
+            ], static fn($v) => $v !== null && $v !== ''),
         ]);
     }
 

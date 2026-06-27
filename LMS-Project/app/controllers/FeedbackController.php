@@ -7,6 +7,7 @@ require_once dirname(__DIR__) . '/lib/View.php';
 require_once dirname(__DIR__) . '/lib/Database.php';
 require_once dirname(__DIR__) . '/models/ClassSession.php';
 require_once dirname(__DIR__) . '/models/TeacherStudent.php';
+require_once dirname(__DIR__) . '/lib/Pagination.php';
 
 class FeedbackController
 {
@@ -112,20 +113,37 @@ class FeedbackController
         Auth::requireRole(['student']);
         $studentId = (int) (Auth::user()['id'] ?? 0);
         $pdo = Database::connection();
+        $req = Pagination::fromRequest();
+        $countStmt = $pdo->prepare('SELECT COUNT(*) FROM feedback WHERE student_id = :sid');
+        $countStmt->execute(['sid' => $studentId]);
+        $total = (int) ($countStmt->fetchColumn() ?: 0);
+
         $stmt = $pdo->prepare(
-            'SELECT f.*, u.name AS teacher_name, s.subject
+            'SELECT f.*, u.name AS teacher_name, cm.class_name
              FROM feedback f
              INNER JOIN users u ON u.id = f.teacher_id
-             LEFT JOIN students s ON s.user_id = f.student_id
+             LEFT JOIN class_master cm ON cm.id = (
+                 SELECT cs.class_master_id FROM class_sessions cs
+                 INNER JOIN enrollments e ON e.class_id = cs.id AND e.student_id = f.student_id
+                 WHERE cs.teacher_id = f.teacher_id
+                 ORDER BY cs.start_datetime DESC LIMIT 1
+             )
              WHERE f.student_id = :sid
-             ORDER BY f.created_at DESC'
+             ORDER BY f.created_at DESC
+             LIMIT :limit OFFSET :offset'
         );
-        $stmt->execute(['sid' => $studentId]);
+        $stmt->bindValue(':sid', $studentId, \PDO::PARAM_INT);
+        $stmt->bindValue(':limit', $req['per_page'], \PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $req['offset'], \PDO::PARAM_INT);
+        $stmt->execute();
         $items = $stmt->fetchAll() ?: [];
+        $pagination = Pagination::meta($total, $req['page'], $req['per_page']);
 
         View::render('feedback/student_index', [
             'pageTitle' => 'My Feedback',
             'items' => $items,
+            'pagination' => $pagination,
+            'queryParams' => [],
         ]);
     }
 
@@ -133,22 +151,36 @@ class FeedbackController
     {
         Auth::requireRole(['admin']);
         $pdo = Database::connection();
-        $stmt = $pdo->query(
+        $req = Pagination::fromRequest();
+        $total = (int) ($pdo->query('SELECT COUNT(*) FROM feedback')->fetchColumn() ?: 0);
+        $stmt = $pdo->prepare(
             'SELECT f.*,
                     su.name AS student_name,
                     tu.name AS teacher_name,
-                    st.subject
+                    cm.class_name
              FROM feedback f
              INNER JOIN users su ON su.id = f.student_id
              INNER JOIN users tu ON tu.id = f.teacher_id
-             LEFT JOIN students st ON st.user_id = f.student_id
-             ORDER BY f.created_at DESC, f.id DESC'
+             LEFT JOIN class_master cm ON cm.id = (
+                 SELECT cs.class_master_id FROM class_sessions cs
+                 INNER JOIN enrollments e ON e.class_id = cs.id AND e.student_id = f.student_id
+                 WHERE cs.teacher_id = f.teacher_id
+                 ORDER BY cs.start_datetime DESC LIMIT 1
+             )
+             ORDER BY f.created_at DESC, f.id DESC
+             LIMIT :limit OFFSET :offset'
         );
+        $stmt->bindValue(':limit', $req['per_page'], \PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $req['offset'], \PDO::PARAM_INT);
+        $stmt->execute();
         $items = $stmt->fetchAll() ?: [];
+        $pagination = Pagination::meta($total, $req['page'], $req['per_page']);
 
         View::render('feedback/admin_index', [
             'pageTitle' => 'Student Feedback',
             'items' => $items,
+            'pagination' => $pagination,
+            'queryParams' => [],
         ]);
     }
 }

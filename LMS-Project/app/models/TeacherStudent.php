@@ -109,10 +109,15 @@ class TeacherStudent
         $pdo = Database::connection();
         $stmt = $pdo->prepare(
             'SELECT u.id, u.name, u.email, u.timezone, u.status,
-                    s.subject, ts.created_at AS assigned_at
+                    cm.class_name, ts.created_at AS assigned_at
              FROM teacher_students ts
              INNER JOIN users u ON u.id = ts.student_id
-             LEFT JOIN students s ON s.user_id = u.id
+             LEFT JOIN class_master cm ON cm.id = (
+                 SELECT cs.class_master_id FROM class_sessions cs
+                 INNER JOIN enrollments e ON e.class_id = cs.id AND e.student_id = ts.student_id
+                 WHERE cs.teacher_id = ts.teacher_id
+                 ORDER BY cs.start_datetime DESC LIMIT 1
+             )
              WHERE ts.teacher_id = :tid
              ORDER BY u.name ASC'
         );

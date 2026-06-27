@@ -88,4 +88,5 @@ $isAdmin = !empty($isAdmin);
             </div>
         </div>
     </div>
+    <?php renderPagination($pagination ?? null, $queryParams ?? []); ?>
 </div>

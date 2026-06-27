@@ -23,7 +23,7 @@ $items = $items ?? [];
                     <tr>
                         <th>Date</th>
                         <th>Teacher</th>
-                        <th>Subject</th>
+                        <th>Class Name</th>
                         <th>Notes</th>
                     </tr>
                     </thead>
@@ -32,7 +32,7 @@ $items = $items ?? [];
                         <tr>
                             <td class="small"><?= h((string) ($item['created_at'] ?? '')) ?></td>
                             <td><?= h((string) ($item['teacher_name'] ?? '')) ?></td>
-                            <td><?= h((string) ($item['subject'] ?? '—')) ?></td>
+                            <td><?= h((string) ($item['class_name'] ?? '—')) ?></td>
                             <td><?= h((string) ($item['comments'] ?? '')) ?></td>
                         </tr>
                     <?php endforeach; ?>
@@ -40,5 +40,6 @@ $items = $items ?? [];
                 </table>
             </div>
         <?php endif; ?>
+        <?php renderPagination($pagination ?? null, $queryParams ?? []); ?>
     </div>
 </div>

@@ -119,11 +119,48 @@ class ClassRecording
      * @param array<string, mixed> $filters
      * @return list<array<string, mixed>>
      */
-    public static function listForAdmin(array $filters = []): array
+    public static function listForAdmin(array $filters = [], ?int $limit = null, ?int $offset = null): array
+    {
+        [$sql, $params] = self::buildAdminListQuery($filters);
+        $sql .= ' ORDER BY COALESCE(cr.updated_at, cs.completed_at, cs.actual_end_time, cs.end_datetime) DESC, cs.id DESC';
+        if ($limit !== null) {
+            $sql .= ' LIMIT :limit OFFSET :offset';
+        }
+
+        $pdo = Database::connection();
+        $stmt = $pdo->prepare($sql);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+        if ($limit !== null) {
+            $stmt->bindValue(':limit', max(1, $limit), \PDO::PARAM_INT);
+            $stmt->bindValue(':offset', max(0, $offset ?? 0), \PDO::PARAM_INT);
+        }
+        $stmt->execute();
+
+        return $stmt->fetchAll() ?: [];
+    }
+
+    public static function countForAdmin(array $filters = []): int
+    {
+        [$sql, $params] = self::buildAdminListQuery($filters, true);
+        $pdo = Database::connection();
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return (int) ($stmt->fetchColumn() ?: 0);
+    }
+
+    /**
+     * @return array{0: string, 1: array<string, scalar>}
+     */
+    private static function buildAdminListQuery(array $filters, bool $countOnly = false): array
     {
         $pdo = Database::connection();
-        // Include completed sessions that expect Drive sync even before a class_recordings row exists.
-        $sql = 'SELECT
+        unset($pdo);
+        $select = $countOnly
+            ? 'SELECT COUNT(*)'
+            : 'SELECT
                     COALESCE(cr.id, 0) AS id,
                     cs.id AS class_id,
                     cs.teacher_id,
@@ -160,7 +197,8 @@ class ClassRecording
                         FROM enrollments e
                         INNER JOIN users u ON u.id = e.student_id
                         WHERE e.class_id = cs.id AND e.status = "active"
-                    ) AS student_names
+                    ) AS student_names';
+        $sql = $select . '
                 FROM class_sessions cs
                 INNER JOIN users t ON t.id = cs.teacher_id
                 LEFT JOIN teacher_google_accounts tga ON tga.teacher_id = cs.teacher_id
@@ -196,11 +234,8 @@ class ClassRecording
         if (!empty($where)) {
             $sql .= ' AND ' . implode(' AND ', $where);
         }
-        $sql .= ' ORDER BY COALESCE(cr.updated_at, cs.completed_at, cs.actual_end_time, cs.end_datetime) DESC, cs.id DESC';
 
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
-        return $stmt->fetchAll() ?: [];
+        return [$sql, $params];
     }
 
     public static function listForTeacher(int $teacherId, int $limit = 12): array

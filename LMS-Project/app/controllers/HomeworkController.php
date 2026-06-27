@@ -7,6 +7,7 @@ require_once dirname(__DIR__) . '/lib/View.php';
 require_once dirname(__DIR__) . '/lib/Database.php';
 require_once dirname(__DIR__) . '/lib/Mailer.php';
 require_once dirname(__DIR__) . '/lib/EmailTemplate.php';
+require_once dirname(__DIR__) . '/lib/Pagination.php';
 
 class HomeworkController
 {
@@ -20,18 +21,27 @@ class HomeworkController
         Auth::requireRole(['teacher', 'admin']);
         $user = Auth::user();
         $pdo = Database::connection();
+        $req = Pagination::fromRequest();
+        $isAdmin = (($user['role'] ?? '') === 'admin');
 
-        if (($user['role'] ?? '') === 'admin') {
-            $stmt = $pdo->query(
+        if ($isAdmin) {
+            $total = (int) ($pdo->query('SELECT COUNT(*) FROM homeworks')->fetchColumn() ?: 0);
+            $stmt = $pdo->prepare(
                 'SELECT h.*, u.name AS teacher_name, u.timezone AS teacher_timezone,
                         (SELECT COUNT(*) FROM homework_assigned_students hs WHERE hs.homework_id = h.id) AS assigned_count,
                         (SELECT COUNT(*) FROM homework_submissions s WHERE s.homework_id = h.id) AS submitted_count
                  FROM homeworks h
                  INNER JOIN users u ON u.id = h.teacher_id
-                 ORDER BY h.created_at DESC'
+                 ORDER BY h.created_at DESC
+                 LIMIT :limit OFFSET :offset'
             );
-            $homeworks = $stmt->fetchAll() ?: [];
+            $stmt->bindValue(':limit', $req['per_page'], \PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $req['offset'], \PDO::PARAM_INT);
+            $stmt->execute();
         } else {
+            $countStmt = $pdo->prepare('SELECT COUNT(*) FROM homeworks WHERE teacher_id = :tid');
+            $countStmt->execute(['tid' => (int) ($user['id'] ?? 0)]);
+            $total = (int) ($countStmt->fetchColumn() ?: 0);
             $stmt = $pdo->prepare(
                 'SELECT h.*, u.name AS teacher_name, u.timezone AS teacher_timezone,
                         (SELECT COUNT(*) FROM homework_assigned_students hs WHERE hs.homework_id = h.id) AS assigned_count,
@@ -39,17 +49,24 @@ class HomeworkController
                  FROM homeworks h
                  INNER JOIN users u ON u.id = h.teacher_id
                  WHERE h.teacher_id = :tid
-                 ORDER BY h.created_at DESC'
+                 ORDER BY h.created_at DESC
+                 LIMIT :limit OFFSET :offset'
             );
-            $stmt->execute(['tid' => (int) ($user['id'] ?? 0)]);
-            $homeworks = $stmt->fetchAll() ?: [];
+            $stmt->bindValue(':tid', (int) ($user['id'] ?? 0), \PDO::PARAM_INT);
+            $stmt->bindValue(':limit', $req['per_page'], \PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $req['offset'], \PDO::PARAM_INT);
+            $stmt->execute();
         }
+        $homeworks = $stmt->fetchAll() ?: [];
+        $pagination = Pagination::meta($total, $req['page'], $req['per_page']);
 
         View::render('homework/teacher_index_modern', [
             'pageTitle' => 'Homework',
             'homeworks' => $homeworks,
             'attachmentsByHomework' => self::fetchAttachmentsByHomework($pdo, array_map(static fn(array $r): int => (int) $r['id'], $homeworks)),
-            'isAdmin' => (($user['role'] ?? '') === 'admin'),
+            'isAdmin' => $isAdmin,
+            'pagination' => $pagination,
+            'queryParams' => [],
         ]);
     }
 
@@ -471,26 +488,39 @@ class HomeworkController
         Auth::requireRole(['student']);
         $studentId = (int) (Auth::user()['id'] ?? 0);
         $pdo = Database::connection();
+        $req = Pagination::fromRequest();
+
+        $countStmt = $pdo->prepare(
+            'SELECT COUNT(*)
+             FROM homeworks h
+             INNER JOIN homework_assigned_students hass ON hass.homework_id = h.id AND hass.student_id = :sid'
+        );
+        $countStmt->execute(['sid' => $studentId]);
+        $total = (int) ($countStmt->fetchColumn() ?: 0);
 
         $stmt = $pdo->prepare(
             'SELECT h.*, t.name AS teacher_name, t.timezone AS teacher_timezone
              FROM homeworks h
              INNER JOIN homework_assigned_students hass ON hass.homework_id = h.id AND hass.student_id = :sid
              INNER JOIN users t ON t.id = h.teacher_id
-             ORDER BY h.due_date IS NULL, h.due_date ASC, h.created_at DESC'
+             ORDER BY h.due_date IS NULL, h.due_date ASC, h.created_at DESC
+             LIMIT :limit OFFSET :offset'
         );
-        $stmt->execute(['sid' => $studentId]);
+        $stmt->bindValue(':sid', $studentId, \PDO::PARAM_INT);
+        $stmt->bindValue(':limit', $req['per_page'], \PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $req['offset'], \PDO::PARAM_INT);
+        $stmt->execute();
         $items = $stmt->fetchAll() ?: [];
         $homeworkIds = array_map(static fn(array $r): int => (int) $r['id'], $items);
-
-        $attachmentsByHomework = self::fetchAttachmentsByHomework($pdo, $homeworkIds);
-        $submissionsByHomework = self::fetchStudentSubmissionRows($pdo, $studentId, $homeworkIds);
+        $pagination = Pagination::meta($total, $req['page'], $req['per_page']);
 
         View::render('homework/student_index_modern', [
             'pageTitle' => 'My Homework',
             'items' => $items,
-            'attachmentsByHomework' => $attachmentsByHomework,
-            'submissionsByHomework' => $submissionsByHomework,
+            'attachmentsByHomework' => self::fetchAttachmentsByHomework($pdo, $homeworkIds),
+            'submissionsByHomework' => self::fetchStudentSubmissionRows($pdo, $studentId, $homeworkIds),
+            'pagination' => $pagination,
+            'queryParams' => [],
         ]);
     }
 

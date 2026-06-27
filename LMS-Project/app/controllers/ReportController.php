@@ -6,6 +6,7 @@ require_once dirname(__DIR__) . '/lib/Auth.php';
 require_once dirname(__DIR__) . '/lib/View.php';
 require_once dirname(__DIR__) . '/lib/Mailer.php';
 require_once dirname(__DIR__) . '/lib/EmailTemplate.php';
+require_once dirname(__DIR__) . '/lib/Pagination.php';
 require_once dirname(__DIR__) . '/models/StudentReport.php';
 require_once dirname(__DIR__) . '/lib/ReportLog.php';
 require_once dirname(__DIR__, 2) . '/reports/generate_report_pdf.php';
@@ -75,7 +76,7 @@ class ReportController
             $errors[] = 'Teacher Name is required.';
         }
         if ($subject === '') {
-            $errors[] = 'Subject is required.';
+            $errors[] = 'Class Title is required.';
         }
         if ($reportDate === '') {
             $errors[] = 'Report Date is required.';
@@ -90,7 +91,7 @@ class ReportController
         $errors = array_merge($errors, self::validateChoice($behaviour, self::BEHAVIOUR_OPTIONS, 'Behaviour & Discipline'));
 
         foreach ([
-            'Subjects Addressed' => $subjectsAddressed,
+            'Topics Covered' => $subjectsAddressed,
             'Future Focus' => $futureFocus,
             'Recommended Areas for Focus' => $recommendedFocus,
             'Suggested Study Strategies' => $studyStrategies,
@@ -211,19 +212,38 @@ class ReportController
         redirectTo($role === 'admin' ? '/admin/reports' : '/teacher/reports');
     }
 
+    private static function renderReportIndex(string $role, array $filters, array $students, array $teachers, string $pageTitle): void
+    {
+        $uid = (int) (Auth::user()['id'] ?? 0);
+        $req = Pagination::fromRequest();
+        $total = StudentReport::countForUser($role, $uid, $filters);
+        $rows = StudentReport::listForUser($role, $uid, $filters, $req['per_page'], $req['offset']);
+        $pagination = Pagination::meta($total, $req['page'], $req['per_page']);
+        $queryParams = array_filter([
+            'student_id' => (int) ($filters['student_id'] ?? 0) ?: null,
+            'teacher_id' => (int) ($filters['teacher_id'] ?? 0) ?: null,
+            'subject' => trim((string) ($filters['subject'] ?? '')) ?: null,
+            'from_date' => trim((string) ($filters['from_date'] ?? '')) ?: null,
+            'to_date' => trim((string) ($filters['to_date'] ?? '')) ?: null,
+        ], static fn($v) => $v !== null && $v !== '');
+
+        View::render('reports/index', [
+            'pageTitle' => $pageTitle,
+            'rows' => $rows,
+            'role' => $role,
+            'filters' => $filters,
+            'students' => $students,
+            'teachers' => $teachers,
+            'pagination' => $pagination,
+            'queryParams' => $queryParams,
+        ]);
+    }
+
     public static function adminIndex(): void
     {
         Auth::requireRole(['admin']);
         $filters = self::collectFilters();
-        $rows = StudentReport::listForUser('admin', (int) (Auth::user()['id'] ?? 0), $filters);
-        View::render('reports/index', [
-            'pageTitle' => 'Student Reports',
-            'rows' => $rows,
-            'role' => 'admin',
-            'filters' => $filters,
-            'students' => StudentReport::allStudents(),
-            'teachers' => StudentReport::allTeachers(),
-        ]);
+        self::renderReportIndex('admin', $filters, StudentReport::allStudents(), StudentReport::allTeachers(), 'Student Reports');
     }
 
     public static function teacherIndex(): void
@@ -231,30 +251,13 @@ class ReportController
         Auth::requireRole(['teacher']);
         $uid = (int) (Auth::user()['id'] ?? 0);
         $filters = self::collectFilters();
-        $rows = StudentReport::listForUser('teacher', $uid, $filters);
-        View::render('reports/index', [
-            'pageTitle' => 'Student Reports',
-            'rows' => $rows,
-            'role' => 'teacher',
-            'filters' => $filters,
-            'students' => StudentReport::teacherStudents($uid),
-            'teachers' => [],
-        ]);
+        self::renderReportIndex('teacher', $filters, StudentReport::teacherStudents($uid), [], 'Student Reports');
     }
 
     public static function studentIndex(): void
     {
         Auth::requireRole(['student']);
-        $uid = (int) (Auth::user()['id'] ?? 0);
-        $rows = StudentReport::listForUser('student', $uid, []);
-        View::render('reports/index', [
-            'pageTitle' => 'My Reports',
-            'rows' => $rows,
-            'role' => 'student',
-            'filters' => [],
-            'students' => [],
-            'teachers' => [],
-        ]);
+        self::renderReportIndex('student', [], [], [], 'My Reports');
     }
 
     public static function show(): void

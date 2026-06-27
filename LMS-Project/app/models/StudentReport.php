@@ -119,10 +119,44 @@ class StudentReport
         return $stmt->fetchAll() ?: [];
     }
 
-    public static function listForUser(string $role, int $userId, array $filters = []): array
+    public static function listForUser(string $role, int $userId, array $filters = [], ?int $limit = null, ?int $offset = null): array
     {
+        [$sql, $params] = self::buildListQuery($role, $userId, $filters);
+        $sql .= ' ORDER BY sr.report_date DESC, sr.created_at DESC';
+        if ($limit !== null) {
+            $sql .= ' LIMIT :limit OFFSET :offset';
+        }
+
         $pdo = Database::connection();
-        $sql = 'SELECT sr.* FROM student_reports sr';
+        $stmt = $pdo->prepare($sql);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+        if ($limit !== null) {
+            $stmt->bindValue(':limit', max(1, $limit), \PDO::PARAM_INT);
+            $stmt->bindValue(':offset', max(0, $offset ?? 0), \PDO::PARAM_INT);
+        }
+        $stmt->execute();
+
+        return $stmt->fetchAll() ?: [];
+    }
+
+    public static function countForUser(string $role, int $userId, array $filters = []): int
+    {
+        [$sql, $params] = self::buildListQuery($role, $userId, $filters, true);
+        $pdo = Database::connection();
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return (int) ($stmt->fetchColumn() ?: 0);
+    }
+
+    /**
+     * @return array{0: string, 1: array<string, scalar>}
+     */
+    private static function buildListQuery(string $role, int $userId, array $filters, bool $countOnly = false): array
+    {
+        $sql = $countOnly ? 'SELECT COUNT(*) FROM student_reports sr' : 'SELECT sr.* FROM student_reports sr';
         $where = [];
         $params = [];
 
@@ -164,11 +198,11 @@ class StudentReport
         if (!empty($where)) {
             $sql .= ' WHERE ' . implode(' AND ', $where);
         }
-        $sql .= ' ORDER BY sr.report_date DESC, sr.created_at DESC';
+        if (!$countOnly) {
+            // ORDER BY appended by listForUser
+        }
 
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
-        return $stmt->fetchAll() ?: [];
+        return [$sql, $params];
     }
 
     public static function findByIdForUser(int $id, string $role, int $userId): ?array

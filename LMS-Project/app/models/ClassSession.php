@@ -27,19 +27,84 @@ class ClassSession
 
     public static function findUpcomingByTeacher(int $teacherId, int $limit = 10): array
     {
+        return self::findUpcomingByTeacherPaginated($teacherId, $limit, 0, null)['rows'];
+    }
+
+    /**
+     * Upcoming classes for teacher dashboard with mapped student names, search, and pagination.
+     *
+     * @return array{rows: list<array<string,mixed>>, total: int}
+     */
+    public static function findUpcomingByTeacherPaginated(
+        int $teacherId,
+        int $limit,
+        int $offset,
+        ?string $search = null
+    ): array {
         $pdo = Database::connection();
-        $stmt = $pdo->prepare(
-            'SELECT *
-             FROM class_sessions
-             WHERE teacher_id = :teacher_id
-               AND status IN ("scheduled", "rescheduled", "ongoing")
-             ORDER BY start_datetime ASC
-             LIMIT :limit'
-        );
-        $stmt->bindValue(':teacher_id', $teacherId, \PDO::PARAM_INT);
-        $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
+        [$whereSql, $params] = self::buildTeacherUpcomingWhere($teacherId, $search);
+
+        $countSql = 'SELECT COUNT(*) FROM class_sessions cs WHERE ' . $whereSql;
+        $countStmt = $pdo->prepare($countSql);
+        $countStmt->execute($params);
+        $total = (int) ($countStmt->fetchColumn() ?: 0);
+
+        $sql = 'SELECT cs.*,
+            (
+                SELECT GROUP_CONCAT(DISTINCT u.name ORDER BY u.name SEPARATOR ", ")
+                FROM enrollments e
+                INNER JOIN users u ON u.id = e.student_id
+                INNER JOIN teacher_students ts
+                    ON ts.student_id = e.student_id AND ts.teacher_id = cs.teacher_id
+                WHERE e.class_id = cs.id AND e.status = "active"
+            ) AS student_names
+         FROM class_sessions cs
+         WHERE ' . $whereSql . '
+         ORDER BY cs.start_datetime ASC
+         LIMIT :limit OFFSET :offset';
+
+        $stmt = $pdo->prepare($sql);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+        $stmt->bindValue(':limit', max(1, $limit), \PDO::PARAM_INT);
+        $stmt->bindValue(':offset', max(0, $offset), \PDO::PARAM_INT);
         $stmt->execute();
-        return $stmt->fetchAll() ?: [];
+
+        return [
+            'rows' => $stmt->fetchAll() ?: [],
+            'total' => $total,
+        ];
+    }
+
+    /**
+     * @return array{0: string, 1: array<string, scalar>}
+     */
+    private static function buildTeacherUpcomingWhere(int $teacherId, ?string $search): array
+    {
+        $where = 'cs.teacher_id = :teacher_id
+            AND cs.status IN ("scheduled", "rescheduled", "ongoing")';
+        $params = ['teacher_id' => $teacherId];
+
+        $search = trim((string) $search);
+        if ($search !== '') {
+            $where .= ' AND (
+                cs.title LIKE :search
+                OR EXISTS (
+                    SELECT 1
+                    FROM enrollments e
+                    INNER JOIN users u ON u.id = e.student_id
+                    INNER JOIN teacher_students ts
+                        ON ts.student_id = e.student_id AND ts.teacher_id = cs.teacher_id
+                    WHERE e.class_id = cs.id
+                      AND e.status = "active"
+                      AND u.name LIKE :search
+                )
+            )';
+            $params['search'] = '%' . $search . '%';
+        }
+
+        return [$where, $params];
     }
 
     public static function findCompletedByTeacher(int $teacherId, int $limit = 10): array
@@ -70,16 +135,133 @@ class ClassSession
     public static function countByStatus(): array
     {
         $pdo = Database::connection();
-        $sql = 'SELECT status, COUNT(*) as total FROM class_sessions GROUP BY status';
-        $rows = $pdo->query($sql)->fetchAll() ?: [];
         $result = ['scheduled' => 0, 'ongoing' => 0, 'completed' => 0, 'cancelled' => 0, 'rescheduled' => 0];
-        foreach ($rows as $row) {
-            $status = $row['status'];
-            if (isset($result[$status])) {
-                $result[$status] = (int) $row['total'];
-            }
+
+        foreach (['completed', 'cancelled', 'rescheduled'] as $status) {
+            $stmt = $pdo->prepare('SELECT COUNT(*) FROM class_sessions WHERE status = :s');
+            $stmt->execute(['s' => $status]);
+            $result[$status] = (int) $stmt->fetchColumn();
         }
+
+        // Dashboard scheduled count: standalone sessions + one per recurring series.
+        $result['scheduled'] = self::countStandaloneByStatuses($pdo, ['scheduled', 'rescheduled'])
+            + self::countDistinctRecurringSeriesByStatuses($pdo, ['scheduled', 'rescheduled']);
+
+        $result['ongoing'] = self::countStandaloneByStatuses($pdo, ['ongoing'])
+            + self::countDistinctRecurringSeriesByStatuses($pdo, ['ongoing']);
+
         return $result;
+    }
+
+    /**
+     * Upcoming appointments for dashboard stats (recurring series counts as one).
+     */
+    public static function countUpcomingAppointmentsForTeacher(int $teacherId): int
+    {
+        $pdo = Database::connection();
+        $statuses = ['scheduled', 'rescheduled', 'ongoing'];
+
+        return self::countStandaloneByStatuses($pdo, $statuses, 'teacher_id = :scope_id', ['scope_id' => $teacherId])
+            + self::countDistinctRecurringSeriesByStatuses($pdo, $statuses, 'teacher_id = :scope_id', ['scope_id' => $teacherId]);
+    }
+
+    public static function countUpcomingAppointmentsForStudent(int $studentId): int
+    {
+        $pdo = Database::connection();
+        $statuses = ['scheduled', 'rescheduled', 'ongoing'];
+        $enrolled = 'EXISTS (
+            SELECT 1 FROM enrollments e
+            WHERE e.class_id = class_sessions.id AND e.student_id = :scope_id AND e.status = "active"
+        )';
+
+        return self::countStandaloneByStatuses($pdo, $statuses, $enrolled, ['scope_id' => $studentId])
+            + self::countDistinctRecurringSeriesByStatuses($pdo, $statuses, $enrolled, ['scope_id' => $studentId]);
+    }
+
+    public static function studentAttendancePercent(int $studentId): ?float
+    {
+        $pdo = Database::connection();
+        $stmt = $pdo->prepare(
+            'SELECT
+                SUM(CASE WHEN cs.status = "completed" THEN 1 ELSE 0 END) AS completed,
+                SUM(CASE WHEN cs.status IN ("completed", "missed", "cancelled") THEN 1 ELSE 0 END) AS total
+             FROM enrollments e
+             INNER JOIN class_sessions cs ON cs.id = e.class_id
+             WHERE e.student_id = :sid AND e.status = "active"'
+        );
+        $stmt->execute(['sid' => $studentId]);
+        $row = $stmt->fetch() ?: [];
+        $completed = (int) ($row['completed'] ?? 0);
+        $total = (int) ($row['total'] ?? 0);
+        if ($total <= 0) {
+            return null;
+        }
+
+        return round(($completed / $total) * 100, 1);
+    }
+
+    /**
+     * @param list<string> $statuses
+     * @param array<string, scalar> $extraParams
+     */
+    private static function countStandaloneByStatuses(
+        \PDO $pdo,
+        array $statuses,
+        ?string $extraWhere = null,
+        array $extraParams = []
+    ): int {
+        if ($statuses === []) {
+            return 0;
+        }
+        $statusParams = [];
+        $statusPlaceholders = [];
+        foreach ($statuses as $index => $status) {
+            $key = 'st' . $index;
+            $statusPlaceholders[] = ':' . $key;
+            $statusParams[$key] = $status;
+        }
+        $sql = 'SELECT COUNT(*) FROM class_sessions
+                WHERE status IN (' . implode(',', $statusPlaceholders) . ')
+                  AND (recurring_series_id IS NULL OR recurring_series_id = 0)';
+        if ($extraWhere !== null && $extraWhere !== '') {
+            $sql .= ' AND (' . $extraWhere . ')';
+        }
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(array_merge($statusParams, $extraParams));
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * @param list<string> $statuses
+     * @param array<string, scalar> $extraParams
+     */
+    private static function countDistinctRecurringSeriesByStatuses(
+        \PDO $pdo,
+        array $statuses,
+        ?string $extraWhere = null,
+        array $extraParams = []
+    ): int {
+        if ($statuses === []) {
+            return 0;
+        }
+        $statusParams = [];
+        $statusPlaceholders = [];
+        foreach ($statuses as $index => $status) {
+            $key = 'st' . $index;
+            $statusPlaceholders[] = ':' . $key;
+            $statusParams[$key] = $status;
+        }
+        $sql = 'SELECT COUNT(DISTINCT recurring_series_id) FROM class_sessions
+                WHERE status IN (' . implode(',', $statusPlaceholders) . ')
+                  AND recurring_series_id IS NOT NULL AND recurring_series_id > 0';
+        if ($extraWhere !== null && $extraWhere !== '') {
+            $sql .= ' AND (' . $extraWhere . ')';
+        }
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(array_merge($statusParams, $extraParams));
+
+        return (int) $stmt->fetchColumn();
     }
 
     public static function formatActualDuration(?array $row): string

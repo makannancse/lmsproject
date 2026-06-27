@@ -3,150 +3,200 @@
 use function htmlspecialchars as h;
 
 $base = appWebPath();
-$studentBannerFsPath = dirname(__DIR__, 3) . '/public/assets/images/student-banner.jpg';
-$defaultBannerFsPath = dirname(__DIR__, 3) . '/public/assets/images/banner.jpg';
-$hasBanner = is_file($studentBannerFsPath) || is_file($defaultBannerFsPath);
-$bannerSrc = is_file($studentBannerFsPath) ? ((defined('BASE_URL') ? BASE_URL : '/') . 'assets/images/student-banner.jpg') : BANNER_PATH;
+$studentName = (string) ($studentName ?? 'Student');
+$studentTimezone = (string) ($studentTimezone ?? APP_TIMEZONE);
+$assignedTeachers = $assignedTeachers ?? [];
+$nextClass = $nextClass ?? null;
+$upcomingCount = (int) ($upcomingCount ?? 0);
+$homeworkItems = $homeworkItems ?? [];
+$homeworkPending = (int) ($homeworkPending ?? 0);
+$homeworkSubmitted = (int) ($homeworkSubmitted ?? 0);
+$feedbackCount = (int) ($feedbackCount ?? 0);
+$reportCount = (int) ($reportCount ?? 0);
+$attendancePercent = $attendancePercent ?? null;
 $recordings = $recordings ?? [];
-$studentTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
+$announcements = $announcements ?? [];
+$hasBanner = (bool) ($hasBanner ?? false);
+$bannerSrc = (string) ($bannerSrc ?? '');
+$primaryTeacher = $assignedTeachers[0] ?? null;
 ?>
 
-<div class="row g-3">
-    <div class="col-12">
-        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
-            <div>
-                <h1 class="h4 mb-0">Student Dashboard</h1>
-                <p class="text-muted mb-0 small">Your classes and approved recordings.</p>
-            </div>
-            <span class="badge text-bg-success text-uppercase">Student</span>
-        </div>
-    </div>
-
-
-    <div class="col-12 col-lg-4">
-        <div class="card shadow-sm mb-3">
-            <div class="card-body">
-                <h2 class="h6 text-muted text-uppercase mb-3">Assigned Teacher</h2>
-                <?php $assignedTeachers = $assignedTeachers ?? []; ?>
-                <?php if ($assignedTeachers === []): ?>
-                    <p class="text-muted small mb-0">No teacher has been assigned yet.</p>
-                <?php else: ?>
-                    <?php foreach ($assignedTeachers as $teacher): ?>
-                        <div class="mb-3 pb-3 border-bottom">
-                            <div class="fw-semibold"><?= h((string) ($teacher['name'] ?? '')) ?></div>
-                            <div class="small text-muted">Subject: <?= h((string) ($teacher['subject'] ?? '—')) ?></div>
-                            <div class="small text-muted">Class: <?= h((string) ($teacher['class_name'] ?? '—')) ?></div>
-                            <div class="small"><a href="mailto:<?= h((string) ($teacher['email'] ?? '')) ?>"><?= h((string) ($teacher['email'] ?? '')) ?></a></div>
-                        </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-12 col-lg-8">
-        <div class="banner-card mb-3">
-            <?php if ($hasBanner): ?>
-                <img src="<?= h($bannerSrc) ?>" alt="Student learning banner">
-            <?php else: ?>
-                <div class="student-dashboard-banner-fallback"></div>
-            <?php endif; ?>
-            <div class="overlay">
-                <h2>Welcome Back</h2>
-                <p>Continue your learning journey</p>
-            </div>
-        </div>
-
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h2 class="h6 text-muted text-uppercase mb-3">Completed Classes</h2>
-                <div class="table-responsive">
-                    <table class="table table-sm align-middle mb-0">
-                        <thead>
-                        <tr>
-                            <th>Title</th>
-                            <th>Ended</th>
-                            <th>Duration</th>
-                            <th>Recording</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <?php if (empty($completedClasses)): ?>
-                            <tr><td colspan="4" class="text-muted small">No completed classes yet.</td></tr>
-                        <?php else: ?>
-                            <?php foreach ($completedClasses as $done): ?>
-                                <?php $recordingStatus = recordingSyncStatusForRow($done); ?>
-                                <tr>
-                                    <td>
-                                        <div class="fw-semibold"><?= h((string) ($done['title'] ?? '')) ?></div>
-                                        <?php if (classActualStartUtcValue($done) !== null): ?>
-                                            <div class="small text-muted">Started: <?= h(formatClassActualAt($done, 'start', $studentTimezone)) ?></div>
-                                            <div class="small text-muted"><?= h(formatClassActualTimezoneLabel($done, $studentTimezone)) ?></div>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td class="small">
-                                        <?php if (classActualEndUtcValue($done) !== null): ?>
-                                            <div><?= h(formatClassActualAt($done, 'end', $studentTimezone)) ?></div>
-                                            <div class="text-muted"><?= h(formatClassActualTimezoneLabel($done, $studentTimezone)) ?></div>
-                                        <?php else: ?>
-                                            <div class="text-muted">Waiting for actual Meet end time</div>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td class="small text-muted"><?= h(ClassSession::formatActualDuration($done)) ?></td>
-                                    <td>
-                                        <?php if (!empty($done['recording_url']) && (string) ($done['visible_to_student'] ?? 'no') === 'yes'): ?>
-                                            <a href="<?= h((string) $done['recording_url']) ?>" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">View Recording</a>
-                                        <?php elseif ($recordingStatus === 'processing' || $recordingStatus === 'failed'): ?>
-                                            <span class="text-muted small"><?= h(recordingSyncStatusText($done)) ?></span>
-                                        <?php elseif ($recordingStatus === 'disabled'): ?>
-                                            <span class="text-muted small">Recording disabled.</span>
-                                        <?php else: ?>
-                                            <span class="text-muted small">Recording not available.</span>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
+<div class="student-dashboard">
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="student-dash-card student-dash-card-hover">
+                <div class="student-dash-card-header">
+                    <h2><i class="fa-solid fa-user-tie me-2"></i>Assigned Teachers</h2>
+                </div>
+                <div class="student-dash-card-body">
+                    <?php if ($assignedTeachers === []): ?>
+                        <p class="text-muted mb-0">No teacher has been assigned to your classes yet.</p>
+                    <?php else: ?>
+                        <div class="row g-3">
+                            <?php foreach ($assignedTeachers as $teacher): ?>
+                                <div class="col-md-6 col-xl-4">
+                                    <div class="student-teacher-widget h-100">
+                                        <div class="d-flex align-items-start gap-3">
+                                            <span class="student-teacher-icon"><i class="fa-solid fa-chalkboard-user"></i></span>
+                                            <div class="min-w-0">
+                                                <div class="fw-semibold"><?= h((string) ($teacher['name'] ?? '')) ?></div>
+                                                <div class="small text-muted mt-1">Class Name: <?= h((string) ($teacher['class_name'] ?? '—')) ?></div>
+                                                <div class="small text-muted">Timezone: <?= h((string) ($teacher['timezone'] ?? '—')) ?></div>
+                                                <?php if (!empty($teacher['email'])): ?>
+                                                    <div class="small mt-2"><a href="mailto:<?= h((string) $teacher['email']) ?>"><?= h((string) $teacher['email']) ?></a></div>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             <?php endforeach; ?>
-                        <?php endif; ?>
-                        </tbody>
-                    </table>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-12 col-lg-4">
-
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h2 class="h6 text-muted text-uppercase mb-3">Approved Recordings</h2>
-                <div class="row g-3">
-                    <?php if ($recordings === []): ?>
-                        <div class="col-12"><p class="text-muted small mb-0">No recordings are available for you yet.</p></div>
+    <div class="row g-4">
+        <div class="col-xl-8">
+            <div class="student-dash-card student-dash-card-hover h-100">
+                <div class="student-dash-card-header">
+                    <h2><i class="fa-solid fa-video me-2"></i>My Classes</h2>
+                    <a href="<?= h(path('student/reschedule')) ?>" class="small text-decoration-none">View all</a>
+                </div>
+                <div class="student-dash-card-body">
+                    <?php if ($nextClass === null): ?>
+                        <p class="text-muted mb-0">No upcoming classes scheduled. Check back soon or view your calendar.</p>
                     <?php else: ?>
-                        <?php foreach ($recordings as $recording): ?>
-                            <div class="col-12">
-                                <div class="recording-meta-card p-3">
-                                    <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
-                                        <div>
-                                            <div class="fw-semibold"><?= h((string) ($recording['recording_title'] ?? $recording['class_title'] ?? 'Recording')) ?></div>
-                                            <div class="small text-muted"><?= h((string) ($recording['teacher_name'] ?? 'Teacher')) ?></div>
-                                        </div>
-                                        <i class="fa-solid fa-video text-primary"></i>
-                                    </div>
-                                    <?php if (classActualStartUtcValue($recording) !== null || classActualEndUtcValue($recording) !== null): ?>
-                                        <?php if (classActualStartUtcValue($recording) !== null): ?><div class="small text-muted mb-1">Started: <?= h(formatClassActualAt($recording, 'start', $studentTimezone)) ?></div><?php endif; ?>
-                                        <?php if (classActualEndUtcValue($recording) !== null): ?><div class="small text-muted mb-1">Ended: <?= h(formatClassActualAt($recording, 'end', $studentTimezone)) ?></div><?php endif; ?>
-                                        <div class="small text-muted mb-1"><?= h(formatClassActualTimezoneLabel($recording, $studentTimezone)) ?></div>
-                                    <?php endif; ?>
-                                    <div class="small text-muted mb-1">Class duration: <?= h(formatDurationMinutes(classActualDurationMinutes($recording))) ?></div>
-                                    <div class="small text-muted mb-3">Recording runtime: <?= h(((int) ($recording['recording_duration'] ?? 0) > 0 ? (int) $recording['recording_duration'] . ' min' : 'Unknown')) ?></div>
-                                    <a href="<?= h((string) ($recording['recording_url'] ?? '')) ?>" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">View Recording</a>
+                        <div class="student-next-class">
+                            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                                <div>
+                                    <div class="student-next-class-label">Next Upcoming Class</div>
+                                    <h3 class="h5 mb-2"><?= h((string) ($nextClass['title'] ?? 'Class')) ?></h3>
+                                    <div class="small text-muted mb-1"><i class="fa-regular fa-clock me-1"></i><?= h(formatClassScheduledAt($nextClass, 'l, d M Y h:i A T')) ?></div>
+                                    <div class="small text-muted"><i class="fa-solid fa-globe me-1"></i><?= h(formatClassScheduledTimezoneLabel($nextClass)) ?></div>
+                                    <div class="small mt-2">Teacher: <?= h((string) ($nextClass['teacher_name'] ?? '')) ?></div>
                                 </div>
+                                <?php if (!empty($nextClass['meeting_link'])): ?>
+                                    <a href="<?= h(path('join-class?class_id=' . (int) ($nextClass['id'] ?? 0))) ?>" class="btn btn-student-primary btn-lg px-4">
+                                        <i class="fa-solid fa-play me-2"></i>Join Class
+                                    </a>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="student-dash-card student-dash-card-hover h-100">
+                <div class="student-dash-card-header">
+                    <h2><i class="fa-solid fa-chart-line me-2"></i>Performance</h2>
+                </div>
+                <div class="student-dash-card-body">
+                    <div class="row g-3 text-center">
+                        <div class="col-4">
+                            <div class="student-stat-pill">
+                                <div class="student-stat-value"><?= $feedbackCount ?></div>
+                                <div class="student-stat-label">Feedback</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="student-stat-pill">
+                                <div class="student-stat-value"><?= $reportCount ?></div>
+                                <div class="student-stat-label">Reports</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="student-stat-pill">
+                                <div class="student-stat-value"><?= $attendancePercent !== null ? h((string) $attendancePercent) . '%' : '—' ?></div>
+                                <div class="student-stat-label">Attendance</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-4">
+            <div class="student-dash-card student-dash-card-hover h-100">
+                <div class="student-dash-card-header">
+                    <h2><i class="fa-solid fa-book-open me-2"></i>Homework</h2>
+                    <a href="<?= h(path('student/homework')) ?>" class="small text-decoration-none">View all</a>
+                </div>
+                <div class="student-dash-card-body">
+                    <div class="d-flex gap-2 mb-3">
+                        <span class="badge rounded-pill student-badge-pending"><?= $homeworkPending ?> Pending</span>
+                        <span class="badge rounded-pill student-badge-done"><?= $homeworkSubmitted ?> Submitted</span>
+                    </div>
+                    <?php if ($homeworkItems === []): ?>
+                        <p class="text-muted small mb-0">No homework assigned yet.</p>
+                    <?php else: ?>
+                        <ul class="list-unstyled mb-0 student-homework-list">
+                            <?php foreach (array_slice($homeworkItems, 0, 4) as $hw): ?>
+                                <li class="d-flex justify-content-between align-items-center gap-2 py-2 border-bottom">
+                                    <span class="small fw-medium"><?= h((string) ($hw['title'] ?? 'Homework')) ?></span>
+                                    <?php if (!empty($hw['is_submitted'])): ?>
+                                        <span class="badge text-bg-success">Submitted</span>
+                                    <?php else: ?>
+                                        <span class="badge text-bg-warning text-dark">Pending</span>
+                                    <?php endif; ?>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-4">
+            <div class="student-dash-card student-dash-card-hover h-100">
+                <div class="student-dash-card-header">
+                    <h2><i class="fa-solid fa-circle-play me-2"></i>Recordings</h2>
+                </div>
+                <div class="student-dash-card-body">
+                    <?php if ($recordings === []): ?>
+                        <p class="text-muted small mb-0">No approved recordings yet.</p>
+                    <?php else: ?>
+                        <?php foreach (array_slice($recordings, 0, 3) as $recording): ?>
+                            <div class="student-recording-item mb-3 pb-3 border-bottom">
+                                <div class="fw-semibold small"><?= h((string) ($recording['recording_title'] ?? $recording['class_title'] ?? 'Recording')) ?></div>
+                                <div class="text-muted small mb-2"><?= h((string) ($recording['teacher_name'] ?? '')) ?></div>
+                                <a href="<?= h((string) ($recording['recording_url'] ?? '#')) ?>" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">
+                                    <i class="fa-solid fa-play me-1"></i>Watch Recording
+                                </a>
                             </div>
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </div>
             </div>
         </div>
+
+        <div class="col-xl-4">
+            <div class="student-dash-card student-dash-card-hover h-100">
+                <div class="student-dash-card-header">
+                    <h2><i class="fa-solid fa-bullhorn me-2"></i>Announcements</h2>
+                </div>
+                <div class="student-dash-card-body">
+                    <?php foreach ($announcements as $item): ?>
+                        <div class="student-announcement mb-3 pb-3 border-bottom">
+                            <div class="d-flex justify-content-between gap-2 mb-1">
+                                <strong class="small"><?= h((string) ($item['title'] ?? '')) ?></strong>
+                                <span class="text-muted small"><?= h((string) ($item['date'] ?? '')) ?></span>
+                            </div>
+                            <p class="text-muted small mb-0"><?= h((string) ($item['body'] ?? '')) ?></p>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="student-dashboard-banner-hero mb-4 student-dash-card" style='min-height: 450px;'>
+        <?php if ($hasBanner && $bannerSrc !== ''): ?>
+            <img src="<?= h($bannerSrc) ?>" alt="LearnWise welcome banner" class="student-dashboard-banner-image">
+        <?php else: ?>
+            <div class="student-dashboard-banner-fallback"></div>
+        <?php endif; ?>
     </div>
 </div>

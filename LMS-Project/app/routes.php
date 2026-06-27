@@ -28,6 +28,7 @@ require_once __DIR__ . '/controllers/MeetingSyncDebugController.php';
 require_once __DIR__ . '/controllers/RecordingController.php';
 require_once __DIR__ . '/controllers/TeacherStudentApiController.php';
 require_once __DIR__ . '/controllers/KeepAliveController.php';
+require_once __DIR__ . '/controllers/LogController.php';
 
 $router = new Router();
 
@@ -159,5 +160,7 @@ $router->get('/teacher/feedback/create', [FeedbackController::class, 'teacherCre
 $router->post('/teacher/feedback', [FeedbackController::class, 'teacherStore']);
 $router->get('/student/feedback', [FeedbackController::class, 'studentIndex']);
 $router->get('/admin/feedback', [FeedbackController::class, 'adminIndex']);
+$router->get('/admin/logs/audit', [LogController::class, 'auditIndex']);
+$router->get('/admin/logs/email', [LogController::class, 'emailIndex']);
 
 $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);

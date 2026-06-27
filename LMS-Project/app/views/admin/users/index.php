@@ -149,4 +149,5 @@ $statusFilter = $statusFilter ?? '';
             </table>
         </div>
     </div>
+    <?php renderPagination($pagination ?? null, $queryParams ?? []); ?>
 </div>

@@ -157,6 +157,7 @@ unset($recentRecordings);
                         </tbody>
                     </table>
                 </div>
+                <?php renderPagination($googlePagination ?? null, []); ?>
             </div>
         </div>
     </div>

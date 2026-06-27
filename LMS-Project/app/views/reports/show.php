@@ -39,7 +39,7 @@ if (Auth::isAdmin()) {
                     <div class="col-md-6"><strong>Email:</strong> <?= h((string) ($r['email'] ?? '')) ?></div>
                     <div class="col-md-6"><strong>Student Name:</strong> <?= h((string) ($r['student_name'] ?? '')) ?></div>
                     <div class="col-md-6"><strong>Teacher Name:</strong> <?= h((string) ($r['teacher_name'] ?? '')) ?></div>
-                    <div class="col-md-6"><strong>Subject:</strong> <?= h((string) ($r['subject'] ?? '')) ?></div>
+                    <div class="col-md-6"><strong>Class Title:</strong> <?= h((string) ($r['subject'] ?? '')) ?></div>
                     <div class="col-md-6"><strong>Report Date:</strong> <?= h((string) ($r['report_date'] ?? '')) ?></div>
                 </div>
                 <hr>
@@ -50,7 +50,7 @@ if (Auth::isAdmin()) {
                 <p><strong>Attention During Class:</strong> <?= h((string) ($r['attention_level'] ?? '')) ?></p>
                 <p><strong>Participation Level:</strong> <?= h((string) ($r['participation_level'] ?? '')) ?></p>
                 <p><strong>Behaviour &amp; Discipline:</strong> <?= h((string) ($r['behaviour'] ?? '')) ?></p>
-                <p><strong>Subjects Addressed:</strong><br><?= nl2br(h((string) ($r['subjects_addressed'] ?? ''))) ?></p>
+                <p><strong>Topics Covered:</strong><br><?= nl2br(h((string) ($r['subjects_addressed'] ?? ''))) ?></p>
                 <p><strong>Future Focus:</strong><br><?= nl2br(h((string) ($r['future_focus'] ?? ''))) ?></p>
                 <p><strong>Recommended Areas for Focus:</strong><br><?= nl2br(h((string) ($r['recommended_focus'] ?? ''))) ?></p>
                 <p><strong>Suggested Study Strategies:</strong><br><?= nl2br(h((string) ($r['study_strategies'] ?? ''))) ?></p>

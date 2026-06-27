@@ -88,9 +88,9 @@ $action = $base . (Auth::isAdmin() ? '/admin/reports' : '/teacher/reports');
                         <?php endif; ?>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold" for="subject">Subject <span class="text-danger">*</span></label>
+                        <label class="form-label fw-semibold" for="subject">Class Title <span class="text-danger">*</span></label>
                         <input type="text" class="form-control form-control-lg" id="subject" name="subject" required
-                               value="<?= h((string) ($old['subject'] ?? '')) ?>" placeholder="e.g. Mathematics">
+                               value="<?= h((string) ($old['subject'] ?? '')) ?>" placeholder="e.g. Grade 8 Math Session">
                     </div>
                 </div>
             </div>
@@ -113,7 +113,7 @@ $action = $base . (Auth::isAdmin() ? '/admin/reports' : '/teacher/reports');
             <div class="card-body p-4">
                 <h2 class="h6 text-primary mb-3 pb-2 border-bottom"><i class="fa-solid fa-pen-to-square me-2"></i>Written feedback</h2>
                 <div class="mb-4">
-                    <label class="form-label fw-semibold">Subjects Addressed <span class="text-danger">*</span></label>
+                    <label class="form-label fw-semibold">Topics Covered <span class="text-danger">*</span></label>
                     <textarea class="form-control" name="subjects_addressed" rows="3" required placeholder="Topics covered in this report period"><?= h((string) ($old['subjects_addressed'] ?? '')) ?></textarea>
                 </div>
                 <div class="mb-4">

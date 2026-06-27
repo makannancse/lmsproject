@@ -12,6 +12,7 @@ require_once dirname(__DIR__) . '/models/User.php';
 require_once dirname(__DIR__) . '/models/ClassRecording.php';
 require_once dirname(__DIR__) . '/lib/Mailer.php';
 require_once dirname(__DIR__) . '/lib/EmailTemplate.php';
+require_once dirname(__DIR__) . '/lib/Pagination.php';
 require_once dirname(__DIR__, 2) . '/payments/payment_helper.php';
 
 class AdminController
@@ -40,8 +41,14 @@ class AdminController
             $totalPayoutPaid += (float) ($tp['paid_amount'] ?? 0);
         }
 
-        // Teacher Google connections only (recent sections removed per UAT)
-        $teacherGoogleAccounts = TeacherGoogleAccount::allWithTeacherNames();
+        // Teacher Google connections (paginated on dashboard)
+        $googleReq = Pagination::fromRequest();
+        $googleTotal = TeacherGoogleAccount::countAllTeachers();
+        $teacherGoogleAccounts = TeacherGoogleAccount::paginatedWithTeacherNames(
+            $googleReq['per_page'],
+            $googleReq['offset']
+        );
+        $googlePagination = Pagination::meta($googleTotal, $googleReq['page'], $googleReq['per_page']);
 
         View::render('admin/dashboard', [
             'pageTitle' => 'Admin Dashboard',
@@ -52,6 +59,7 @@ class AdminController
             'totalPayoutPaid' => $totalPayoutPaid,
             'teacherPayouts' => $teacherPayouts,
             'teacherGoogleAccounts' => $teacherGoogleAccounts,
+            'googlePagination' => $googlePagination,
         ]);
     }
 
@@ -68,7 +76,11 @@ class AdminController
         $status = trim((string) ($_GET['status'] ?? ''));
         $statusFilter = in_array($status, ['active', 'inactive'], true) ? $status : null;
 
-        $users = User::search($role, $query !== '' ? $query : null, $statusFilter);
+        $req = Pagination::fromRequest();
+        $searchQuery = $query !== '' ? $query : null;
+        $total = User::countSearch($role, $searchQuery, $statusFilter);
+        $users = User::searchPaged($role, $searchQuery, $statusFilter, $req['per_page'], $req['offset']);
+        $pagination = Pagination::meta($total, $req['page'], $req['per_page']);
 
         View::render('admin/users/index', [
             'pageTitle' => 'Users',
@@ -76,6 +88,12 @@ class AdminController
             'users' => $users,
             'searchQuery' => $query,
             'statusFilter' => $statusFilter ?? '',
+            'pagination' => $pagination,
+            'queryParams' => array_filter([
+                'role' => $role,
+                'q' => $query !== '' ? $query : null,
+                'status' => $statusFilter,
+            ], static fn($v) => $v !== null && $v !== ''),
         ]);
     }
 
@@ -488,6 +506,10 @@ class AdminController
         }
 
         $rows = getAllTeacherPayoutSummaries($statusFilter);
+        $req = Pagination::fromRequest();
+        $total = count($rows);
+        $pagedRows = array_slice($rows, $req['offset'], $req['per_page']);
+        $pagination = Pagination::meta($total, $req['page'], $req['per_page']);
         $totalPayout = 0.0;
         $totalPaid = 0.0;
         $totalPending = 0.0;
@@ -499,11 +521,13 @@ class AdminController
 
         View::render('admin/payments/index', [
             'pageTitle' => 'Teacher Payments',
-            'rows' => $rows,
+            'rows' => $pagedRows,
             'statusFilter' => $statusFilter,
             'totalPayout' => $totalPayout,
             'totalPaid' => $totalPaid,
             'totalPending' => $totalPending,
+            'pagination' => $pagination,
+            'queryParams' => array_filter(['status' => $statusFilter !== '' ? $statusFilter : null]),
         ]);
     }
 

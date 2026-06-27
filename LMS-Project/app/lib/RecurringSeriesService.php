@@ -64,6 +64,14 @@ class RecurringSeriesService
 
         $meetLink = (string) ($meeting['meet_link'] ?? '');
         $googleEventId = (string) ($meeting['event_id'] ?? '');
+        if ($googleEventId === '') {
+            self::logRecurringSchedule([
+                'event' => 'google_event_missing',
+                'teacher_id' => $teacherId,
+                'meet_link' => $meetLink !== '' ? $meetLink : null,
+                'message' => 'Google Calendar createMeeting returned no event_id; series will use empty google_event_id on class_sessions until synced.',
+            ]);
+        }
         $googleMeetingCode = self::extractMeetCode($meetLink);
         $googleMeetSpaceName = null;
         try {
@@ -129,19 +137,24 @@ class RecurringSeriesService
              VALUES
                 (:series_id, :occurrence_date, :start_utc, :end_utc, "scheduled", 0, "pending")'
         );
+        // google_event_id is omitted from INSERT: class_sessions.google_event_id is NOT NULL
+        // (defaults to ''). Only the first occurrence is updated after insert (see persistClassOccurrence).
         $classStmt = $pdo->prepare(
             'INSERT INTO class_sessions
                 (teacher_id, class_master_id, title, description, payout_amount, student_fee,
                  start_datetime, scheduled_time_utc, start_time_utc, end_datetime, end_time_utc,
-                 timezone, scheduled_timezone, meeting_link, google_event_id, teacher_google_email,
+                 timezone, scheduled_timezone, meeting_link, teacher_google_email,
                  google_meet_space_name, google_meeting_code, meeting_live_status, status, recording_enabled,
                  recurring_series_id, recurrence_rule)
              VALUES
                 (:teacher_id, :class_master_id, :title, :description, :payout, :student_fee,
                  :start_dt, :scheduled_time_utc, :start_time_utc, :end_dt, :end_time_utc,
-                 :timezone, :scheduled_timezone, :meeting_link, :google_event_id, :teacher_google_email,
+                 :timezone, :scheduled_timezone, :meeting_link, :teacher_google_email,
                  :google_meet_space_name, :google_meeting_code, "pending", "scheduled", :recording_enabled,
                  :recurring_series_id, :recurrence_rule)'
+        );
+        $updateGoogleEventStmt = $pdo->prepare(
+            'UPDATE class_sessions SET google_event_id = :google_event_id WHERE id = :id'
         );
 
         self::logRecurringSchedule([
@@ -165,30 +178,49 @@ class RecurringSeriesService
             ]);
             $occurrenceId = (int) $pdo->lastInsertId();
 
-            $classStmt->execute([
-                'teacher_id' => $teacherId,
-                'class_master_id' => $classMasterId > 0 ? $classMasterId : null,
-                'title' => $title,
-                'description' => $description,
-                'payout' => $teacherRate,
-                'student_fee' => 0,
-                'start_dt' => $slotStartUtc,
-                'scheduled_time_utc' => $slotStartUtc,
-                'start_time_utc' => $slotStartUtc,
-                'end_dt' => $slotEndUtc,
-                'end_time_utc' => $slotEndUtc,
-                'timezone' => $timezone,
-                'scheduled_timezone' => $timezone,
-                'meeting_link' => $meetLink !== '' ? $meetLink : null,
-                'google_event_id' => $index === 0 && $googleEventId !== '' ? $googleEventId : null,
-                'teacher_google_email' => $teacherGoogleEmail !== '' ? $teacherGoogleEmail : null,
-                'google_meet_space_name' => $googleMeetSpaceName,
-                'google_meeting_code' => $googleMeetingCode,
-                'recording_enabled' => $recordingEnabled,
-                'recurring_series_id' => $seriesId,
-                'recurrence_rule' => $frequency,
-            ]);
+            try {
+                $classStmt->execute([
+                    'teacher_id' => $teacherId,
+                    'class_master_id' => $classMasterId > 0 ? $classMasterId : null,
+                    'title' => $title,
+                    'description' => $description,
+                    'payout' => $teacherRate,
+                    'student_fee' => 0,
+                    'start_dt' => $slotStartUtc,
+                    'scheduled_time_utc' => $slotStartUtc,
+                    'start_time_utc' => $slotStartUtc,
+                    'end_dt' => $slotEndUtc,
+                    'end_time_utc' => $slotEndUtc,
+                    'timezone' => $timezone,
+                    'scheduled_timezone' => $timezone,
+                    'meeting_link' => $meetLink !== '' ? $meetLink : null,
+                    'teacher_google_email' => $teacherGoogleEmail !== '' ? $teacherGoogleEmail : null,
+                    'google_meet_space_name' => $googleMeetSpaceName,
+                    'google_meeting_code' => $googleMeetingCode,
+                    'recording_enabled' => $recordingEnabled,
+                    'recurring_series_id' => $seriesId,
+                    'recurrence_rule' => $frequency,
+                ]);
+            } catch (\PDOException $e) {
+                self::logRecurringSchedule([
+                    'event' => 'class_session_insert_failed',
+                    'series_id' => $seriesId,
+                    'occurrence_index' => $index,
+                    'occurrence_date' => $occurrenceDate,
+                    'google_event_id' => $index === 0 ? ($googleEventId !== '' ? $googleEventId : '(empty)') : '(series occurrence — omitted from insert)',
+                    'error' => $e->getMessage(),
+                    'root_cause' => 'INSERT INTO class_sessions failed; google_event_id column is NOT NULL and cannot receive explicit NULL.',
+                ]);
+                throw $e;
+            }
             $classSessionId = (int) $pdo->lastInsertId();
+
+            if ($index === 0 && $googleEventId !== '') {
+                $updateGoogleEventStmt->execute([
+                    'google_event_id' => $googleEventId,
+                    'id' => $classSessionId,
+                ]);
+            }
 
             if (migration034HasOccurrenceColumn($pdo)) {
                 $pdo->prepare(

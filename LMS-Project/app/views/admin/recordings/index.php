@@ -189,4 +189,5 @@ $adminTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
             </tbody>
         </table>
     </div>
+    <?php renderPagination($pagination ?? null, $queryParams ?? []); ?>
 </div>

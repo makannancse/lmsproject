@@ -30,7 +30,7 @@ $teacherTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
                 <span class="stat-icon bg-primary text-white"><i class="fa-solid fa-calendar-days"></i></span>
                 <div>
                     <h2 class="h6 text-muted text-uppercase mb-1 small">Upcoming Classes</h2>
-                    <p class="display-6 fw-semibold mb-0 lh-1"><?= count($upcomingClasses ?? []) ?></p>
+                    <p class="display-6 fw-semibold mb-0 lh-1"><?= (int) ($upcomingCount ?? count($upcomingClasses ?? [])) ?></p>
                 </div>
             </div>
         </div>
@@ -111,7 +111,7 @@ $teacherTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
                         <thead>
                         <tr>
                             <th>Student</th>
-                            <th>Subject</th>
+                            <th>Class Name</th>
                             <th>Timezone</th>
                             <th>Status</th>
                         </tr>
@@ -123,7 +123,7 @@ $teacherTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
                             <?php foreach ($assignedStudents as $student): ?>
                                 <tr>
                                     <td><?= h((string) ($student['name'] ?? '')) ?></td>
-                                    <td><?= h((string) ($student['subject'] ?? '—')) ?></td>
+                                    <td><?= h((string) ($student['class_name'] ?? '—')) ?></td>
                                     <td><?= h((string) ($student['timezone'] ?? '—')) ?></td>
                                     <td>
                                         <?php if (strtolower((string) ($student['status'] ?? 'active')) === 'active'): ?>
@@ -143,42 +143,54 @@ $teacherTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
     </div>
 
     <div class="col-12 col-xl-7">
-        <div class="card shadow-sm h-100">
+        <div class="card shadow-sm h-100" id="upcoming-classes">
             <div class="card-body">
-                <h2 class="h6 text-muted text-uppercase mb-3">Upcoming Classes</h2>
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                    <h2 class="h6 text-muted text-uppercase mb-0">Upcoming Classes</h2>
+                    <span class="badge text-bg-light text-dark border"><?= (int) ($upcomingPagination['total'] ?? count($upcomingClasses ?? [])) ?> total</span>
+                </div>
+                <form method="get" action="<?= h(path('teacher')) ?>" class="row g-2 align-items-end mb-3 no-app-loader">
+                    <div class="col-md-8">
+                        <label class="form-label form-label-sm mb-0" for="upcomingSearch">Search class or student</label>
+                        <input type="search" class="form-control form-control-sm" id="upcomingSearch" name="upcoming_q"
+                               value="<?= h((string) ($upcomingSearch ?? '')) ?>" placeholder="Class title or student name">
+                    </div>
+                    <div class="col-md-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-sm btn-primary">Search</button>
+                        <a href="<?= h(path('teacher')) ?>#upcoming-classes" class="btn btn-sm btn-outline-secondary">Reset</a>
+                    </div>
+                </form>
                 <div class="table-responsive">
                     <table class="table table-sm align-middle mb-0">
                         <thead>
                         <tr>
-                            <th>Title</th>
-                            <th>Start</th>
+                            <th>Student</th>
+                            <th>Class Title</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Timezone</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
                         </thead>
                         <tbody>
                         <?php if (empty($upcomingClasses)): ?>
-                            <tr><td colspan="4" class="text-muted small">No upcoming or in-progress classes.</td></tr>
+                            <tr><td colspan="7" class="text-muted small">No upcoming or in-progress classes.</td></tr>
                         <?php else: ?>
                             <?php foreach ($upcomingClasses as $cls): ?>
                                 <tr>
+                                    <td class="small"><?= h((string) ($cls['student_names'] ?? '—')) ?></td>
                                     <td><?= h((string) ($cls['title'] ?? '')) ?></td>
-                                    <td>
-                                        <div><?= h(formatUtcForTimezone(classStartUtcValue($cls), $teacherTimezone, 'd M Y h:i A T')) ?></div>
-                                        <div class="small text-muted"><?= h(formatClassScheduledAt($cls, 'd M Y h:i A T')) ?></div>
-                                        <div class="small text-muted"><?= h(formatClassScheduledTimezoneLabel($cls)) ?></div>
-                                        <?php if (classActualStartUtcValue($cls) !== null): ?>
-                                            <div class="small text-muted mt-1">Actual start: <?= h(formatClassActualAt($cls, 'start', $teacherTimezone)) ?></div>
-                                            <div class="small text-muted"><?= h(formatClassActualTimezoneLabel($cls, $teacherTimezone)) ?></div>
-                                        <?php endif; ?>
-                                    </td>
+                                    <td class="small"><?= h(formatClassScheduledAt($cls, 'd M Y')) ?></td>
+                                    <td class="small"><?= h(formatClassScheduledAt($cls, 'h:i A T')) ?></td>
+                                    <td class="small"><?= h(formatClassScheduledTimezoneLabel($cls)) ?></td>
                                     <td><span class="badge <?= h(classStatusBadgeClass((string) ($cls['status'] ?? 'scheduled'))) ?> text-uppercase"><?= h((string) ($cls['status'] ?? 'scheduled')) ?></span><?= teacherLateJoinBadgeHtml($cls) ?></td>
                                     <td>
                                         <div class="d-flex flex-wrap gap-2">
+                                            <a href="<?= h(path('join-class?class_id=' . (int) ($cls['id'] ?? 0))) ?>" class="btn btn-sm btn-primary" target="_blank" rel="noopener">Join Class</a>
                                             <?php $meetLink = trim((string) ($cls['meeting_link'] ?? '')); ?>
-                                            <a href="<?= h(path('join-class?class_id=' . (int) ($cls['id'] ?? 0))) ?>" class="btn btn-sm btn-primary" target="_blank" rel="noopener">Join Meeting</a>
                                             <?php if ($meetLink !== ''): ?>
-                                                <a href="<?= h($meetLink) ?>" class="btn btn-sm btn-outline-primary" target="_blank" rel="noopener">Open Meet Link</a>
+                                                <a href="<?= h($meetLink) ?>" class="btn btn-sm btn-outline-primary" target="_blank" rel="noopener">Open Meet</a>
                                             <?php endif; ?>
                                             <form method="post"
                                                   action="<?= h($base . '/meeting/track') ?>"
@@ -201,6 +213,15 @@ $teacherTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
                         </tbody>
                     </table>
                 </div>
+                <?php
+                $pagination = $upcomingPagination ?? null;
+                $queryParams = $upcomingQueryParams ?? [];
+                $pageParam = 'upcoming_page';
+                $perPageParam = 'upcoming_per_page';
+                $perPageOptions = [10, 25, 50];
+                $showFirstLast = false;
+                require dirname(__DIR__) . '/partials/pagination.php';
+                ?>
             </div>
         </div>
     </div>

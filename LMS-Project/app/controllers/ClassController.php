@@ -21,6 +21,7 @@ require_once dirname(__DIR__) . '/lib/GoogleMeetLiveTrackingService.php';
 require_once dirname(__DIR__) . '/lib/ClassRecurrenceHelper.php';
 require_once dirname(__DIR__) . '/lib/RecurringSeriesService.php';
 require_once dirname(__DIR__) . '/lib/EmailTemplate.php';
+require_once dirname(__DIR__) . '/lib/Pagination.php';
 require_once dirname(__DIR__) . '/models/RecurringOccurrence.php';
 
 class ClassController
@@ -454,7 +455,7 @@ class ClassController
             $rows = [
                 'Student Name' => htmlspecialchars($studentDisplay, ENT_QUOTES, 'UTF-8'),
                 'Teacher Name' => htmlspecialchars((string) ($series['teacher_name'] ?? ''), ENT_QUOTES, 'UTF-8'),
-                'Subject' => htmlspecialchars((string) ($series['title'] ?? ''), ENT_QUOTES, 'UTF-8'),
+                'Class Title' => htmlspecialchars((string) ($series['title'] ?? ''), ENT_QUOTES, 'UTF-8'),
                 'Recurring Type' => htmlspecialchars($recurrenceLabel, ENT_QUOTES, 'UTF-8'),
                 'Start Date' => htmlspecialchars($startDate, ENT_QUOTES, 'UTF-8'),
                 'End Date' => htmlspecialchars($endDate, ENT_QUOTES, 'UTF-8'),
@@ -533,7 +534,7 @@ class ClassController
         $rows = [
             'Student Name' => $studentList,
             'Teacher Name' => htmlspecialchars($teacherName, ENT_QUOTES, 'UTF-8'),
-            'Subject' => $safeSubject,
+            'Class Title' => $safeSubject,
             'Date' => $classDate,
             'Time' => $timeRange,
             'Timezone' => htmlspecialchars($scheduledTimezoneAbbr, ENT_QUOTES, 'UTF-8'),
@@ -663,15 +664,32 @@ class ClassController
         if (!empty($where)) {
             $sql .= ' WHERE ' . implode(' AND ', $where);
         }
-        $sql .= ' ORDER BY cs.start_datetime DESC';
+        $countSql = 'SELECT COUNT(*) FROM class_sessions cs INNER JOIN users u ON u.id = cs.teacher_id';
+        if (!empty($where)) {
+            $countSql .= ' WHERE ' . implode(' AND ', $where);
+        }
+        $countStmt = $pdo->prepare($countSql);
+        $countStmt->execute($params);
+        $total = (int) ($countStmt->fetchColumn() ?: 0);
+
+        $req = Pagination::fromRequest();
+        $sql .= ' ORDER BY cs.start_datetime DESC LIMIT :limit OFFSET :offset';
         $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+        $stmt->bindValue(':limit', $req['per_page'], \PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $req['offset'], \PDO::PARAM_INT);
+        $stmt->execute();
         $classes = $stmt->fetchAll() ?: [];
+        $pagination = Pagination::meta($total, $req['page'], $req['per_page']);
 
         View::render('classes/index', [
             'pageTitle' => 'Classes',
             'classes' => $classes,
             'statusFilter' => $statusFilter,
+            'pagination' => $pagination,
+            'queryParams' => array_filter(['status' => $statusFilter !== '' ? $statusFilter : null]),
         ]);
     }
 
@@ -715,18 +733,30 @@ class ClassController
     {
         Auth::requireRole(['admin']);
         $pdo = Database::connection();
-        $stmt = $pdo->query(
+        $total = (int) ($pdo->query(
+            'SELECT COUNT(*) FROM class_sessions cs WHERE cs.status = "completed"'
+        )->fetchColumn() ?: 0);
+
+        $req = Pagination::fromRequest();
+        $stmt = $pdo->prepare(
             'SELECT cs.*, u.name AS teacher_name
              FROM class_sessions cs
              INNER JOIN users u ON u.id = cs.teacher_id
              WHERE cs.status = "completed"
-             ORDER BY cs.completed_at DESC, cs.start_datetime DESC'
+             ORDER BY cs.completed_at DESC, cs.start_datetime DESC
+             LIMIT :limit OFFSET :offset'
         );
+        $stmt->bindValue(':limit', $req['per_page'], \PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $req['offset'], \PDO::PARAM_INT);
+        $stmt->execute();
         $classes = $stmt->fetchAll() ?: [];
+        $pagination = Pagination::meta($total, $req['page'], $req['per_page']);
 
         View::render('classes/completed', [
             'pageTitle' => 'Completed Classes',
             'classes' => $classes,
+            'pagination' => $pagination,
+            'queryParams' => [],
         ]);
     }
 
