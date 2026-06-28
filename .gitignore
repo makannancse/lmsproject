@@ -1,0 +1,14 @@
+# Environment files
+.env
+.env.*
+
+
+# Logs
+*.log
+
+
+# Cache
+/cache/
+/tmp/
+
+
