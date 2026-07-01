@@ -323,6 +323,9 @@ $timezoneOptions = calendarTimezoneOptions(resolveUserTimezone(Auth::user() ?: n
             html += '<p class="mb-1"><strong>Teacher:</strong> ' + escapeHtml(p.teacher_name || '-') + '</p>';
             if (p.teacher_google_email) html += '<p class="mb-1"><strong>Host account:</strong> ' + escapeHtml(p.teacher_google_email) + '</p>';
             html += '<p class="mb-1"><strong>Teacher joined:</strong> ' + (p.teacher_joined ? 'Yes' : 'Not yet') + '</p>';
+            if (p.teacher_late_join) {
+                html += '<p class="mb-1 text-danger"><strong>Late join:</strong> &#128308; ' + escapeHtml(p.teacher_late_join) + '</p>';
+            }
             if (p.student_names) html += '<p class="mb-1"><strong>Students:</strong> ' + escapeHtml(p.student_names) + '</p>';
             html += '<p class="mb-1"><strong>Scheduled start:</strong> ' + escapeHtml(p.start_local || '') + '</p>';
             html += '<p class="mb-1"><strong>Scheduled end:</strong> ' + escapeHtml(p.end_local || '') + '</p>';

@@ -14,7 +14,7 @@ $viewerTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
             <h1 class="h4 mb-0">Classes</h1>
             <p class="text-muted small mb-0">Manage live classes, tracking, and recordings.</p>
         </div>
-        <a href="<?= h($base . '/classes/create') ?>" class="btn btn-primary btn-sm">Schedule Class</a>
+        <a href="<?= h(path('classes/create')) ?>" class="btn btn-primary btn-sm">Schedule Class</a>
     </div>
 
     <div class="card shadow-sm mb-3">
@@ -67,7 +67,7 @@ $viewerTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
                                         <div class="small text-muted"><?= h(formatClassActualTimezoneLabel($cls, $viewerTimezone)) ?></div>
                                     <?php endif; ?>
                                 </td>
-                                <td><span class="badge <?= h(classStatusBadgeClass((string) ($cls['status'] ?? 'scheduled'))) ?> text-uppercase"><?= h((string) ($cls['status'] ?? 'scheduled')) ?></span></td>
+                                <td><span class="badge <?= h(classStatusBadgeClass((string) ($cls['status'] ?? 'scheduled'))) ?> text-uppercase"><?= h((string) ($cls['status'] ?? 'scheduled')) ?></span><?= teacherLateJoinBadgeHtml($cls) ?></td>
                                 <td class="small text-muted"><?= h(ClassSession::formatActualDuration($cls)) ?></td>
                                 <td>
                                     <?php if (Auth::isAdmin()):

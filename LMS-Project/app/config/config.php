@@ -71,3 +71,5 @@ define('LOGO_PATH', path('assets/images/logo.png'));
 define('BANNER_PATH', path('assets/images/banner.jpg'));
 
 date_default_timezone_set(APP_TIMEZONE);
+
+ensureUploadDirectories();

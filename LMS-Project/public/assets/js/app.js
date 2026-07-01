@@ -273,6 +273,19 @@
         );
     });
 
+    function preserveConfirmSubmitter(form, submitter) {
+        if (!(form instanceof HTMLFormElement) || !(submitter instanceof HTMLElement) || !submitter.name) {
+            return;
+        }
+        form.querySelectorAll('input[data-confirm-action="1"]').forEach((node) => node.remove());
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = submitter.name;
+        hidden.value = submitter.value || '1';
+        hidden.dataset.confirmAction = '1';
+        form.appendChild(hidden);
+    }
+
     document.addEventListener('submit', (event) => {
         if (event.defaultPrevented) {
             return;
@@ -330,6 +343,7 @@
                 }
 
                 form.dataset.confirmed = '1';
+                preserveConfirmSubmitter(form, submitter);
                 if (typeof form.requestSubmit === 'function') {
                     if (submitter) {
                         form.requestSubmit(submitter);

@@ -49,6 +49,7 @@ class AdminController
             $googleReq['offset']
         );
         $googlePagination = Pagination::meta($googleTotal, $googleReq['page'], $googleReq['per_page']);
+        $recentCompletedClasses = ClassSession::findRecentCompleted(8);
 
         View::render('admin/dashboard', [
             'pageTitle' => 'Admin Dashboard',
@@ -60,6 +61,7 @@ class AdminController
             'teacherPayouts' => $teacherPayouts,
             'teacherGoogleAccounts' => $teacherGoogleAccounts,
             'googlePagination' => $googlePagination,
+            'recentCompletedClasses' => $recentCompletedClasses,
         ]);
     }
 
@@ -554,8 +556,10 @@ class AdminController
                 $snapshot = getTeacherPayoutSummary($teacherId);
                 if ((float) $snapshot['pending_amount'] > 0) {
                     createTeacherPaymentEntry($teacherId, (float) $snapshot['pending_amount'], 'Marked paid from dashboard');
+                    $_SESSION['flash_success'] = 'Payment marked as paid successfully.';
+                } else {
+                    $_SESSION['flash_warning'] = 'No pending balance to mark as paid for this teacher.';
                 }
-                $_SESSION['flash_success'] = 'Payment marked as paid successfully.';
                 $suffix = $statusFilter !== '' ? ('&status=' . urlencode($statusFilter)) : '';
                 redirect('admin/payments?success=paid' . $suffix);
             }

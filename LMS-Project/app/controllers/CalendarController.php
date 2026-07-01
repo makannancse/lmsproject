@@ -247,6 +247,8 @@ class CalendarController
                 'scheduled_timezone_label' => $scheduledTimezoneLabel,
                 'teacher_google_email' => (string) ($row['teacher_google_email'] ?? ''),
                 'teacher_joined' => !empty($row['teacher_joined_at']),
+                'teacher_join_delay_minutes' => teacherJoinDelayMinutes($row),
+                'teacher_late_join' => teacherLateJoinNoticeText($row),
                 'start_local' => $startLocal,
                 'end_local' => $endLocal,
                 'actual_start_local' => $actualStartLocal,

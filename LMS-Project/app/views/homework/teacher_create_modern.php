@@ -31,7 +31,7 @@ $dueTimezoneValue = normalizeTimezone((string) ($old['due_timezone'] ?? (Auth::u
                 <?php endif; ?>
 
                 <form method="post"
-                      action="<?= h($base . '/teacher/homework') ?>"
+                      action="<?= h(path('teacher/homework')) ?>"
                       enctype="multipart/form-data"
                       data-loader-title="Assigning homework..."
                       data-loader-text="Saving homework details, uploading attachments, and notifying students.">
@@ -39,7 +39,7 @@ $dueTimezoneValue = normalizeTimezone((string) ($old['due_timezone'] ?? (Auth::u
                         <div class="mb-3">
                             <label class="form-label" for="teacher_id">Teacher</label>
                             <select class="form-select" id="teacher_id" name="teacher_id" required
-                                    data-homework-create-base="<?= h($base) ?>"
+                                    data-homework-create-base="<?= h(rtrim(path(), '/')) ?>"
                                     onchange="var basePath=this.dataset.homeworkCreateBase; if(basePath){ window.location.href=basePath+'/teacher/homework/create?teacher_id='+encodeURIComponent(this.value); }">
                                 <option value="">Select teacher</option>
                                 <?php foreach ($teachers as $teacher): ?>

@@ -96,7 +96,7 @@ $paymentsRouteBase = $appBase . '/admin/payments';
                     <td><?= htmlspecialchars((string) ($l['start_datetime'] ?? '')) ?></td>
                     <td><?= htmlspecialchars(formatCurrency((float) ($l['amount'] ?? 0))) ?></td>
                     <td><?= htmlspecialchars((string) ($l['status'] ?? '')) ?></td>
-                    <td><?php $lateBadge = teacherLateJoinBadgeHtml($l); echo $lateBadge !== '' ? $lateBadge : '<span class="text-muted small">On time</span>'; ?></td>
+                    <td><?php $lateText = teacherLateJoinNoticeText($l); echo $lateText !== null ? teacherLateJoinNoticeHtml($l, 'mb-0') : '<span class="text-muted small">On time</span>'; ?></td>
                     <td><?= htmlspecialchars((string) ($l['created_at'] ?? '')) ?></td>
                 </tr>
             <?php endforeach; endif; ?>

@@ -165,6 +165,50 @@ unset($recentRecordings);
     <div class="col-12">
         <div class="card shadow-sm">
             <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h6 text-muted text-uppercase mb-0">Recent Completed Classes</h2>
+                    <a href="<?= h(path('classes/completed')) ?>" class="btn btn-sm btn-outline-secondary">View all</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th>Class</th>
+                            <th>Teacher</th>
+                            <th>Scheduled</th>
+                            <th>Join Status</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php $recentCompletedClasses = $recentCompletedClasses ?? []; ?>
+                        <?php if ($recentCompletedClasses === []): ?>
+                            <tr><td colspan="4" class="text-muted small">No completed classes yet.</td></tr>
+                        <?php else: ?>
+                            <?php foreach ($recentCompletedClasses as $cls): ?>
+                                <tr>
+                                    <td><?= h((string) ($cls['title'] ?? '')) ?></td>
+                                    <td><?= h((string) ($cls['teacher_name'] ?? '')) ?></td>
+                                    <td class="small"><?= h(formatClassScheduledAt($cls, 'd M Y h:i A T')) ?></td>
+                                    <td>
+                                        <?php if (teacherLateJoinNoticeText($cls) !== null): ?>
+                                            <?= teacherLateJoinNoticeHtml($cls, 'mb-0') ?>
+                                        <?php else: ?>
+                                            <span class="small text-success">On time</span>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
                 <h2 class="h6 text-muted text-uppercase mb-3">Teacher Payouts</h2>
                 <div class="table-responsive">
                     <table class="table table-sm align-middle mb-0">

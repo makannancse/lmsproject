@@ -26,7 +26,7 @@ $radioField = static function (string $name, string $label) use ($options, $old)
     echo '</div></div>';
 };
 
-$action = $base . (Auth::isAdmin() ? '/admin/reports' : '/teacher/reports');
+$action = path(Auth::isAdmin() ? 'admin/reports' : 'teacher/reports');
 ?>
 
 <div class="report-form-page">

@@ -11,13 +11,15 @@ $statusFilter = $statusFilter ?? '';
 ?>
 
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-    <div>
+    <div class="me-auto">
         <h1 class="h4 mb-0">Users</h1>
         <p class="text-muted small mb-0">Search, filter, edit, and activate or deactivate accounts.</p>
     </div>
-    <div class="btn-group">
-        <a href="<?= h($base . '/admin/users/create-student') ?>" class="btn btn-sm btn-primary">New Student</a>
-        <a href="<?= h($base . '/admin/users/create-teacher') ?>" class="btn btn-sm btn-outline-primary">New Teacher</a>
+    <div class="flex-shrink-0">
+        <div class="btn-group" role="group" aria-label="Create user">
+            <a href="<?= h(path('admin/users/create-student')) ?>" class="btn btn-sm btn-primary">New Student</a>
+            <a href="<?= h(path('admin/users/create-teacher')) ?>" class="btn btn-sm btn-outline-primary">New Teacher</a>
+        </div>
     </div>
 </div>
 

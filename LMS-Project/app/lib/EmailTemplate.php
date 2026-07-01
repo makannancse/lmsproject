@@ -112,7 +112,7 @@ class EmailTemplate
             . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f3f4f6;padding:24px 12px;">'
             . '<tr><td align="center">'
             . '<table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.07);">'
-            . '<tr><td style="background:linear-gradient(135deg,#1e40af 0%,#2563eb 100%);padding:24px;text-align:center;">'
+            . '<tr><td style="background: linear-gradient(135deg, #111827 0%, #1e40af 100%);padding:24px;text-align:center;">'
             . ($logo !== '' ? self::logoImgHtml($logo, $brand, 84, '8px') : '')
             . '<p style="margin:0;color:#ffffff;font-size:22px;font-weight:700;">' . $brand . '</p>'
             . '<p style="margin:6px 0 0;color:#bfdbfe;font-size:14px;">' . htmlspecialchars($subjectLine, ENT_QUOTES, 'UTF-8') . '</p>'

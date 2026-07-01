@@ -53,10 +53,11 @@ $viewerTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
                                     <?php else: ?>
                                         <span class="text-muted small">No actual meeting activity captured.</span>
                                     <?php endif; ?>
+                                    <?= teacherLateJoinNoticeHtml($cls) ?>
                                 </td>
                                 <td><?= h(formatUtcForTimezone((string) ($cls['completed_at'] ?? ''), $viewerTimezone, 'd M Y h:i A T')) ?></td>
                                 <td><?= h(ClassSession::formatActualDuration($cls)) ?></td>
-                                <td><span class="badge text-bg-success text-uppercase"><?= h($cls['status']) ?></span></td>
+                                <td><span class="badge text-bg-success text-uppercase"><?= h($cls['status']) ?></span><?= teacherLateJoinBadgeHtml($cls) ?></td>
                             </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>

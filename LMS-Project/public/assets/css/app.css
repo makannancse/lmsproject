@@ -135,10 +135,45 @@ body.app-loader-on {
 .btn {
     border-radius: 10px;
     font-weight: 600;
+    position: relative;
+    z-index: 1;
+}
+
+a.btn,
+button.btn,
+input.btn[type="submit"],
+input.btn[type="button"] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+.btn-group > .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+form.d-inline .btn,
+form.d-inline-block .btn {
+    vertical-align: middle;
+}
+
+.teacher-late-join-notice {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+.teacher-late-join-badge {
+    white-space: normal;
+    text-align: left;
 }
 
 .btn:hover {
-    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
 }
 
 .modal-content {

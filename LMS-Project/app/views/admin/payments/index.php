@@ -93,21 +93,23 @@ $flashCode = (string) ($_GET['success'] ?? '');
                         <td><span class="badge <?= h($badge) ?> text-capitalize"><?= h($status) ?></span></td>
                         <td class="text-end">
                             <a href="<?= h(path('admin/payments/details?teacher_id=' . (int) $r['teacher_id'])) ?>" class="btn btn-sm btn-outline-secondary">Details</a>
-                            <form method="post" action="<?= h(path('admin/payments/process')) ?>" class="d-inline"
+                            <form method="post" action="<?= h(path('admin/payments/process')) ?>" class="d-inline no-app-loader"
                                   data-confirm="1"
                                   data-confirm-title="Mark as Paid?"
                                   data-confirm-text="This will record the full pending amount as paid for this teacher."
                                   data-confirm-button="Mark as Paid">
                                 <input type="hidden" name="teacher_id" value="<?= (int) $r['teacher_id'] ?>">
                                 <input type="hidden" name="status" value="<?= h($statusFilter) ?>">
-                                <button type="submit" name="mark_paid" value="1" class="btn btn-sm btn-primary" <?= (float) $r['pending_amount'] <= 0 ? 'disabled' : '' ?>>Mark as Paid</button>
+                                <input type="hidden" name="mark_paid" value="1">
+                                <button type="submit" class="btn btn-sm btn-primary" <?= (float) $r['pending_amount'] <= 0 ? 'disabled' : '' ?>>Mark as Paid</button>
                             </form>
-                            <form method="post" action="<?= h(path('admin/payments/process')) ?>" class="d-inline-flex gap-1 ms-1 align-items-center">
+                            <form method="post" action="<?= h(path('admin/payments/process')) ?>" class="d-inline-flex gap-1 ms-1 align-items-center no-app-loader">
                                 <input type="hidden" name="teacher_id" value="<?= (int) $r['teacher_id'] ?>">
                                 <input type="hidden" name="status" value="<?= h($statusFilter) ?>">
+                                <input type="hidden" name="add_payment" value="1">
                                 <input type="number" step="0.01" min="0.01" class="form-control form-control-sm" name="advance_amount" placeholder="Amount" required style="width: 100px;">
                                 <input type="text" class="form-control form-control-sm" name="remarks" placeholder="Remarks" style="width: 120px;">
-                                <button type="submit" name="add_payment" value="1" class="btn btn-sm btn-outline-primary">Add</button>
+                                <button type="submit" class="btn btn-sm btn-outline-primary">Add</button>
                             </form>
                         </td>
                     </tr>

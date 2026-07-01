@@ -77,15 +77,17 @@ if (!function_exists('appWebPath')) {
             return $cached;
         }
 
+        $webPath = '';
         if (defined('APP_URL') && APP_URL !== '') {
             $parsed = parse_url((string) APP_URL);
-            $webPath = is_array($parsed) ? (string) ($parsed['path'] ?? '') : '';
-            $cached = rtrim($webPath, '/');
-
-            return $cached;
+            $webPath = is_array($parsed) ? rtrim((string) ($parsed['path'] ?? ''), '/') : '';
         }
 
-        $cached = defined('BASE_PATH') ? rtrim((string) BASE_PATH, '/') : '';
+        if ($webPath === '' && defined('BASE_PATH')) {
+            $webPath = rtrim((string) BASE_PATH, '/');
+        }
+
+        $cached = $webPath;
 
         return $cached;
     }
@@ -103,9 +105,15 @@ if (!function_exists('url')) {
             return path($path);
         }
 
-        $segment = normalizeUrlPath($path);
+        $parsed = parse_url($root);
+        $origin = ($parsed['scheme'] ?? 'http') . '://' . ($parsed['host'] ?? 'localhost');
+        if (!empty($parsed['port'])) {
+            $origin .= ':' . $parsed['port'];
+        }
 
-        return $segment === '' ? ($root . '/') : ($root . '/' . $segment);
+        $route = $path === '/' ? '' : $path;
+
+        return $origin . path($route);
     }
 }
 
@@ -122,6 +130,28 @@ if (!function_exists('path')) {
         }
 
         return ($webPath === '' ? '' : $webPath) . '/' . $segment;
+    }
+}
+
+if (!function_exists('ensureUploadDirectories')) {
+    /**
+     * Ensure writable upload directories exist (homework, reports, etc.).
+     */
+    function ensureUploadDirectories(): void
+    {
+        static $done = false;
+        if ($done) {
+            return;
+        }
+        $done = true;
+
+        $root = dirname(__DIR__, 2);
+        foreach (['uploads/homework', 'uploads/homework_submissions', 'uploads/reports'] as $subdir) {
+            $dir = $root . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $subdir);
+            if (!is_dir($dir)) {
+                @mkdir($dir, 0755, true);
+            }
+        }
     }
 }
 
@@ -1038,11 +1068,29 @@ if (!function_exists('isTeacherLateJoin')) {
     /**
      * @param array<string, mixed>|null $classRow
      */
-    function isTeacherLateJoin(?array $classRow, int $thresholdMinutes = 5): bool
+    function isTeacherLateJoin(?array $classRow, int $thresholdMinutes = 1): bool
     {
         $delay = teacherJoinDelayMinutes($classRow);
 
-        return $delay !== null && $delay > $thresholdMinutes;
+        return $delay !== null && $delay >= $thresholdMinutes;
+    }
+}
+
+if (!function_exists('teacherLateJoinNoticeText')) {
+    /**
+     * @param array<string, mixed>|null $classRow
+     */
+    function teacherLateJoinNoticeText(?array $classRow): ?string
+    {
+        if (!isTeacherLateJoin($classRow)) {
+            return null;
+        }
+        $delay = teacherJoinDelayMinutes($classRow);
+        if ($delay === null) {
+            return 'Teacher joined late';
+        }
+
+        return 'Teacher joined ' . (int) $delay . ' minute' . ($delay === 1 ? '' : 's') . ' late';
     }
 }
 
@@ -1052,13 +1100,31 @@ if (!function_exists('teacherLateJoinBadgeHtml')) {
      */
     function teacherLateJoinBadgeHtml(?array $classRow): string
     {
-        if (!isTeacherLateJoin($classRow)) {
+        $text = teacherLateJoinNoticeText($classRow);
+        if ($text === null) {
             return '';
         }
-        $delay = teacherJoinDelayMinutes($classRow);
 
-        return '<span class="badge text-bg-danger ms-1">Late Join'
-            . ($delay !== null ? ' (' . (int) $delay . ' min)' : '')
+        return '<span class="badge text-bg-danger ms-1 teacher-late-join-badge" title="' . htmlspecialchars($text, ENT_QUOTES, 'UTF-8') . '">'
+            . htmlspecialchars($text, ENT_QUOTES, 'UTF-8')
+            . '</span>';
+    }
+}
+
+if (!function_exists('teacherLateJoinNoticeHtml')) {
+    /**
+     * @param array<string, mixed>|null $classRow
+     */
+    function teacherLateJoinNoticeHtml(?array $classRow, string $extraClass = ''): string
+    {
+        $text = teacherLateJoinNoticeText($classRow);
+        if ($text === null) {
+            return '';
+        }
+        $classAttr = trim('teacher-late-join-notice small d-block mt-1 ' . $extraClass);
+
+        return '<span class="' . htmlspecialchars($classAttr, ENT_QUOTES, 'UTF-8') . '">'
+            . '&#128308; ' . htmlspecialchars($text, ENT_QUOTES, 'UTF-8')
             . '</span>';
     }
 }

@@ -78,6 +78,11 @@ class Mailer
 
             $mail->Port = (int) ($_ENV['SMTP_PORT'] ?? 587);
 
+            $smtpOptions = self::smtpSslOptions();
+            if ($smtpOptions !== []) {
+                $mail->SMTPOptions = $smtpOptions;
+            }
+
             // Verbose SMTP transcript (level 2) → logs/mail_debug.log
             $mail->SMTPDebug = 2;
             $mail->Debugoutput = static function (string $str, int $level): void {
@@ -85,7 +90,9 @@ class Mailer
             };
 
             // From address must match the authenticated mailbox (or a configured alias) for Gmail.
-            $mail->setFrom((string) $_ENV['SMTP_USERNAME'], EmailTemplate::brandName());
+            $fromEmail = trim((string) ($_ENV['SMTP_FROM'] ?? $_ENV['SMTP_USERNAME'] ?? ''));
+            $fromName = trim((string) ($_ENV['SMTP_FROM_NAME'] ?? ''));
+            $mail->setFrom($fromEmail, $fromName !== '' ? $fromName : EmailTemplate::brandName());
 
             $mail->addAddress($to);
             $mail->CharSet = 'UTF-8';
@@ -163,6 +170,50 @@ class Mailer
     private static function mailSentLogPath(): string
     {
         return self::logsDirectory() . DIRECTORY_SEPARATOR . 'mail.log';
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function smtpSslOptions(): array
+    {
+        $cafile = self::resolveCaBundlePath();
+        if ($cafile === null) {
+            return [];
+        }
+
+        return [
+            'ssl' => [
+                'verify_peer' => true,
+                'verify_peer_name' => true,
+                'allow_self_signed' => false,
+                'cafile' => $cafile,
+            ],
+        ];
+    }
+
+    private static function resolveCaBundlePath(): ?string
+    {
+        $configured = trim((string) ($_ENV['SMTP_CAINFO'] ?? $_ENV['SSL_CAINFO'] ?? $_ENV['GOOGLE_CAINFO'] ?? ''));
+        $candidates = [];
+        if ($configured !== '') {
+            $candidates[] = $configured;
+        }
+
+        $root = self::projectRoot();
+        $candidates[] = $root . DIRECTORY_SEPARATOR . 'certs' . DIRECTORY_SEPARATOR . 'cacert.pem';
+
+        foreach ($candidates as $candidate) {
+            $path = $candidate;
+            if (!preg_match('/^[A-Za-z]:[\\\\\\/]/', $path) && !str_starts_with($path, DIRECTORY_SEPARATOR)) {
+                $path = $root . DIRECTORY_SEPARATOR . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path);
+            }
+            if (is_file($path) && is_readable($path)) {
+                return $path;
+            }
+        }
+
+        return null;
     }
 
     /** Successful SMTP send (logs/mail.log). */

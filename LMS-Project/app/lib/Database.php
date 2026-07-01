@@ -201,6 +201,14 @@ class Database
             $pdo,
             $databaseName,
             'class_sessions',
+            'teacher_join_delay_minutes',
+            'ALTER TABLE class_sessions
+             ADD COLUMN teacher_join_delay_minutes INT NULL AFTER teacher_joined_at'
+        );
+        self::ensureColumnExists(
+            $pdo,
+            $databaseName,
+            'class_sessions',
             'student_joined_at',
             'ALTER TABLE class_sessions
              ADD COLUMN student_joined_at DATETIME NULL AFTER teacher_joined_at'

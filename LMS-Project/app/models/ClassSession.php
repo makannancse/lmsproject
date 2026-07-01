@@ -132,6 +132,23 @@ class ClassSession
         return $stmt->fetchAll() ?: [];
     }
 
+    public static function findRecentCompleted(int $limit = 8): array
+    {
+        $pdo = Database::connection();
+        $stmt = $pdo->prepare(
+            'SELECT cs.*, u.name AS teacher_name
+             FROM class_sessions cs
+             INNER JOIN users u ON u.id = cs.teacher_id
+             WHERE cs.status = "completed"
+             ORDER BY COALESCE(cs.completed_at, cs.actual_end_time, cs.end_datetime, cs.start_datetime) DESC
+             LIMIT :limit'
+        );
+        $stmt->bindValue(':limit', max(1, $limit), \PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll() ?: [];
+    }
+
     public static function countByStatus(): array
     {
         $pdo = Database::connection();
