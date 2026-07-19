@@ -24,6 +24,89 @@ $teacherTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
         </div>
     </div>
 
+    <!-- Teaching Guidelines / Rubric -->
+    <div class="col-12">
+        <div class="accordion shadow-sm mb-3" id="teachingStandardsAccordion">
+            <div class="accordion-item border-0 rounded">
+                <h2 class="accordion-header" id="headingStandards">
+                    <button class="accordion-button collapsed fw-semibold rounded bg-white text-dark border shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseStandards" aria-expanded="false" aria-controls="collapseStandards">
+                        <i class="fa-solid fa-chalkboard-user me-2 text-primary"></i> Online Teaching Standards &amp; Best Practices
+                    </button>
+                </h2>
+                <div id="collapseStandards" class="accordion-collapse collapse" aria-labelledby="headingStandards" data-bs-parent="#teachingStandardsAccordion">
+                    <div class="accordion-body bg-light rounded-bottom border-top shadow-sm">
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <ul class="list-unstyled mb-0">
+                                    <li class="mb-3">
+                                        <div class="fw-bold">🎯 Classroom Environment</div>
+                                        <div class="text-muted small ms-4">Create a positive, inclusive, and engaging space where students feel safe, valued, and motivated to learn.</div>
+                                    </li>
+                                    <li class="mb-3">
+                                        <div class="fw-bold">💬 Communication</div>
+                                        <div class="text-muted small ms-4">Be clear, respectful, and professional. Ensure students and parents always understand expectations.</div>
+                                    </li>
+                                    <li class="mb-3">
+                                        <div class="fw-bold">🤝 Student &amp; Parent Relationships</div>
+                                        <div class="text-muted small ms-4">Build strong rapport through friendliness, respect, and confident, solution-oriented interactions.</div>
+                                    </li>
+                                    <li class="mb-3">
+                                        <div class="fw-bold">📗 Lesson Delivery</div>
+                                        <div class="text-muted small ms-4">Be well-prepared, use simple examples, and adapt teaching pace to suit every learner's needs.</div>
+                                    </li>
+                                    <li class="mb-3">
+                                        <div class="fw-bold">🧠 Student Engagement</div>
+                                        <div class="text-muted small ms-4">Encourage participation through active listening, age-appropriate interaction, and flexible teaching methods.</div>
+                                    </li>
+                                    <li class="mb-3">
+                                        <div class="fw-bold">👔 Professional Discipline</div>
+                                        <div class="text-muted small ms-4">Be punctual, manage time effectively, and follow structured protocols for attendance and delays.</div>
+                                    </li>
+                                    <li class="mb-3">
+                                        <div class="fw-bold">📱 Communication Protocols</div>
+                                        <div class="text-muted small ms-4">Stay responsive on groups, share updates transparently, and keep coordination smooth.</div>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="list-unstyled mb-0">
+                                    <li class="mb-3">
+                                        <div class="fw-bold">⚙️ Accountability</div>
+                                        <div class="text-muted small ms-4">Track sessions, handle issues responsibly, and maintain high professional standards at all times.</div>
+                                    </li>
+                                    <li class="mb-3">
+                                        <div class="fw-bold">🧩 Background</div>
+                                        <div class="text-muted small ms-4">Maintain a clean, distraction-free, and professional background during all classes. Ensure proper lighting and clear visibility.</div>
+                                    </li>
+                                    <li class="mb-3">
+                                        <div class="fw-bold">⏰ Punctuality</div>
+                                        <div class="text-muted small ms-4">Join sessions on time. Be ready before the scheduled start with all materials prepared.</div>
+                                    </li>
+                                    <li class="mb-3">
+                                        <div class="fw-bold">🚫 Avoid No-Show</div>
+                                        <div class="text-muted small ms-4">Inform in advance in case of any absence. No-shows without prior notice are strictly discouraged and will affect performance evaluation.</div>
+                                    </li>
+                                    <li class="mb-3">
+                                        <div class="fw-bold">📅 Notice Period</div>
+                                        <div class="text-muted small ms-4">Follow proper notice period guidelines before taking leave or discontinuing sessions. Ensure smooth transition for students.</div>
+                                    </li>
+                                    <li class="mb-3">
+                                        <div class="fw-bold">👔 Dress Code</div>
+                                        <div class="text-muted small ms-4">Maintain a neat, professional appearance. Dress appropriately to reflect a respectful and serious teaching environment.</div>
+                                    </li>
+                                    <li class="mb-0">
+                                        <div class="fw-bold">🏆 Mission</div>
+                                        <div class="text-muted small ms-4">Deliver consistent, high-quality learning experiences with professionalism, care, and impact.</div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="col-12 col-md-4">
         <div class="card dashboard-stat-card h-100">
             <div class="card-body d-flex align-items-center gap-3">
