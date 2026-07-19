@@ -49,6 +49,7 @@ class AdminController
             $googleReq['offset']
         );
         $googlePagination = Pagination::meta($googleTotal, $googleReq['page'], $googleReq['per_page']);
+        $currentLateClasses = ClassSession::findCurrentTeacherLate(8);
         $recentCompletedClasses = ClassSession::findRecentCompleted(8);
 
         View::render('admin/dashboard', [
@@ -61,6 +62,7 @@ class AdminController
             'teacherPayouts' => $teacherPayouts,
             'teacherGoogleAccounts' => $teacherGoogleAccounts,
             'googlePagination' => $googlePagination,
+            'currentLateClasses' => $currentLateClasses,
             'recentCompletedClasses' => $recentCompletedClasses,
         ]);
     }

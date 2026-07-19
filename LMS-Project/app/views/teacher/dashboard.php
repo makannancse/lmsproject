@@ -184,7 +184,7 @@ $teacherTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
                                     <td class="small"><?= h(formatClassScheduledAt($cls, 'd M Y')) ?></td>
                                     <td class="small"><?= h(formatClassScheduledAt($cls, 'h:i A T')) ?></td>
                                     <td class="small"><?= h(formatClassScheduledTimezoneLabel($cls)) ?></td>
-                                    <td><span class="badge <?= h(classStatusBadgeClass((string) ($cls['status'] ?? 'scheduled'))) ?> text-uppercase"><?= h((string) ($cls['status'] ?? 'scheduled')) ?></span><?= teacherLateJoinBadgeHtml($cls) ?></td>
+                                    <td><span class="badge <?= h(classStatusBadgeClass((string) ($cls['status'] ?? 'scheduled'))) ?> text-uppercase"><?= h((string) ($cls['status'] ?? 'scheduled')) ?></span><?= teacherLateJoinBadgeHtml($cls, 'teacher') ?></td>
                                     <td>
                                         <div class="d-flex flex-wrap gap-2">
                                             <a href="<?= h(path('join-class?class_id=' . (int) ($cls['id'] ?? 0))) ?>" class="btn btn-sm btn-primary" target="_blank" rel="noopener">Join Class</a>
@@ -252,6 +252,7 @@ $teacherTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
                                             <div class="small text-muted"><?= h(formatClassActualAt($cls, 'start', $teacherTimezone)) ?><?= classActualEndUtcValue($cls) !== null ? (' to ' . formatClassActualAt($cls, 'end', $teacherTimezone)) : '' ?></div>
                                             <div class="small text-muted"><?= h(formatClassActualTimezoneLabel($cls, $teacherTimezone)) ?></div>
                                         <?php endif; ?>
+                                        <?= teacherLateJoinNoticeHtml($cls, '', 'teacher') ?>
                                     </td>
                                     <td class="small text-muted"><?= h(ClassSession::formatActualDuration($cls)) ?></td>
                                     <td>

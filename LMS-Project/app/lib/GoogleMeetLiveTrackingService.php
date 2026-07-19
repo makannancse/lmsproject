@@ -950,6 +950,7 @@ class GoogleMeetLiveTrackingService
         if ($mergedTeacherJoin !== null) {
             $delayRow = $class;
             $delayRow['teacher_joined_at'] = $mergedTeacherJoin;
+            unset($delayRow['teacher_join_delay_minutes']);
             if (function_exists('teacherJoinDelayMinutes')) {
                 $teacherJoinDelayMinutes = teacherJoinDelayMinutes($delayRow);
             }

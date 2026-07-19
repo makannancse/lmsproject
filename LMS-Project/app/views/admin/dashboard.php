@@ -165,6 +165,41 @@ unset($recentRecordings);
     <div class="col-12">
         <div class="card shadow-sm">
             <div class="card-body">
+                <h2 class="h6 text-muted text-uppercase mb-3">Current Late Teacher Joins</h2>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th>Class</th>
+                            <th>Teacher</th>
+                            <th>Scheduled</th>
+                            <th>Late Status</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php $currentLateClasses = $currentLateClasses ?? []; ?>
+                        <?php if ($currentLateClasses === []): ?>
+                            <tr><td colspan="4" class="text-muted small">No teachers are currently late.</td></tr>
+                        <?php else: ?>
+                            <?php foreach ($currentLateClasses as $cls): ?>
+                                <tr>
+                                    <td><?= h((string) ($cls['title'] ?? '')) ?></td>
+                                    <td><?= h((string) ($cls['teacher_name'] ?? '')) ?></td>
+                                    <td class="small"><?= h(formatClassScheduledAt($cls, 'd M Y h:i A T')) ?></td>
+                                    <td><?= teacherLateJoinNoticeHtml($cls, 'mb-0') ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h2 class="h6 text-muted text-uppercase mb-0">Recent Completed Classes</h2>
                     <a href="<?= h(path('classes/completed')) ?>" class="btn btn-sm btn-outline-secondary">View all</a>

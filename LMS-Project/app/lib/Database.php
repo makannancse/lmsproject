@@ -329,6 +329,11 @@ class Database
                          ELSE NULL
                      END
                  ),
+                 teacher_join_delay_minutes = CASE
+                     WHEN teacher_joined_at IS NOT NULL
+                         THEN GREATEST(0, TIMESTAMPDIFF(MINUTE, COALESCE(start_time_utc, scheduled_time_utc, start_datetime), teacher_joined_at))
+                     ELSE teacher_join_delay_minutes
+                 END,
                  scheduled_timezone = CASE
                      WHEN scheduled_timezone IS NULL OR TRIM(scheduled_timezone) = ""
                          THEN COALESCE(NULLIF(timezone, ""), "UTC")

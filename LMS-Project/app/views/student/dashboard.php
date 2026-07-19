@@ -192,7 +192,7 @@ $primaryTeacher = $assignedTeachers[0] ?? null;
             </div>
         </div>
     </div>
-    <div class="student-dashboard-banner-hero mb-4 student-dash-card" style='min-height: 450px;'>
+    <div class="student-dashboard-banner-hero mb-4 student-dash-card" style='min-height: 550px;'>
         <?php if ($hasBanner && $bannerSrc !== ''): ?>
             <img src="<?= h($bannerSrc) ?>" alt="LearnWise welcome banner" class="student-dashboard-banner-image">
         <?php else: ?>

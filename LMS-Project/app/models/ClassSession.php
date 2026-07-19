@@ -15,8 +15,10 @@ class ClassSession
              INNER JOIN users t ON t.id = cs.teacher_id
              INNER JOIN enrollments e ON e.class_id = cs.id
              WHERE e.student_id = :student_id
+               AND e.status = "active"
                AND cs.status IN ("scheduled", "rescheduled", "ongoing")
-             ORDER BY cs.start_datetime ASC
+               AND COALESCE(cs.start_time_utc, cs.scheduled_time_utc, cs.start_datetime) >= UTC_TIMESTAMP()
+             ORDER BY COALESCE(cs.start_time_utc, cs.scheduled_time_utc, cs.start_datetime) ASC
              LIMIT :limit'
         );
         $stmt->bindValue(':student_id', $studentId, \PDO::PARAM_INT);
@@ -149,6 +151,25 @@ class ClassSession
         return $stmt->fetchAll() ?: [];
     }
 
+    public static function findCurrentTeacherLate(int $limit = 8): array
+    {
+        $pdo = Database::connection();
+        $stmt = $pdo->prepare(
+            'SELECT cs.*, u.name AS teacher_name
+             FROM class_sessions cs
+             INNER JOIN users u ON u.id = cs.teacher_id
+             WHERE cs.status IN ("scheduled", "rescheduled", "ongoing")
+               AND cs.teacher_joined_at IS NULL
+               AND COALESCE(cs.start_time_utc, cs.scheduled_time_utc, cs.start_datetime) < UTC_TIMESTAMP()
+             ORDER BY COALESCE(cs.start_time_utc, cs.scheduled_time_utc, cs.start_datetime) ASC
+             LIMIT :limit'
+        );
+        $stmt->bindValue(':limit', max(1, $limit), \PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll() ?: [];
+    }
+
     public static function countByStatus(): array
     {
         $pdo = Database::connection();
@@ -189,7 +210,8 @@ class ClassSession
         $enrolled = 'EXISTS (
             SELECT 1 FROM enrollments e
             WHERE e.class_id = class_sessions.id AND e.student_id = :scope_id AND e.status = "active"
-        )';
+        )
+        AND COALESCE(class_sessions.start_time_utc, class_sessions.scheduled_time_utc, class_sessions.start_datetime) >= UTC_TIMESTAMP()';
 
         return self::countStandaloneByStatuses($pdo, $statuses, $enrolled, ['scope_id' => $studentId])
             + self::countDistinctRecurringSeriesByStatuses($pdo, $statuses, $enrolled, ['scope_id' => $studentId]);

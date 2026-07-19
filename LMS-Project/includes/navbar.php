@@ -13,8 +13,8 @@ $userRole = is_array($user) ? (string) ($user['role'] ?? '') : '';
             <button class="btn btn-link d-lg-none text-dark p-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#appSidebar" aria-controls="appSidebar" aria-label="Open menu">
                 <i class="fa-solid fa-bars fa-lg"></i>
             </button>
-            <div class="flex-grow-1 min-w-0">
-                <a class="d-flex align-items-center gap-2 text-decoration-none text-dark min-w-0" href="<?= h(path('dashboard')) ?>">
+            <div class="app-brand-slot flex-grow-1 min-w-0">
+                <a class="app-brand-link d-flex align-items-center gap-2 text-decoration-none text-dark min-w-0" href="<?= h(path('dashboard')) ?>">
                     <?php if (is_file(dirname(__DIR__) . '/public/assets/images/logo.png')): ?>
                         <img src="<?= h(LOGO_PATH) ?>" class="app-brand-logo-sm">
                     <?php endif; ?>

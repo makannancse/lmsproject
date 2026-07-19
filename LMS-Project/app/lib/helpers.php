@@ -1057,10 +1057,55 @@ if (!function_exists('teacherJoinDelayMinutes')) {
             $start = new DateTimeImmutable($startUtc, new DateTimeZone('UTC'));
             $join = new DateTimeImmutable($joinUtc, new DateTimeZone('UTC'));
 
-            return max(0, (int) round(($join->getTimestamp() - $start->getTimestamp()) / 60));
+            return max(0, (int) floor(($join->getTimestamp() - $start->getTimestamp()) / 60));
         } catch (\Throwable) {
             return null;
         }
+    }
+}
+
+if (!function_exists('teacherCurrentLateMinutes')) {
+    /**
+     * Current lateness before the teacher's actual Meet join is known.
+     *
+     * @param array<string, mixed>|null $classRow
+     */
+    function teacherCurrentLateMinutes(?array $classRow, ?DateTimeImmutable $nowUtc = null): ?int
+    {
+        if ($classRow === null) {
+            return null;
+        }
+
+        if (trim((string) ($classRow['teacher_joined_at'] ?? '')) !== '') {
+            return null;
+        }
+
+        $status = strtolower(trim((string) ($classRow['status'] ?? 'scheduled')));
+        if (in_array($status, ['completed', 'cancelled'], true)) {
+            return null;
+        }
+
+        $start = utcDateTimeImmutable(classStartUtcValue($classRow));
+        if ($start === null) {
+            return null;
+        }
+
+        $nowUtc ??= new DateTimeImmutable('now', new DateTimeZone('UTC'));
+        $secondsLate = $nowUtc->getTimestamp() - $start->getTimestamp();
+        if ($secondsLate < 60) {
+            return null;
+        }
+
+        return max(1, (int) floor($secondsLate / 60));
+    }
+}
+
+if (!function_exists('formatTeacherLateMinutes')) {
+    function formatTeacherLateMinutes(int $minutes): string
+    {
+        $minutes = max(0, $minutes);
+
+        return $minutes . ' Minute' . ($minutes === 1 ? '' : 's');
     }
 }
 
@@ -1087,10 +1132,34 @@ if (!function_exists('teacherLateJoinNoticeText')) {
         }
         $delay = teacherJoinDelayMinutes($classRow);
         if ($delay === null) {
-            return 'Teacher joined late';
+            return 'Late';
         }
 
-        return 'Teacher joined ' . (int) $delay . ' minute' . ($delay === 1 ? '' : 's') . ' late';
+        return 'Late by ' . formatTeacherLateMinutes((int) $delay);
+    }
+}
+
+if (!function_exists('teacherLateStatusText')) {
+    /**
+     * @param array<string, mixed>|null $classRow
+     */
+    function teacherLateStatusText(?array $classRow, string $viewer = 'admin'): ?string
+    {
+        $joinedText = teacherLateJoinNoticeText($classRow);
+        if ($joinedText !== null) {
+            return $joinedText;
+        }
+
+        $currentDelay = teacherCurrentLateMinutes($classRow);
+        if ($currentDelay === null) {
+            return null;
+        }
+
+        if ($viewer === 'teacher') {
+            return 'You are currently ' . $currentDelay . ' minute' . ($currentDelay === 1 ? '' : 's') . ' late';
+        }
+
+        return 'Currently ' . $currentDelay . ' minute' . ($currentDelay === 1 ? '' : 's') . ' late';
     }
 }
 
@@ -1098,9 +1167,9 @@ if (!function_exists('teacherLateJoinBadgeHtml')) {
     /**
      * @param array<string, mixed>|null $classRow
      */
-    function teacherLateJoinBadgeHtml(?array $classRow): string
+    function teacherLateJoinBadgeHtml(?array $classRow, string $viewer = 'admin'): string
     {
-        $text = teacherLateJoinNoticeText($classRow);
+        $text = teacherLateStatusText($classRow, $viewer);
         if ($text === null) {
             return '';
         }
@@ -1115,13 +1184,13 @@ if (!function_exists('teacherLateJoinNoticeHtml')) {
     /**
      * @param array<string, mixed>|null $classRow
      */
-    function teacherLateJoinNoticeHtml(?array $classRow, string $extraClass = ''): string
+    function teacherLateJoinNoticeHtml(?array $classRow, string $extraClass = '', string $viewer = 'admin'): string
     {
-        $text = teacherLateJoinNoticeText($classRow);
+        $text = teacherLateStatusText($classRow, $viewer);
         if ($text === null) {
             return '';
         }
-        $classAttr = trim('teacher-late-join-notice small d-block mt-1 ' . $extraClass);
+        $classAttr = trim('teacher-late-join-notice text-danger small d-block mt-1 ' . $extraClass);
 
         return '<span class="' . htmlspecialchars($classAttr, ENT_QUOTES, 'UTF-8') . '">'
             . '&#128308; ' . htmlspecialchars($text, ENT_QUOTES, 'UTF-8')

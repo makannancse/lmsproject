@@ -248,7 +248,7 @@ class CalendarController
                 'teacher_google_email' => (string) ($row['teacher_google_email'] ?? ''),
                 'teacher_joined' => !empty($row['teacher_joined_at']),
                 'teacher_join_delay_minutes' => teacherJoinDelayMinutes($row),
-                'teacher_late_join' => teacherLateJoinNoticeText($row),
+                'teacher_late_join' => teacherLateStatusText($row, $viewerRole === 'teacher' ? 'teacher' : 'admin'),
                 'start_local' => $startLocal,
                 'end_local' => $endLocal,
                 'actual_start_local' => $actualStartLocal,

@@ -35,6 +35,7 @@ $payments = $paymentsStmt->fetchAll() ?: [];
 
 $logsStmt = $pdo->prepare(
     'SELECT tpl.*, cs.title AS class_title, cs.start_datetime, cs.start_time_utc,
+            cs.scheduled_time_utc, cs.scheduled_timezone, cs.timezone,
             cs.teacher_joined_at, cs.teacher_join_delay_minutes
      FROM teacher_payment_logs tpl
      INNER JOIN class_sessions cs ON cs.id = tpl.class_id
@@ -89,14 +90,15 @@ $paymentsRouteBase = $appBase . '/admin/payments';
 
     <div class="card shadow-sm">
         <div class="card-header">Class Logs</div>
-        <div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>Class</th><th>Date</th><th>Amount</th><th>Status</th><th>Join</th><th>Created</th></tr></thead><tbody>
-            <?php if (empty($logs)): ?><tr><td colspan="6" class="text-muted p-3">No class logs.</td></tr><?php else: foreach ($logs as $l): ?>
+        <div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>Class</th><th>Scheduled Start</th><th>Actual Join</th><th>Late Status</th><th>Amount</th><th>Status</th><th>Created</th></tr></thead><tbody>
+            <?php if (empty($logs)): ?><tr><td colspan="7" class="text-muted p-3">No class logs.</td></tr><?php else: foreach ($logs as $l): ?>
                 <tr>
                     <td><?= htmlspecialchars((string) ($l['class_title'] ?? '')) ?></td>
-                    <td><?= htmlspecialchars((string) ($l['start_datetime'] ?? '')) ?></td>
+                    <td><?= htmlspecialchars(formatClassScheduledAt($l, 'd M Y h:i A T')) ?></td>
+                    <td><?= !empty($l['teacher_joined_at']) ? htmlspecialchars(formatUtcForTimezone((string) $l['teacher_joined_at'], classScheduledTimezone($l, APP_TIMEZONE), 'd M Y h:i A T')) : '<span class="text-muted">Not recorded</span>' ?></td>
+                    <td><?php $lateText = teacherLateJoinNoticeText($l); echo $lateText !== null ? teacherLateJoinNoticeHtml($l, 'mb-0') : '<span class="text-success small">On time</span>'; ?></td>
                     <td><?= htmlspecialchars(formatCurrency((float) ($l['amount'] ?? 0))) ?></td>
                     <td><?= htmlspecialchars((string) ($l['status'] ?? '')) ?></td>
-                    <td><?php $lateText = teacherLateJoinNoticeText($l); echo $lateText !== null ? teacherLateJoinNoticeHtml($l, 'mb-0') : '<span class="text-muted small">On time</span>'; ?></td>
                     <td><?= htmlspecialchars((string) ($l['created_at'] ?? '')) ?></td>
                 </tr>
             <?php endforeach; endif; ?>
