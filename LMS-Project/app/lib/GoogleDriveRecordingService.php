@@ -247,8 +247,41 @@ class GoogleDriveRecordingService
     }
 
     /**
+     * Creates a 'reader' permission for 'anyone' on the specified Google Drive file.
+     * Required so students can view the recording when it is shared via the LMS.
+     */
+    public function shareFileWithAnyone(int $teacherId, string $fileId): bool
+    {
+        if ($teacherId <= 0 || $fileId === '') {
+            return false;
+        }
+
+        try {
+            $oauth = new GoogleOAuthService();
+            $client = $oauth->client();
+            $client->setAccessToken($oauth->getActiveAccessTokenForTeacher($teacherId));
+
+            if (!class_exists(GoogleDrive::class)) {
+                return false;
+            }
+
+            $drive = new GoogleDrive($client);
+            $permission = new \Google\Service\Drive\Permission([
+                'type' => 'anyone',
+                'role' => 'reader',
+            ]);
+
+            $drive->permissions->create($fileId, $permission);
+            return true;
+        } catch (\Throwable $e) {
+            error_log('Failed to share Google Drive file: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * @param array<string, mixed> $classRow
-     * @return array{candidates:list<array<string,mixed>>,returned_files:int,samples:list<array<string,mixed>>,error:?string}
+     * @return array{returned_files:int,candidates:list<array{score:int,time_delta_seconds:int,recording:array<string,mixed>,debug:array<string,mixed>}>,samples:list<array<string,mixed>>,error:?string}
      */
     private function searchDriveForCandidates(
         GoogleDrive $drive,

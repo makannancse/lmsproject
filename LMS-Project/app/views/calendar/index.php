@@ -379,6 +379,79 @@ $timezoneOptions = calendarTimezoneOptions(resolveUserTimezone(Auth::user() ?: n
                 }
             }
 
+            if (calendarRole === 'admin' || calendarRole === 'teacher') {
+                var adminEditWrap = document.createElement('div');
+                adminEditWrap.className = 'ms-auto d-flex gap-1 align-items-center';
+                
+                var editA = document.createElement('a');
+                editA.href = (typeof base === 'string' ? base : '') + '/classes/edit?id=' + (p.class_id || '');
+                editA.className = 'btn btn-sm btn-outline-primary';
+                editA.textContent = 'Edit';
+                adminEditWrap.appendChild(editA);
+                
+                var isRecurring = !!p.is_recurring_occurrence;
+
+                if (isRecurring) {
+                    var delBtn = document.createElement('button');
+                    delBtn.type = 'button';
+                    delBtn.className = 'btn btn-sm btn-outline-danger';
+                    delBtn.textContent = 'Delete';
+                    delBtn.onclick = function() {
+                        document.getElementById('calDetailTitle').textContent = 'Delete Recurring Class';
+                        
+                        var html = '<form id="calDeleteForm" method="POST" action="' + (typeof base === 'string' ? base : '') + '/classes/delete' + '">';
+                        html += '<input type="hidden" name="class_id" value="' + (p.class_id || '') + '">';
+                        html += '<p class="mb-3 fw-medium">This is a recurring class. What would you like to delete?</p>';
+                        html += '<div class="form-check mb-2"><input class="form-check-input" type="radio" name="delete_scope" id="delScopeCurrent" value="current" checked><label class="form-check-label" for="delScopeCurrent">This occurrence only</label></div>';
+                        html += '<div class="form-check mb-2"><input class="form-check-input" type="radio" name="delete_scope" id="delScopeAllFuture" value="all_future"><label class="form-check-label" for="delScopeAllFuture">This and following occurrences</label></div>';
+                        html += '<div class="form-check mb-3"><input class="form-check-input" type="radio" name="delete_scope" id="delScopeSeries" value="entire_series"><label class="form-check-label" for="delScopeSeries">All occurrences in the series</label></div>';
+                        html += '<p class="text-danger small mb-0">This will also cancel the corresponding Google Meet event(s).</p>';
+                        html += '</form>';
+                        
+                        document.getElementById('calDetailBody').innerHTML = html;
+                        
+                        var actions = document.getElementById('calDetailActions');
+                        actions.innerHTML = '';
+                        
+                        var cancelBtn = document.createElement('button');
+                        cancelBtn.type = 'button';
+                        cancelBtn.className = 'btn btn-secondary btn-sm';
+                        cancelBtn.setAttribute('data-bs-dismiss', 'modal');
+                        cancelBtn.textContent = 'Cancel';
+                        actions.appendChild(cancelBtn);
+                        
+                        var submitBtn = document.createElement('button');
+                        submitBtn.type = 'submit';
+                        submitBtn.setAttribute('form', 'calDeleteForm');
+                        submitBtn.className = 'btn btn-danger btn-sm';
+                        submitBtn.textContent = 'Delete';
+                        actions.appendChild(submitBtn);
+                    };
+                    adminEditWrap.appendChild(delBtn);
+                } else {
+                    var delForm = document.createElement('form');
+                    delForm.method = 'POST';
+                    delForm.action = (typeof base === 'string' ? base : '') + '/classes/delete';
+                    delForm.className = 'd-inline m-0 p-0';
+                    delForm.onsubmit = function() { return confirm('Are you sure you want to delete this class? This will also cancel the Google Meet event.'); };
+                    
+                    var classIdInput = document.createElement('input');
+                    classIdInput.type = 'hidden';
+                    classIdInput.name = 'class_id';
+                    classIdInput.value = p.class_id || '';
+                    delForm.appendChild(classIdInput);
+                    
+                    var delBtn = document.createElement('button');
+                    delBtn.type = 'submit';
+                    delBtn.className = 'btn btn-sm btn-outline-danger';
+                    delBtn.textContent = 'Delete';
+                    delForm.appendChild(delBtn);
+                    
+                    adminEditWrap.appendChild(delForm);
+                }
+                actions.appendChild(adminEditWrap);
+            }
+
             var modal = new bootstrap.Modal(document.getElementById('calDetailModal'));
             modal.show();
         },

@@ -64,6 +64,7 @@ $router->get('/classes/create', [ClassController::class, 'createForm']);
 $router->post('/classes', [ClassController::class, 'store']);
 $router->get('/classes/edit', [ClassController::class, 'editForm']);
 $router->post('/classes/update', [ClassController::class, 'update']);
+$router->post('/classes/delete', [ClassController::class, 'delete']);
 $router->post('/classes/status', [ClassController::class, 'updateStatus']);
 $router->post('/classes/recording-toggle', [ClassController::class, 'toggleRecording']);
 $router->get('/classes/completed', [ClassController::class, 'completed']);

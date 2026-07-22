@@ -148,4 +148,56 @@ class NotificationMailer
 
         Mailer::send($teacherEmail, $mailSubject, $body, true);
     }
+    public static function notifyClassAction(string $action, array $class, array $students): void
+    {
+        if (!self::isEnabled('notify_class_action')) {
+            return;
+        }
+
+        $teacherEmail = trim((string) ($class['teacher_email'] ?? ''));
+        $teacherName = trim((string) ($class['teacher_name'] ?? ''));
+
+        $meetingLink = (string) ($class['meeting_link'] ?? '');
+        $scheduledStart = function_exists('formatClassScheduledAt')
+            ? formatClassScheduledAt($class, 'l M j, Y g:i A')
+            : (string) ($class['start_datetime'] ?? '');
+        $scheduledEnd = function_exists('formatClassScheduledEndAt')
+            ? formatClassScheduledEndAt($class, 'g:i A')
+            : '';
+        $timezoneLabel = function_exists('formatClassScheduledTimezoneLabel')
+            ? formatClassScheduledTimezoneLabel($class)
+            : (string) ($class['scheduled_timezone'] ?? APP_TIMEZONE);
+        $whenLine = trim($scheduledStart . ($scheduledEnd !== '' ? ' – ' . $scheduledEnd : '') . ' ' . $timezoneLabel);
+        
+        $title = (string) ($class['title'] ?? 'Class');
+        
+        $subject = EmailTemplate::subject('default', 'Class ' . $action . ': ' . $title);
+        
+        $intro = '<p>A class has been <strong>' . strtolower($action) . '</strong> in ' . htmlspecialchars(EmailTemplate::brandName(), ENT_QUOTES, 'UTF-8') . '.</p>';
+        
+        $rows = [
+            'Action' => htmlspecialchars($action, ENT_QUOTES, 'UTF-8'),
+            'Class' => htmlspecialchars($title, ENT_QUOTES, 'UTF-8'),
+            'Teacher' => htmlspecialchars($teacherName, ENT_QUOTES, 'UTF-8'),
+            'Scheduled Time' => htmlspecialchars($whenLine, ENT_QUOTES, 'UTF-8'),
+        ];
+        if ($meetingLink !== '' && strtolower($action) !== 'cancelled') {
+            $rows['Google Meet'] = '<a href="' . htmlspecialchars($meetingLink, ENT_QUOTES, 'UTF-8') . '">' . htmlspecialchars($meetingLink, ENT_QUOTES, 'UTF-8') . '</a>';
+        }
+        
+        $body = EmailTemplate::wrap('Class ' . $action, $intro, $rows, null, null, false);
+        
+        // Notify Teacher
+        if ($teacherEmail !== '' && filter_var($teacherEmail, FILTER_VALIDATE_EMAIL)) {
+            Mailer::send($teacherEmail, $subject, $body, true);
+        }
+        
+        // Notify Students
+        foreach ($students as $student) {
+            $studentEmail = trim((string) ($student['email'] ?? ''));
+            if ($studentEmail !== '' && filter_var($studentEmail, FILTER_VALIDATE_EMAIL)) {
+                Mailer::send($studentEmail, $subject, $body, true);
+            }
+        }
+    }
 }

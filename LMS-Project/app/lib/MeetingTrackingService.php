@@ -399,15 +399,22 @@ class MeetingTrackingService
                 return ['status' => 'processing', 'message' => $message, 'recording' => null];
             }
 
+            $visibility = $this->existingVisibilityForClass($classId);
             ClassRecording::upsertForClass($classId, (int) $class['teacher_id'], [
                 'recording_url' => $recording['recording_url'] ?? null,
                 'recording_file_id' => $recording['recording_file_id'] ?? null,
                 'recording_title' => $recording['recording_title'] ?? null,
                 'recording_duration' => $recording['recording_duration'] ?? null,
-                'visible_to_student' => $this->existingVisibilityForClass($classId),
+                'visible_to_student' => $visibility,
                 'sync_status' => 'ready',
                 'source' => $recording['source'] ?? 'google_drive',
             ]);
+            
+            if ($visibility === 'yes' && !empty($recording['recording_file_id']) && ($recording['source'] ?? 'google_drive') === 'google_drive') {
+                require_once dirname(__DIR__) . '/lib/GoogleDriveRecordingService.php';
+                $gDrive = new GoogleDriveRecordingService();
+                $gDrive->shareFileWithAnyone((int) $class['teacher_id'], $recording['recording_file_id']);
+            }
             $this->setClassRecordingSyncState($classId, 'ready', null, (string) ($recording['recording_url'] ?? ''));
 
             MeetingTrackingLog::write('recording_synced', [

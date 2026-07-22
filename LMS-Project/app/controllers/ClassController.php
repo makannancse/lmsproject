@@ -693,6 +693,139 @@ class ClassController
         ]);
     }
 
+    public static function delete(): void
+    {
+        Auth::requireRole(['admin', 'teacher']);
+        $user = Auth::user();
+        $role = (string) ($user['role'] ?? '');
+        $classId = (int) ($_POST['class_id'] ?? 0);
+
+        if ($classId <= 0) {
+            $_SESSION['flash_error'] = 'Invalid class ID.';
+            redirectTo($_SERVER['HTTP_REFERER'] ?? '/classes');
+            return;
+        }
+
+        $pdo = Database::connection();
+        $stmt = $pdo->prepare('SELECT * FROM class_sessions WHERE id = :id LIMIT 1');
+        $stmt->execute(['id' => $classId]);
+        $class = $stmt->fetch();
+
+        if (!$class) {
+            $_SESSION['flash_error'] = 'Class not found.';
+            redirectTo($_SERVER['HTTP_REFERER'] ?? '/classes');
+            return;
+        }
+
+        if ($role === 'teacher' && (int) $class['teacher_id'] !== (int) ($user['id'] ?? 0)) {
+            $_SESSION['flash_error'] = 'You do not have permission to delete this class.';
+            redirectTo($_SERVER['HTTP_REFERER'] ?? '/classes');
+            return;
+        }
+
+        $deleteScope = (string) ($_POST['delete_scope'] ?? 'current');
+        $targetIds = [$classId];
+        $targetOccurrenceIds = [];
+        $seriesId = 0;
+        $occurrenceId = (int) ($class['recurring_occurrence_id'] ?? 0);
+
+        if ($occurrenceId > 0 && self::classIsInRecurrenceSeries($class, $pdo)) {
+            $targetOccurrenceIds = RecurringOccurrence::idsFromScope($occurrenceId, $deleteScope, $pdo);
+            $mapped = [];
+            $mapStmt = $pdo->prepare('SELECT class_session_id, series_id FROM recurring_occurrences WHERE id = :id LIMIT 1');
+            foreach ($targetOccurrenceIds as $oid) {
+                $mapStmt->execute(['id' => $oid]);
+                $occRow = $mapStmt->fetch();
+                if ($occRow) {
+                    $seriesId = (int) $occRow['series_id'];
+                    $mappedId = (int) ($occRow['class_session_id'] ?? 0);
+                    if ($mappedId > 0) {
+                        $mapped[] = $mappedId;
+                    }
+                }
+            }
+            if ($mapped !== []) {
+                $targetIds = $mapped;
+            }
+        } elseif ($deleteScope === 'all_future' && self::classIsInRecurrenceSeries($class, $pdo)) {
+            $targetIds = ClassRecurrenceHelper::futureSeriesClassIds($classId, $pdo);
+            if ($targetIds === []) {
+                $targetIds = [$classId];
+            }
+        } elseif ($deleteScope === 'entire_series' && self::classIsInRecurrenceSeries($class, $pdo)) {
+            $targetIds = ClassRecurrenceHelper::allSeriesClassIds($classId, $pdo);
+            if ($targetIds === []) {
+                $targetIds = [$classId];
+            }
+        }
+
+        try {
+            $pdo->beginTransaction();
+
+            $delStmt = $pdo->prepare('DELETE FROM class_sessions WHERE id = :id');
+            $meetingService = new GoogleCalendarMeetingService();
+            
+            $firstTargetClass = null;
+            $studentsForEmail = [];
+            
+            foreach ($targetIds as $targetId) {
+                $tStmt = $pdo->prepare('SELECT cs.*, u.name AS teacher_name, u.email AS teacher_email FROM class_sessions cs INNER JOIN users u ON u.id = cs.teacher_id WHERE cs.id = :id LIMIT 1');
+                $tStmt->execute(['id' => $targetId]);
+                $targetClass = $tStmt->fetch();
+                if (!$targetClass) {
+                    continue;
+                }
+
+                if ($firstTargetClass === null) {
+                    $firstTargetClass = $targetClass;
+                    $studentStmt = $pdo->prepare('SELECT u.name, u.email FROM enrollments e INNER JOIN users u ON u.id = e.student_id WHERE e.class_id = :class_id AND e.status = "active"');
+                    $studentStmt->execute(['class_id' => $targetId]);
+                    $studentsForEmail = $studentStmt->fetchAll() ?: [];
+                }
+
+                $delStmt->execute(['id' => $targetId]);
+
+                if (!empty($targetClass['google_event_id'])) {
+                    try {
+                        $meetingService->deleteMeeting((int)$targetClass['teacher_id'], (string)$targetClass['google_event_id']);
+                    } catch (\Throwable $e) {
+                        error_log('Failed to delete Google Calendar event: ' . $e->getMessage());
+                    }
+                }
+            }
+            
+            if ($targetOccurrenceIds !== []) {
+                $delOccStmt = $pdo->prepare('DELETE FROM recurring_occurrences WHERE id = :id');
+                foreach ($targetOccurrenceIds as $oid) {
+                    $delOccStmt->execute(['id' => $oid]);
+                }
+                
+                if ($deleteScope === 'entire_series' && $seriesId > 0) {
+                    $cancelSeries = $pdo->prepare('UPDATE recurring_series SET status = "cancelled" WHERE id = :sid');
+                    $cancelSeries->execute(['sid' => $seriesId]);
+                }
+            }
+
+            $pdo->commit();
+
+            if ($firstTargetClass) {
+                require_once dirname(__DIR__) . '/lib/NotificationMailer.php';
+                NotificationMailer::notifyClassAction('Cancelled', $firstTargetClass, $studentsForEmail);
+            }
+
+            $_SESSION['flash_success'] = count($targetIds) > 1 
+                ? count($targetIds) . ' classes deleted successfully.' 
+                : 'Class deleted successfully.';
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            $_SESSION['flash_error'] = 'Failed to delete class: ' . $e->getMessage();
+        }
+
+        redirectTo($_SERVER['HTTP_REFERER'] ?? '/classes');
+    }
+
     public static function updateStatus(): void
     {
         Auth::requireRole(['admin']);
@@ -960,12 +1093,18 @@ class ClassController
         $durationSec = $durationMin * 60;
         $meetingService = new GoogleCalendarMeetingService();
 
+        $firstTargetClass = null;
+
         foreach ($targetIds as $targetId) {
-            $tStmt = $pdo->prepare('SELECT * FROM class_sessions WHERE id = :id LIMIT 1');
+            $tStmt = $pdo->prepare('SELECT cs.*, u.name AS teacher_name, u.email AS teacher_email FROM class_sessions cs INNER JOIN users u ON u.id = cs.teacher_id WHERE cs.id = :id LIMIT 1');
             $tStmt->execute(['id' => $targetId]);
             $targetClass = $tStmt->fetch();
             if (!$targetClass) {
                 continue;
+            }
+
+            if ($firstTargetClass === null) {
+                $firstTargetClass = $targetClass;
             }
 
             if ((int) $targetId === $classId) {
@@ -1041,6 +1180,21 @@ class ClassController
                     : 'pending',
                 'id' => $targetId,
             ]);
+
+            if (!empty($targetClass['recurring_occurrence_id'])) {
+                $roUpd = $pdo->prepare(
+                    'UPDATE recurring_occurrences 
+                     SET scheduled_start_utc = :start_utc,
+                         scheduled_end_utc = :end_utc,
+                         status = IF(status = "completed", "completed", "rescheduled")
+                     WHERE id = :oid'
+                );
+                $roUpd->execute([
+                    'start_utc' => $targetStartUtcValue,
+                    'end_utc' => $targetEndUtcValue,
+                    'oid' => $targetClass['recurring_occurrence_id'],
+                ]);
+            }
         }
 
         logTimezoneFix([
@@ -1063,6 +1217,15 @@ class ClassController
             'start_time_utc' => $startUtcValue,
             'end_time_utc' => $endUtcValue,
         ]);
+
+        if ($firstTargetClass) {
+            $studentStmt = $pdo->prepare('SELECT u.name, u.email FROM enrollments e INNER JOIN users u ON u.id = e.student_id WHERE e.class_id = :class_id AND e.status = "active"');
+            $studentStmt->execute(['class_id' => $firstTargetClass['id']]);
+            $students = $studentStmt->fetchAll() ?: [];
+            
+            require_once dirname(__DIR__) . '/lib/NotificationMailer.php';
+            NotificationMailer::notifyClassAction('Updated', $firstTargetClass, $students);
+        }
 
         $_SESSION['flash_success'] = count($targetIds) > 1
             ? count($targetIds) . ' classes in the series were updated.'

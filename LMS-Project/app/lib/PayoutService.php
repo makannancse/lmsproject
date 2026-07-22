@@ -16,20 +16,13 @@ class PayoutService
      */
     public static function calculateTeacherPayout(int $teacherId): array
     {
+        require_once dirname(__DIR__, 2) . '/payments/payment_helper.php';
+        
+        $summary = getTeacherPayoutSummary($teacherId);
+        $pending = (float) $summary['pending_amount'];
+        $paid = (float) $summary['paid_amount'];
+
         $pdo = Database::connection();
-
-        $stmt = $pdo->prepare(
-            'SELECT 
-                COALESCE(SUM(CASE WHEN status = "pending" THEN amount ELSE 0 END), 0) AS pending,
-                COALESCE(SUM(CASE WHEN status = "paid" THEN amount ELSE 0 END), 0) AS paid
-             FROM teacher_payouts
-             WHERE teacher_id = :tid'
-        );
-        $stmt->execute(['tid' => $teacherId]);
-        $row = $stmt->fetch() ?: ['pending' => 0, 'paid' => 0];
-        $pending = (float) $row['pending'];
-        $paid = (float) $row['paid'];
-
         $cntStmt = $pdo->prepare(
             'SELECT COUNT(*) FROM class_sessions
              WHERE teacher_id = :tid AND status = "completed"'

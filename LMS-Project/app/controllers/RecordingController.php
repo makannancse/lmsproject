@@ -48,6 +48,17 @@ class RecordingController
         $visible = (string) ($_POST['visible_to_student'] ?? 'no');
         if ($recordingId > 0) {
             ClassRecording::setVisibility($recordingId, $visible);
+            if ($visible === 'yes') {
+                $pdo = Database::connection();
+                $stmt = $pdo->prepare('SELECT teacher_id, recording_file_id, source FROM class_recordings WHERE id = :id');
+                $stmt->execute(['id' => $recordingId]);
+                $row = $stmt->fetch();
+                if ($row && $row['source'] === 'google_drive' && !empty($row['recording_file_id'])) {
+                    require_once dirname(__DIR__) . '/lib/GoogleDriveRecordingService.php';
+                    $gDrive = new GoogleDriveRecordingService();
+                    $gDrive->shareFileWithAnyone((int) $row['teacher_id'], $row['recording_file_id']);
+                }
+            }
             $_SESSION['flash_success'] = 'Recording visibility updated.';
         } elseif ($classId > 0) {
             ClassRecording::setVisibilityForClass($classId, $visible);
