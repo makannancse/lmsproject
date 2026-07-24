@@ -6,10 +6,8 @@ require_once dirname(__DIR__) . '/lib/Auth.php';
 require_once dirname(__DIR__) . '/lib/View.php';
 require_once dirname(__DIR__) . '/lib/Pagination.php';
 require_once dirname(__DIR__) . '/models/ClassSession.php';
-require_once dirname(__DIR__) . '/models/TeacherGoogleAccount.php';
 require_once dirname(__DIR__) . '/lib/PayoutService.php';
 require_once dirname(__DIR__) . '/models/ClassRecording.php';
-require_once dirname(__DIR__) . '/lib/GoogleAccountType.php';
 require_once dirname(__DIR__) . '/models/TeacherStudent.php';
 
 class TeacherController
@@ -51,19 +49,6 @@ class TeacherController
 
         $payoutBreakdown = PayoutService::calculateTeacherPayout($teacherId);
         $totalPayout = (float) ($payoutBreakdown['total'] ?? 0);
-        $googleAccount = TeacherGoogleAccount::findByTeacherId($teacherId);
-        if ($googleAccount !== null) {
-            $accountKindRaw = strtolower(trim((string) ($googleAccount['account_type'] ?? '')));
-            if ($accountKindRaw !== 'workspace' && $accountKindRaw !== 'personal') {
-                $accountKindRaw = GoogleAccountType::profileFromEmail(
-                    isset($googleAccount['google_email']) ? (string) $googleAccount['google_email'] : null
-                )['account_type'];
-            }
-            $googleRecordingCapability = TeacherGoogleAccount::recordingSupportedFromAccountRow($googleAccount);
-        } else {
-            $accountKindRaw = 'workspace';
-            $googleRecordingCapability = false;
-        }
         $recordings = ClassRecording::listForTeacher($teacherId, 12);
         $assignedStudents = TeacherStudent::assignedStudentsDetailed($teacherId);
 
@@ -78,9 +63,6 @@ class TeacherController
             'assignedStudents' => $assignedStudents,
             'totalPayout' => $totalPayout,
             'payoutBreakdown' => $payoutBreakdown,
-            'googleAccount' => $googleAccount,
-            'teacherGoogleAccountKind' => $accountKindRaw,
-            'teacherGoogleRecordingCapability' => $googleRecordingCapability,
             'recordings' => $recordings,
         ]);
     }

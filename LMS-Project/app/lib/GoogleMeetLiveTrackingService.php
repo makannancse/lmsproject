@@ -1234,16 +1234,6 @@ class GoogleMeetLiveTrackingService
             return 'pending';
         }
 
-        $teacherId = (int) ($class['teacher_id'] ?? 0);
-        if ($teacherId <= 0) {
-            return 'pending';
-        }
-
-        $teacherRow = TeacherGoogleAccount::findByTeacherId($teacherId);
-        if (!TeacherGoogleAccount::recordingSupportedFromAccountRow($teacherRow)) {
-            return 'pending';
-        }
-
         return trim((string) ($class['recording_url'] ?? '')) === '' ? 'processing' : 'ready';
     }
 
@@ -1251,7 +1241,7 @@ class GoogleMeetLiveTrackingService
     {
         $oauth = new GoogleOAuthService();
         $client = $oauth->client();
-        $client->setAccessToken($oauth->getActiveAccessTokenForTeacher($teacherId));
+        $client->setAccessToken($oauth->getActiveAccessTokenForAdmin());
 
         return new GoogleMeet($client);
     }

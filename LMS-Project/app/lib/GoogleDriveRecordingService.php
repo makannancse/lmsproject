@@ -58,7 +58,7 @@ class GoogleDriveRecordingService
 
         $oauth = new GoogleOAuthService();
         $client = $oauth->client();
-        $client->setAccessToken($oauth->getActiveAccessTokenForTeacher($teacherId));
+        $client->setAccessToken($oauth->getActiveAccessTokenForAdmin());
 
         if (!class_exists(GoogleDrive::class)) {
             throw new RuntimeException('Google Drive API client is not installed.');
@@ -259,7 +259,7 @@ class GoogleDriveRecordingService
         try {
             $oauth = new GoogleOAuthService();
             $client = $oauth->client();
-            $client->setAccessToken($oauth->getActiveAccessTokenForTeacher($teacherId));
+            $client->setAccessToken($oauth->getActiveAccessTokenForAdmin());
 
             if (!class_exists(GoogleDrive::class)) {
                 return false;

@@ -62,7 +62,7 @@ $primaryTeacher = $assignedTeachers[0] ?? null;
             <div class="student-dash-card student-dash-card-hover h-100">
                 <div class="student-dash-card-header">
                     <h2><i class="fa-solid fa-video me-2"></i>My Classes</h2>
-                    <a href="<?= h(path('student/reschedule')) ?>" class="small text-decoration-none">View all</a>
+                    <a href="<?= h(path('student/calendar')) ?>" class="small text-decoration-none">View all</a>
                 </div>
                 <div class="student-dash-card-body">
                     <?php if ($nextClass === null): ?>

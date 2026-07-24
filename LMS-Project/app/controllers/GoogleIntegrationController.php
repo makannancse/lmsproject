@@ -9,96 +9,39 @@ require_once dirname(__DIR__) . '/lib/GoogleCalendarMeetingService.php';
 require_once dirname(__DIR__) . '/lib/GoogleMeetLiveTrackingService.php';
 require_once dirname(__DIR__) . '/lib/GoogleAccountType.php';
 require_once dirname(__DIR__) . '/models/StudentPayment.php';
-require_once dirname(__DIR__) . '/models/TeacherGoogleAccount.php';
+require_once dirname(__DIR__) . '/models/AdminGoogleAccount.php';
 require_once dirname(__DIR__) . '/controllers/ClassController.php';
 
 class GoogleIntegrationController
 {
     public static function connectGoogle(): void
     {
-        Auth::requireRole(['admin', 'teacher']);
+        Auth::requireRole(['admin']);
         Auth::startSession();
-
-        $actor = Auth::user() ?: [];
-        $actorRole = (string) ($actor['role'] ?? '');
-        $actorId = (int) ($actor['id'] ?? 0);
-        $teacherId = (int) ($_POST['teacher_id'] ?? $_GET['teacher_id'] ?? $actorId);
-        if ($teacherId <= 0) {
-            self::json(['error' => 'teacher_id is required'], 422);
-            return;
-        }
-        if ($actorRole === 'teacher' && $actorId !== $teacherId) {
-            self::json(['error' => 'Teacher can connect only own account'], 403);
-            return;
-        }
 
         try {
             $oauth = new GoogleOAuthService();
-            $url = $oauth->buildAuthUrl($teacherId);
-            if (function_exists('logGoogleAuth')) {
-                logGoogleAuth([
-                    'event' => 'oauth_connect_redirect',
-                    'teacher_id' => $teacherId,
-                    'actor_role' => $actorRole,
-                    'redirect_uri' => $oauth->configuredRedirectUri(),
-                    'google_auth_url' => $url,
-                ]);
-            }
+            $url = $oauth->buildAdminAuthUrl();
             header('Location: ' . $url, true, 302);
             exit;
         } catch (\Throwable $e) {
-            if (function_exists('logGoogleAuth')) {
-                logGoogleAuth([
-                    'event' => 'oauth_connect_failed',
-                    'teacher_id' => $teacherId,
-                    'error' => $e->getMessage(),
-                ]);
-            }
             self::json(['error' => $e->getMessage()], 500);
         }
     }
 
     public static function authGoogle(): void
     {
-        Auth::requireRole(['admin', 'teacher']);
+        Auth::requireRole(['admin']);
         Auth::startSession();
-
-        $actor = Auth::user() ?: [];
-        $actorRole = (string) ($actor['role'] ?? '');
-        $actorId = (int) ($actor['id'] ?? 0);
-        $teacherId = (int) ($_GET['teacher_id'] ?? $_POST['teacher_id'] ?? $actorId);
-        if ($teacherId <= 0) {
-            $_SESSION['flash_warning'] = 'Teacher id is required to connect Google.';
-            redirectTo($actorRole === 'admin' ? '/admin' : '/teacher');
-        }
-        if ($actorRole === 'teacher' && $actorId !== $teacherId) {
-            $_SESSION['flash_warning'] = 'You can connect only your own Google account.';
-            redirectTo('/teacher');
-        }
 
         try {
             $oauth = new GoogleOAuthService();
-            $url = $oauth->buildAuthUrl($teacherId);
-            if (function_exists('logGoogleAuth')) {
-                logGoogleAuth([
-                    'event' => 'oauth_redirect_to_google',
-                    'teacher_id' => $teacherId,
-                    'actor_role' => $actorRole,
-                    'redirect_uri' => $oauth->configuredRedirectUri(),
-                    'google_auth_url' => $url,
-                ]);
-            }
+            $url = $oauth->buildAdminAuthUrl();
             header('Location: ' . $url, true, 302);
             exit;
         } catch (\Throwable $e) {
-            if (function_exists('logGoogleAuth')) {
-                logGoogleAuth([
-                    'event' => 'oauth_auth_url_failed',
-                    'teacher_id' => $teacherId,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-            self::redirectAfterOAuth(0, 'Google connection failed: ' . $e->getMessage(), true);
+            $_SESSION['flash_warning'] = 'Google connection failed: ' . $e->getMessage();
+            redirectTo('/settings');
         }
     }
 
@@ -107,36 +50,19 @@ class GoogleIntegrationController
         Auth::startSession();
         $code = (string) ($_GET['code'] ?? '');
         $state = (string) ($_GET['state'] ?? '');
-        if (function_exists('logGoogleAuth')) {
-            logGoogleAuth([
-                'event' => 'oauth_callback_received',
-                'has_code' => $code !== '',
-                'has_state' => $state !== '',
-                'callback_url' => (string) ($_SERVER['REQUEST_URI'] ?? ''),
-                'user_role' => (string) ($_SESSION['role'] ?? ''),
-            ]);
-        }
         if ($code === '' || $state === '') {
-            self::redirectAfterOAuth(0, 'Google connection failed: missing authorization code.', true);
+            $_SESSION['flash_warning'] = 'Google connection failed: missing authorization code.';
+            redirectTo('/settings');
             return;
         }
 
         try {
-            $result = (new GoogleOAuthService())->handleCallback($code, $state);
-            $message = 'Google account connected successfully.';
-            $profile = GoogleAccountType::profileFromEmail($result['email'] ?? null);
-            if (!$profile['recording_supported']) {
-                $message .= ' Meet scheduling works with your Gmail account. Cloud recording and Drive sync require Google Workspace.';
-            }
-            self::redirectAfterOAuth((int) ($result['teacher_id'] ?? 0), $message);
+            $result = (new GoogleOAuthService())->handleAdminCallback($code, $state);
+            $_SESSION['flash_success'] = 'Admin Google Workspace account connected successfully.';
+            redirectTo('/settings');
         } catch (\Throwable $e) {
-            if (function_exists('logGoogleAuth')) {
-                logGoogleAuth([
-                    'event' => 'oauth_callback_failed',
-                    'error' => $e->getMessage(),
-                ]);
-            }
-            self::redirectAfterOAuth(0, 'Google connection failed: ' . $e->getMessage(), true);
+            $_SESSION['flash_warning'] = 'Google connection failed: ' . $e->getMessage();
+            redirectTo('/settings');
         }
     }
 
@@ -147,25 +73,19 @@ class GoogleIntegrationController
 
     public static function disconnectGoogle(): void
     {
-        Auth::requireRole(['admin', 'teacher']);
+        Auth::requireRole(['admin']);
         Auth::startSession();
 
-        $actor = Auth::user() ?: [];
-        $actorRole = (string) ($actor['role'] ?? '');
-        $actorId = (int) ($actor['id'] ?? 0);
-        $teacherId = (int) ($_POST['teacher_id'] ?? $_GET['teacher_id'] ?? $actorId);
-        if ($teacherId <= 0) {
-            self::json(['error' => 'teacher_id is required'], 422);
-            return;
-        }
-        if ($actorRole === 'teacher' && $actorId !== $teacherId) {
-            self::json(['error' => 'Teacher can disconnect only own account'], 403);
+        (new GoogleOAuthService())->prepareAdminReconnect();
+        $_SESSION['flash_success'] = 'Admin Google Workspace account disconnected.';
+        
+        // If this was called via AJAX, we return JSON
+        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+            self::json(['success' => true]);
             return;
         }
 
-        (new GoogleOAuthService())->prepareReconnect($teacherId);
-        $_SESSION['flash_success'] = 'Google account disconnected.';
-        redirectTo($actorRole === 'admin' ? '/admin' : '/teacher');
+        redirectTo('/settings');
     }
 
     public static function createClass(): void
@@ -205,7 +125,7 @@ class GoogleIntegrationController
                 $summary,
                 self::studentEmailsForIds($studentIds)
             );
-            $account = (new GoogleOAuthService())->getTeacherAccount($teacherId);
+            $account = (new GoogleOAuthService())->getAdminAccount();
             $spaceMeta = null;
             try {
                 $spaceMeta = $meetTrackingService->describeSpaceForMeetingLink($teacherId, (string) ($meeting['meet_link'] ?? ''));
@@ -260,8 +180,7 @@ class GoogleIntegrationController
         $pdo = Database::connection();
         $pdo->beginTransaction();
         try {
-            $tgaRowRec = TeacherGoogleAccount::findByTeacherId($teacherId);
-            $recordingEnabledInsert = TeacherGoogleAccount::recordingSupportedFromAccountRow($tgaRowRec) ? 1 : 0;
+            $recordingEnabledInsert = 1; // Always enabled for admin workspace
             $googleMeetingCode = self::extractGoogleMeetCode($meetingLink);
             $stmt = $pdo->prepare(
                 'INSERT INTO class_sessions

@@ -10,8 +10,8 @@ use GuzzleHttp\Client as GuzzleClient;
 
 require_once dirname(__DIR__) . '/models/SystemConfig.php';
 require_once dirname(__DIR__) . '/models/TeacherGoogleAccount.php';
+require_once dirname(__DIR__) . '/models/AdminGoogleAccount.php';
 require_once dirname(__DIR__) . '/lib/GoogleAccountType.php';
-require_once dirname(__DIR__) . '/lib/SyncLog.php';
 
 class GoogleOAuthService
 {
@@ -55,7 +55,7 @@ class GoogleOAuthService
         return [
             GoogleCalendar::CALENDAR,
             GoogleMeet::MEETINGS_SPACE_READONLY,
-            'https://www.googleapis.com/auth/drive.readonly',
+            'https://www.googleapis.com/auth/drive',
             GooglePeopleService::USERINFO_EMAIL,
             'openid',
             'email',
@@ -89,6 +89,23 @@ class GoogleOAuthService
         return $authUrl;
     }
 
+    public function buildAdminAuthUrl(): string
+    {
+        $this->prepareAdminReconnect();
+
+        $client = $this->client();
+        $state = base64_encode(json_encode([
+            'admin_connect' => true,
+            'nonce' => bin2hex(random_bytes(8)),
+        ], JSON_UNESCAPED_SLASHES));
+        $_SESSION['google_oauth_state'] = $state;
+
+        $client->setState($state);
+        $authUrl = $client->createAuthUrl();
+
+        return $authUrl;
+    }
+
     /**
      * Revoke any existing Google tokens so reconnect always issues fresh consent + refresh token.
      */
@@ -113,6 +130,29 @@ class GoogleOAuthService
         }
 
         TeacherGoogleAccount::disconnect($teacherId);
+    }
+
+    public function prepareAdminReconnect(): void
+    {
+        $account = AdminGoogleAccount::getCredentials();
+        if ($account === null) {
+            return;
+        }
+
+        $tokenToRevoke = trim((string) ($account['refresh_token'] ?? ''));
+        if ($tokenToRevoke === '') {
+            $tokenToRevoke = trim((string) ($account['access_token'] ?? ''));
+        }
+
+        if ($tokenToRevoke !== '') {
+            try {
+                $this->client()->revokeToken($tokenToRevoke);
+            } catch (\Throwable $e) {
+                // Non-fatal: token may already be invalid.
+            }
+        }
+
+        AdminGoogleAccount::disconnect();
     }
 
     /**
@@ -235,6 +275,66 @@ class GoogleOAuthService
     }
 
     /**
+     * @return array{email:?string,refresh_token_saved:bool}
+     */
+    public function handleAdminCallback(string $code, string $state): array
+    {
+        $expected = (string) ($_SESSION['google_oauth_state'] ?? '');
+        if ($expected === '' || !hash_equals($expected, $state)) {
+            throw new RuntimeException('Invalid OAuth state.');
+        }
+        unset($_SESSION['google_oauth_state']);
+
+        $stateData = json_decode((string) base64_decode($state, true), true);
+        if (empty($stateData['admin_connect'])) {
+            throw new RuntimeException('Invalid admin connect state.');
+        }
+
+        $client = $this->client();
+        $token = $client->fetchAccessTokenWithAuthCode($code);
+        if (!is_array($token) || isset($token['error'])) {
+            $err = is_array($token) ? ($token['error_description'] ?? $token['error'] ?? 'OAuth token exchange failed') : 'OAuth token exchange failed';
+            throw new RuntimeException((string) $err);
+        }
+
+        $refresh = trim((string) ($token['refresh_token'] ?? ''));
+        if ($refresh === '') {
+            throw new RuntimeException(
+                'Google did not return a refresh token. Disconnect the account, then connect again and approve all requested permissions.'
+            );
+        }
+
+        self::assertCalendarScopeGranted($token);
+
+        $email = null;
+        try {
+            $client->setAccessToken($token);
+            $payload = $client->verifyIdToken();
+            if (is_array($payload) && !empty($payload['email'])) {
+                $email = (string) $payload['email'];
+            }
+        } catch (\Throwable $e) {
+            // non-fatal
+        }
+
+        $existing = AdminGoogleAccount::getCredentials();
+        if (($email === null || trim($email) === '') && $existing !== null && !empty($existing['google_email'])) {
+            $email = (string) $existing['google_email'];
+        }
+        $this->validateTeacherGoogleEmail($email); // Reusing this validation to enforce Workspace if needed
+
+        AdminGoogleAccount::upsertConnection(
+            $email,
+            (string) ($token['access_token'] ?? ''),
+            $refresh !== '' ? $refresh : null,
+            $this->tokenExpiryFromPayload($token),
+            'active'
+        );
+
+        return ['email' => $email, 'refresh_token_saved' => true];
+    }
+
+    /**
      * @param array<string, mixed> $token
      */
     public static function assertCalendarScopeGranted(array $token): void
@@ -348,6 +448,72 @@ class GoogleOAuthService
         $token['refresh_token'] = (string) ($token['refresh_token'] ?? $refreshToken);
         TeacherGoogleAccount::upsertConnection(
             $teacherId,
+            $account['google_email'] ?? null,
+            (string) $token['access_token'],
+            (string) $token['refresh_token'],
+            $this->tokenExpiryFromPayload($token),
+            'active'
+        );
+
+        return $token;
+    }
+
+    /**
+     * @return array{id:int,google_email:?string,access_token:string,refresh_token:string,token_expiry:?string,status:string,connected_at:?string}
+     */
+    public function getAdminAccount(): array
+    {
+        $account = AdminGoogleAccount::getCredentials();
+        if ($account === null) {
+            throw new RuntimeException('Admin has not connected a Google Workspace account.');
+        }
+        if (($account['status'] ?? '') !== 'active') {
+            throw new RuntimeException('Admin Google Workspace account is not active. Please reconnect it in settings.');
+        }
+        if (($account['refresh_token'] ?? '') === '') {
+            throw new RuntimeException('Admin Google refresh token is missing. Reconnect the Google account.');
+        }
+
+        return $account;
+    }
+
+    /**
+     * @return array{access_token:string,refresh_token:string,created?:mixed,expires_in?:mixed}
+     */
+    public function getActiveAccessTokenForAdmin(): array
+    {
+        $account = $this->getAdminAccount();
+        if ($account['access_token'] !== '' && !$this->isExpired($account['token_expiry'])) {
+            return [
+                'access_token' => $account['access_token'],
+                'refresh_token' => $account['refresh_token'],
+            ];
+        }
+
+        return $this->refreshAccessTokenForAdmin($account);
+    }
+
+    /**
+     * @param array{id:int,google_email:?string,access_token:string,refresh_token:string,token_expiry:?string,status:string,connected_at:?string}|null $account
+     * @return array{access_token:string,refresh_token:string,created?:mixed,expires_in?:mixed}
+     */
+    public function refreshAccessTokenForAdmin(?array $account = null): array
+    {
+        $account = $account ?? $this->getAdminAccount();
+        $refreshToken = (string) ($account['refresh_token'] ?? '');
+        if ($refreshToken === '') {
+            throw new RuntimeException('Admin Google refresh token is missing. Reconnect the Google account.');
+        }
+
+        $client = $this->client();
+        $token = $client->fetchAccessTokenWithRefreshToken($refreshToken);
+        if (!is_array($token) || isset($token['error']) || empty($token['access_token'])) {
+            $err = is_array($token) ? ($token['error_description'] ?? $token['error'] ?? 'Token refresh failed') : 'Token refresh failed';
+            throw new RuntimeException((string) $err);
+        }
+
+        $token['refresh_token'] = (string) ($token['refresh_token'] ?? $refreshToken);
+        AdminGoogleAccount::upsertConnection(
             $account['google_email'] ?? null,
             (string) $token['access_token'],
             (string) $token['refresh_token'],

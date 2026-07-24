@@ -12,6 +12,7 @@ require_once dirname(__DIR__) . '/lib/Mailer.php';
 require_once dirname(__DIR__) . '/models/SystemConfig.php';
 require_once dirname(__DIR__) . '/models/ClassMaster.php';
 require_once dirname(__DIR__) . '/models/TeacherGoogleAccount.php';
+require_once dirname(__DIR__) . '/models/AdminGoogleAccount.php';
 require_once dirname(__DIR__) . '/lib/PayoutService.php';
 require_once dirname(__DIR__) . '/models/TeacherPayout.php';
 require_once dirname(__DIR__) . '/models/StudentPayment.php';
@@ -66,9 +67,7 @@ class ClassController
                 'displayTimezone' => $displayTimezone,
                 'teacherGoogleEmail' => $teacherGoogleEmail,
                 'openMeetUrl' => $openMeetUrl,
-                'recordingWorkflowSupported' => TeacherGoogleAccount::recordingSupportedFromAccountRow(
-                    TeacherGoogleAccount::findByTeacherId((int) ($user['id'] ?? 0))
-                ),
+                'recordingWorkflowSupported' => ((int) ($class['recording_enabled'] ?? 0) === 1),
             ]);
             return;
         }
@@ -578,21 +577,21 @@ class ClassController
         return null;
     }
 
-    private static function teacherGoogleSchedulingError(int $teacherId): ?string
+    private static function adminGoogleSchedulingError(): ?string
     {
-        $account = TeacherGoogleAccount::getCredentialsForTeacher($teacherId);
+        $account = AdminGoogleAccount::getCredentials();
         if ($account === null) {
-            return 'Assigned teacher must connect a Google account (Workspace or Gmail) before scheduling.';
+            return 'Admin must connect a Google Workspace account in Settings before classes can be scheduled.';
         }
         $status = (string) ($account['status'] ?? '');
         if ($status === 'error') {
-            return 'Assigned teacher Google connection is invalid. Please reconnect the account.';
+            return 'Admin Google Workspace connection is invalid. Please reconnect the account in Settings.';
         }
         if ($status !== 'active') {
-            return 'Assigned teacher Google account is disconnected. Please reconnect it first.';
+            return 'Admin Google Workspace account is disconnected. Please reconnect it in Settings.';
         }
         if (trim((string) ($account['refresh_token'] ?? '')) === '') {
-            return 'Assigned teacher Google token is incomplete. Please reconnect with offline consent.';
+            return 'Admin Google Workspace token is incomplete. Please reconnect with offline consent.';
         }
 
         return null;
@@ -900,16 +899,6 @@ class ClassController
         $enabled = (int) ($_POST['recording_enabled'] ?? 0) === 1 ? 1 : 0;
         if ($classId > 0) {
             $pdo = Database::connection();
-            $teacherStmt = $pdo->prepare('SELECT teacher_id FROM class_sessions WHERE id = :id LIMIT 1');
-            $teacherStmt->execute(['id' => $classId]);
-            $row = $teacherStmt->fetch();
-            if ($enabled === 1 && $row) {
-                $tgaRow = TeacherGoogleAccount::findByTeacherId((int) ($row['teacher_id'] ?? 0));
-                if (!TeacherGoogleAccount::recordingSupportedFromAccountRow($tgaRow)) {
-                    $_SESSION['flash_warning'] = 'Recording reminders and Drive sync need a Google Workspace–style account (not personal Gmail). You can continue hosting Meet with Gmail.';
-                    $enabled = 0;
-                }
-            }
             $stmt = $pdo->prepare('UPDATE class_sessions SET recording_enabled = :enabled WHERE id = :id');
             $stmt->execute(['enabled' => $enabled, 'id' => $classId]);
         }
@@ -1354,13 +1343,13 @@ class ClassController
             return;
         }
 
-        $teacherGoogleError = self::teacherGoogleSchedulingError($teacherId);
-        if ($teacherGoogleError !== null) {
+        $adminGoogleError = self::adminGoogleSchedulingError();
+        if ($adminGoogleError !== null) {
             if ($calendarAjax) {
                 self::respondScheduleJson([
                     'success' => false,
-                    'message' => $teacherGoogleError,
-                    'errors' => [$teacherGoogleError],
+                    'message' => $adminGoogleError,
+                    'errors' => [$adminGoogleError],
                 ], 422);
                 return;
             }
@@ -1377,7 +1366,7 @@ class ClassController
                 'teachers' => $teachers,
                 'students' => self::studentsForScheduleForm($_POST),
                 'classTypes' => $classTypes,
-                'errors' => [$teacherGoogleError],
+                'errors' => [$adminGoogleError],
                 'old' => $_POST,
             ]);
             return;
@@ -1419,10 +1408,13 @@ class ClassController
         $meetingService = new GoogleCalendarMeetingService();
         $meetTrackingService = new GoogleMeetLiveTrackingService();
         $attendeeEmails = self::studentEmailsForIds($studentIds);
-        $teacherGoogleRowForRec = TeacherGoogleAccount::findByTeacherId($teacherId);
-        $recordingEnabledInsert = TeacherGoogleAccount::recordingSupportedFromAccountRow($teacherGoogleRowForRec) ? 1 : 0;
-        $teacherGoogleAccount = TeacherGoogleAccount::getCredentialsForTeacher($teacherId);
-        $teacherGoogleEmailDefault = (string) ($teacherGoogleAccount['google_email'] ?? '');
+        
+        $teacherUser = User::findById($teacherId);
+        if ($teacherUser && !empty($teacherUser['email'])) {
+            $attendeeEmails[] = $teacherUser['email'];
+        }
+        $teacherGoogleEmailDefault = $teacherUser ? (string) ($teacherUser['email'] ?? '') : '';
+        $recordingEnabledInsert = 1; // Always supported since we use Admin Workspace
 
         $plannedMeets = [];
         try {

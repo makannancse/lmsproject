@@ -952,14 +952,6 @@ if (!function_exists('recordingSyncStatusForRow')) {
             return 'disabled';
         }
 
-        if (
-            array_key_exists('teacher_recording_supported', $row)
-            && $row['teacher_recording_supported'] !== null
-            && (int) $row['teacher_recording_supported'] !== 1
-        ) {
-            return 'disabled';
-        }
-
         $rawStatus = $row['sync_status']
             ?? $row['class_recording_sync_status']
             ?? $row['recording_sync_status']
@@ -1020,14 +1012,6 @@ if (!function_exists('recordingSyncStatusText')) {
             if ($row !== null && array_key_exists('recording_enabled', $row) && (int) ($row['recording_enabled'] ?? 0) !== 1) {
                 return 'Recording disabled for this class.';
             }
-            if (
-                $row !== null
-                && array_key_exists('teacher_recording_supported', $row)
-                && $row['teacher_recording_supported'] !== null
-                && (int) $row['teacher_recording_supported'] !== 1
-            ) {
-                return 'Google Drive recording sync is unavailable for this teacher account.';
-            }
 
             return 'Recording disabled.';
         }
@@ -1045,22 +1029,31 @@ if (!function_exists('teacherJoinDelayMinutes')) {
         if ($classRow === null) {
             return null;
         }
+        $joinUtc = trim((string) ($classRow['teacher_joined_at'] ?? ''));
+        if ($joinUtc === '') {
+            $joinUtc = trim((string) ($classRow['actual_start_time'] ?? ''));
+        }
+        $startUtc = classStartUtcValue($classRow);
+        if ($joinUtc !== '' && $startUtc !== null && $startUtc !== '') {
+            try {
+                $start = new DateTimeImmutable($startUtc, new DateTimeZone('UTC'));
+                $join = new DateTimeImmutable($joinUtc, new DateTimeZone('UTC'));
+                $diffSec = $join->getTimestamp() - $start->getTimestamp();
+                if ($diffSec <= 0) {
+                    return 0;
+                }
+
+                return (int) ceil($diffSec / 60);
+            } catch (\Throwable) {
+                // fall through to DB column check
+            }
+        }
+
         if (isset($classRow['teacher_join_delay_minutes']) && $classRow['teacher_join_delay_minutes'] !== null && $classRow['teacher_join_delay_minutes'] !== '') {
             return (int) $classRow['teacher_join_delay_minutes'];
         }
-        $joinUtc = trim((string) ($classRow['teacher_joined_at'] ?? ''));
-        $startUtc = classStartUtcValue($classRow);
-        if ($joinUtc === '' || $startUtc === null || $startUtc === '') {
-            return null;
-        }
-        try {
-            $start = new DateTimeImmutable($startUtc, new DateTimeZone('UTC'));
-            $join = new DateTimeImmutable($joinUtc, new DateTimeZone('UTC'));
 
-            return max(0, (int) floor(($join->getTimestamp() - $start->getTimestamp()) / 60));
-        } catch (\Throwable) {
-            return null;
-        }
+        return null;
     }
 }
 
@@ -1081,7 +1074,7 @@ if (!function_exists('teacherCurrentLateMinutes')) {
         }
 
         $status = strtolower(trim((string) ($classRow['status'] ?? 'scheduled')));
-        if (in_array($status, ['completed', 'cancelled'], true)) {
+        if ($status === 'cancelled') {
             return null;
         }
 
@@ -1090,8 +1083,18 @@ if (!function_exists('teacherCurrentLateMinutes')) {
             return null;
         }
 
-        $nowUtc ??= new DateTimeImmutable('now', new DateTimeZone('UTC'));
-        $secondsLate = $nowUtc->getTimestamp() - $start->getTimestamp();
+        if ($status === 'completed') {
+            $endTimeStr = $classRow['completed_at'] ?? $classRow['actual_end_time'] ?? classEndUtcValue($classRow);
+            $endUtc = utcDateTimeImmutable(is_string($endTimeStr) ? $endTimeStr : null);
+            if ($endUtc === null) {
+                return null;
+            }
+            $secondsLate = $endUtc->getTimestamp() - $start->getTimestamp();
+        } else {
+            $nowUtc ??= new DateTimeImmutable('now', new DateTimeZone('UTC'));
+            $secondsLate = $nowUtc->getTimestamp() - $start->getTimestamp();
+        }
+
         if ($secondsLate < 60) {
             return null;
         }
@@ -1153,6 +1156,11 @@ if (!function_exists('teacherLateStatusText')) {
         $currentDelay = teacherCurrentLateMinutes($classRow);
         if ($currentDelay === null) {
             return null;
+        }
+
+        $status = strtolower(trim((string) ($classRow['status'] ?? 'scheduled')));
+        if ($status === 'completed') {
+            return 'Late by ' . $currentDelay . ' minute' . ($currentDelay === 1 ? '' : 's');
         }
 
         if ($viewer === 'teacher') {

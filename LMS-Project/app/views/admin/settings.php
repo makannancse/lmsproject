@@ -28,6 +28,21 @@ use function htmlspecialchars as h;
 
                     <hr>
                     <h2 class="h6">Google Meet (Google Workspace)</h2>
+                    <div class="card mb-3 border-<?= ($adminGoogleAccount['status'] ?? '') === 'active' ? 'success' : 'warning' ?>">
+                        <div class="card-header">
+                            Admin Google Workspace Connection
+                        </div>
+                        <div class="card-body">
+                            <?php if (($adminGoogleAccount['status'] ?? '') === 'active'): ?>
+                                <p class="text-success"><i class="bi bi-check-circle"></i> Connected as <strong><?= h($adminGoogleAccount['google_email'] ?? 'Unknown') ?></strong></p>
+                                <a href="<?= h(appWebPath() . '/disconnect-google') ?>" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure you want to disconnect?');">Disconnect Workspace Account</a>
+                            <?php else: ?>
+                                <p class="text-warning"><i class="bi bi-exclamation-triangle"></i> Not connected. Centralized meeting creation requires connecting an admin Workspace account.</p>
+                                <a href="<?= h(appWebPath() . '/connect-google') ?>" class="btn btn-primary btn-sm">Connect Google Workspace</a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
                     <div class="mb-3">
                         <label for="google_client_id" class="form-label">Google Client ID</label>
                         <input type="text" class="form-control" id="google_client_id" name="google_client_id"
@@ -41,19 +56,7 @@ use function htmlspecialchars as h;
                     <div class="mb-3">
                         <label class="form-label">Required OAuth Redirect URI</label>
                         <input type="text" class="form-control" value="<?= h(googleOAuthRedirectUri()) ?>" readonly>
-                        <div class="form-text">Use one shared Google OAuth app for all teachers. Add this exact URI in Google Cloud Console and use the <code>https://www.googleapis.com/auth/calendar</code> scope.</div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="google_calendar_id" class="form-label">Google Calendar ID</label>
-                        <input type="text" class="form-control" id="google_calendar_id" name="google_calendar_id"
-                               value="<?= h($googleCalendarId ?? 'primary') ?>" placeholder="primary">
-                        <div class="form-text">Use <code>primary</code> so each Meet is created on the assigned teacher's own calendar and the teacher becomes organizer/host.</div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="google_workspace_domain" class="form-label">Google Workspace Domain</label>
-                        <input type="text" class="form-control" id="google_workspace_domain" name="google_workspace_domain"
-                               value="<?= h($googleWorkspaceDomain ?? '') ?>" placeholder="yourdomain.com">
-                        <div class="form-text">Optional but recommended. If set, only teacher accounts from this domain can connect Google and host Meet sessions.</div>
+                        <div class="form-text">Add this exact URI in Google Cloud Console.</div>
                     </div>
                     <div class="mb-3">
                         <label for="static_meeting_link" class="form-label">Static Meeting Link (Fallback)</label>

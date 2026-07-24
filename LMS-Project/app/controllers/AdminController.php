@@ -6,7 +6,6 @@ require_once dirname(__DIR__) . '/lib/Auth.php';
 require_once dirname(__DIR__) . '/lib/View.php';
 require_once dirname(__DIR__) . '/lib/Database.php';
 require_once dirname(__DIR__) . '/models/ClassSession.php';
-require_once dirname(__DIR__) . '/models/TeacherGoogleAccount.php';
 require_once dirname(__DIR__) . '/models/TeacherPayout.php';
 require_once dirname(__DIR__) . '/models/User.php';
 require_once dirname(__DIR__) . '/models/ClassRecording.php';
@@ -41,14 +40,6 @@ class AdminController
             $totalPayoutPaid += (float) ($tp['paid_amount'] ?? 0);
         }
 
-        // Teacher Google connections (paginated on dashboard)
-        $googleReq = Pagination::fromRequest();
-        $googleTotal = TeacherGoogleAccount::countAllTeachers();
-        $teacherGoogleAccounts = TeacherGoogleAccount::paginatedWithTeacherNames(
-            $googleReq['per_page'],
-            $googleReq['offset']
-        );
-        $googlePagination = Pagination::meta($googleTotal, $googleReq['page'], $googleReq['per_page']);
         $currentLateClasses = ClassSession::findCurrentTeacherLate(8);
         $recentCompletedClasses = ClassSession::findRecentCompleted(8);
 
@@ -60,13 +51,10 @@ class AdminController
             'totalPayoutPending' => $totalPayoutPending,
             'totalPayoutPaid' => $totalPayoutPaid,
             'teacherPayouts' => $teacherPayouts,
-            'teacherGoogleAccounts' => $teacherGoogleAccounts,
-            'googlePagination' => $googlePagination,
             'currentLateClasses' => $currentLateClasses,
             'recentCompletedClasses' => $recentCompletedClasses,
         ]);
     }
-
     public static function users(): void
     {
         Auth::requireRole(['admin']);

@@ -98,71 +98,6 @@ unset($recentRecordings);
     </div>
 
     <div class="col-12">
-        <div class="card shadow-sm" id="teacher-google-connections">
-            <div class="card-body">
-                <h2 class="h6 text-muted text-uppercase mb-3">Teacher Google Connections</h2>
-                <div class="table-responsive">
-                    <table class="table table-sm align-middle mb-0">
-                        <thead>
-                        <tr>
-                            <th>Teacher</th>
-                            <th>Teacher Email</th>
-                            <th>Google Email</th>
-                            <th>Account</th>
-                            <th>Recording</th>
-                            <th>Status</th>
-                            <th>Connected At</th>
-                            <th>Action</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <?php if (empty($teacherGoogleAccounts)): ?>
-                            <tr><td colspan="8" class="text-muted small">No teachers found.</td></tr>
-                        <?php else: ?>
-                            <?php foreach ($teacherGoogleAccounts as $row): ?>
-                                <?php $status = (string) ($row['status'] ?? 'disconnected'); ?>
-                                <?php $statusClass = $status === 'active' ? 'text-bg-success' : ($status === 'error' ? 'text-bg-danger' : 'text-bg-secondary'); ?>
-                                <?php
-                                    $googleEmailDash = strtolower(trim((string) ($row['google_email'] ?? '')));
-                                    $isPersonalMail = ($googleEmailDash !== '' && (str_ends_with($googleEmailDash, '@gmail.com') || str_ends_with($googleEmailDash, '@googlemail.com')));
-                                    $acctType = strtolower(trim((string) ($row['account_type'] ?? '')));
-                                    if ($acctType === '' && $googleEmailDash !== '') {
-                                        $acctType = $isPersonalMail ? 'personal' : 'workspace';
-                                    }
-                                    $recSupported = array_key_exists('recording_supported', $row) && $row['recording_supported'] !== null
-                                        ? ((int) $row['recording_supported'] === 1)
-                                        : ($googleEmailDash === '' ? false : !$isPersonalMail);
-                                ?>
-                                <tr>
-                                    <td><?= h((string) ($row['teacher_name'] ?? '')) ?></td>
-                                    <td><?= h((string) ($row['teacher_email'] ?? '')) ?></td>
-                                    <td><?= h((string) ($row['google_email'] ?? 'Not connected')) ?></td>
-                                    <td><span class="badge text-bg-light border text-uppercase"><?= $googleEmailDash === '' ? h('—') : h($acctType !== '' ? $acctType : '?') ?></span></td>
-                                    <td><?= $recSupported ? '<span class="badge text-bg-success">Yes</span>' : '<span class="badge text-bg-secondary">No</span>' ?></td>
-                                    <td><span class="badge <?= h($statusClass) ?> text-uppercase"><?= h($status) ?></span></td>
-                                    <td><?= h((string) ($row['connected_at'] ?? '')) ?></td>
-                                    <td>
-                                        <form method="post" action="<?= h(appWebPath() . ($status === 'active' ? '/disconnect-google' : '/connect-google')) ?>" class="d-inline">
-                                            <input type="hidden" name="teacher_id" value="<?= (int) ($row['teacher_id'] ?? 0) ?>">
-                                            <button type="submit"
-                                                    class="btn btn-sm <?= $status === 'active' ? 'btn-outline-danger' : 'btn-outline-primary' ?>"
-                                                    <?= $status === 'active' ? 'data-confirm="1" data-confirm-title="Disconnect Google account?" data-confirm-text="This teacher will stop using the connected Google host account for new classes." data-confirm-button="Disconnect"' : '' ?>>
-                                                <?= $status === 'active' ? 'Disconnect' : 'Connect' ?>
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
-                <?php renderPagination($googlePagination ?? null, []); ?>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-12">
         <div class="card shadow-sm">
             <div class="card-body">
                 <h2 class="h6 text-muted text-uppercase mb-3">Current Late Teacher Joins</h2>
@@ -211,7 +146,7 @@ unset($recentRecordings);
                             <th>Class</th>
                             <th>Teacher</th>
                             <th>Scheduled</th>
-                            <th>Join Status</th>
+                            <th>Status</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -225,11 +160,8 @@ unset($recentRecordings);
                                     <td><?= h((string) ($cls['teacher_name'] ?? '')) ?></td>
                                     <td class="small"><?= h(formatClassScheduledAt($cls, 'd M Y h:i A T')) ?></td>
                                     <td>
-                                        <?php if (teacherLateJoinNoticeText($cls) !== null): ?>
-                                            <?= teacherLateJoinNoticeHtml($cls, 'mb-0') ?>
-                                        <?php else: ?>
-                                            <span class="small text-success">On time</span>
-                                        <?php endif; ?>
+                                        <span class="badge <?= h(classStatusBadgeClass((string) ($cls['status'] ?? 'completed'))) ?> text-uppercase"><?= h((string) ($cls['status'] ?? 'completed')) ?></span>
+                                        <?= teacherLateJoinBadgeHtml($cls) ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

@@ -27,11 +27,11 @@ class GoogleCalendarMeetingService
         }
 
         $oauth = new GoogleOAuthService();
-        $account = $oauth->getTeacherAccount($teacherId);
+        $account = $oauth->getAdminAccount();
         $client = $oauth->client();
-        $client->setAccessToken($oauth->getActiveAccessTokenForTeacher($teacherId));
+        $client->setAccessToken($oauth->getActiveAccessTokenForAdmin());
         $calendar = new GoogleCalendar($client);
-        $calendarId = $this->calendarIdForTeacher($account);
+        $calendarId = $this->adminCalendarId($account);
 
         try {
             // events.get() does not accept conferenceDataVersion (only insert/patch/import do).
@@ -40,7 +40,7 @@ class GoogleCalendarMeetingService
             $this->logFailure([
                 'message' => 'Failed to fetch Google Calendar event',
                 'teacher_id' => $teacherId,
-                'teacher_google_email' => $account['google_email'] ?? null,
+                'admin_google_email' => $account['google_email'] ?? null,
                 'event_id' => $eventId,
                 'error' => $e->getMessage(),
             ]);
@@ -74,16 +74,16 @@ class GoogleCalendarMeetingService
     {
         $this->assertTeacherAvailability($teacherId, $startTime, $endTime);
         $oauth = new GoogleOAuthService();
-        $account = $oauth->getTeacherAccount($teacherId);
+        $account = $oauth->getAdminAccount();
         $client = $oauth->client();
-        $token = $oauth->getActiveAccessTokenForTeacher($teacherId);
+        $token = $oauth->getActiveAccessTokenForAdmin();
         $client->setAccessToken($token);
-        $calendarId = $this->calendarIdForTeacher($account);
+        $calendarId = $this->adminCalendarId($account);
         $sanitizedAttendees = $this->sanitizeAttendeeEmails($attendeeEmails, (string) ($account['google_email'] ?? ''));
         $this->logInfo([
             'message' => 'Creating Google Meet event',
             'teacher_id' => $teacherId,
-            'teacher_google_email' => $account['google_email'],
+            'admin_google_email' => $account['google_email'],
             'calendar_id' => $calendarId,
             'start_time' => $startTime,
             'end_time' => $endTime,
@@ -122,7 +122,7 @@ class GoogleCalendarMeetingService
         } catch (\Throwable $e) {
             // One retry after explicit refresh
             try {
-                $client->setAccessToken($oauth->refreshAccessTokenForTeacher($teacherId, $account));
+                $client->setAccessToken($oauth->refreshAccessTokenForAdmin($account));
                 $created = $calendar->events->insert($calendarId, $event, [
                     'conferenceDataVersion' => 1,
                     'sendUpdates' => $sanitizedAttendees !== [] ? 'all' : 'none',
@@ -131,7 +131,7 @@ class GoogleCalendarMeetingService
                 $this->logFailure([
                     'message' => 'Google Calendar insert failed',
                     'teacher_id' => $teacherId,
-                    'teacher_google_email' => $account['google_email'],
+                    'admin_google_email' => $account['google_email'],
                     'request_id' => $requestId,
                     'error' => $retryError->getMessage(),
                 ]);
@@ -165,7 +165,7 @@ class GoogleCalendarMeetingService
         $this->logInfo([
             'message' => 'Google Calendar API response',
             'teacher_id' => $teacherId,
-            'teacher_google_email' => $account['google_email'],
+            'admin_google_email' => $account['google_email'],
             'request_id' => $requestId,
             'organizer_email' => $organizerEmail,
             'event_id' => $id,
@@ -175,7 +175,7 @@ class GoogleCalendarMeetingService
         logMeetingHost([
             'event' => 'meeting_created',
             'teacher_id' => $teacherId,
-            'teacher_google_email' => $account['google_email'] ?? null,
+            'admin_google_email' => $account['google_email'] ?? null,
             'organizer_email' => $organizerEmail,
             'calendar_id' => $calendarId,
             'event_id' => $id,
@@ -188,7 +188,7 @@ class GoogleCalendarMeetingService
             logMeetingHost([
                 'event' => 'meeting_organizer_mismatch',
                 'teacher_id' => $teacherId,
-                'teacher_google_email' => $account['google_email'] ?? null,
+                'admin_google_email' => $account['google_email'] ?? null,
                 'organizer_email' => $organizerEmail,
                 'calendar_id' => $calendarId,
                 'event_id' => $id,
@@ -203,7 +203,7 @@ class GoogleCalendarMeetingService
             $this->logFailure([
                 'message' => 'Google event created without Meet link',
                 'teacher_id' => $teacherId,
-                'teacher_google_email' => $account['google_email'],
+                'admin_google_email' => $account['google_email'],
                 'request_id' => $requestId,
                 'event_id' => $id,
                 'response' => print_r($created, true),
@@ -227,25 +227,25 @@ class GoogleCalendarMeetingService
         }
 
         $oauth = new GoogleOAuthService();
-        $account = $oauth->getTeacherAccount($teacherId);
+        $account = $oauth->getAdminAccount();
         $client = $oauth->client();
-        $client->setAccessToken($oauth->getActiveAccessTokenForTeacher($teacherId));
+        $client->setAccessToken($oauth->getActiveAccessTokenForAdmin());
         $calendar = new GoogleCalendar($client);
-        $calendarId = $this->calendarIdForTeacher($account);
+        $calendarId = $this->adminCalendarId($account);
 
         try {
             $calendar->events->delete($calendarId, $eventId);
             $this->logInfo([
                 'message' => 'Deleted orphaned Google Calendar event',
                 'teacher_id' => $teacherId,
-                'teacher_google_email' => $account['google_email'],
+                'admin_google_email' => $account['google_email'],
                 'event_id' => $eventId,
             ]);
         } catch (\Throwable $e) {
             $this->logFailure([
                 'message' => 'Failed to delete orphaned Google Calendar event',
                 'teacher_id' => $teacherId,
-                'teacher_google_email' => $account['google_email'],
+                'admin_google_email' => $account['google_email'],
                 'event_id' => $eventId,
                 'error' => $e->getMessage(),
             ]);
@@ -266,12 +266,12 @@ class GoogleCalendarMeetingService
         }
 
         $oauth = new GoogleOAuthService();
-        $account = $oauth->getTeacherAccount($teacherId);
+        $account = $oauth->getAdminAccount();
         $client = $oauth->client();
-        $token = $oauth->getActiveAccessTokenForTeacher($teacherId);
+        $token = $oauth->getActiveAccessTokenForAdmin();
         $client->setAccessToken($token);
         $calendar = new GoogleCalendar($client);
-        $calendarId = $this->calendarIdForTeacher($account);
+        $calendarId = $this->adminCalendarId($account);
 
         $patchEvent = function () use ($calendar, $calendarId, $eventId, $startTime, $endTime, $timezone, $summary): void {
             $event = new GoogleCalendarEvent([
@@ -291,13 +291,13 @@ class GoogleCalendarMeetingService
             $patchEvent();
         } catch (\Throwable $e) {
             try {
-                $client->setAccessToken($oauth->refreshAccessTokenForTeacher($teacherId, $account));
+                $client->setAccessToken($oauth->refreshAccessTokenForAdmin($account));
                 $patchEvent();
             } catch (\Throwable $retryError) {
                 $this->logFailure([
                     'message' => 'Google Calendar patch failed',
                     'teacher_id' => $teacherId,
-                    'teacher_google_email' => $account['google_email'] ?? null,
+                    'admin_google_email' => $account['google_email'] ?? null,
                     'event_id' => $eventId,
                     'start_time' => $startTime,
                     'end_time' => $endTime,
@@ -317,7 +317,7 @@ class GoogleCalendarMeetingService
         $this->logInfo([
             'message' => 'Google Calendar event updated',
             'teacher_id' => $teacherId,
-            'teacher_google_email' => $account['google_email'] ?? null,
+            'admin_google_email' => $account['google_email'] ?? null,
             'event_id' => $eventId,
             'start_time' => $startTime,
             'end_time' => $endTime,
@@ -382,16 +382,16 @@ class GoogleCalendarMeetingService
     /**
      * @param array<string, mixed> $account
      */
-    private function calendarIdForTeacher(array $account): string
+    private function adminCalendarId(array $account): string
     {
         $configured = trim((string) SystemConfig::get('google_calendar_id', env('GOOGLE_CALENDAR_ID', 'primary')));
         if ($configured !== '' && strtolower($configured) !== 'primary') {
             $this->logInfo([
-                'message' => 'Ignoring shared calendar ID to preserve teacher host ownership',
-                'teacher_id' => (int) ($account['teacher_id'] ?? 0),
-                'teacher_google_email' => $account['google_email'] ?? null,
+                'message' => 'Using shared calendar ID for admin Google Workspace',
+                'admin_google_email' => $account['google_email'] ?? null,
                 'configured_calendar_id' => $configured,
             ]);
+            return $configured;
         }
 
         return 'primary';

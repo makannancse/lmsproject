@@ -71,8 +71,7 @@ class MeetingTrackingController
                 if ((int) ($classRow['teacher_id'] ?? 0) !== $userId) {
                     throw new RuntimeException('Only the assigned teacher can start this class.');
                 }
-                $acct = TeacherGoogleAccount::findByTeacherId($userId);
-                $requiresRecordingAck = TeacherGoogleAccount::recordingSupportedFromAccountRow($acct);
+                $requiresRecordingAck = ((int) ($classRow['recording_enabled'] ?? 0) === 1);
                 if ($requiresRecordingAck && (int) ($_POST['recording_acknowledged'] ?? 0) !== 1) {
                     throw new RuntimeException('Please acknowledge the recording reminder before starting the class.');
                 }

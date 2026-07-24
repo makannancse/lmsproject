@@ -88,6 +88,7 @@ class MeetingTrackingService
                      WHEN status IN ("scheduled", "rescheduled") THEN "ongoing"
                      ELSE status
                  END,
+                 teacher_joined_at = COALESCE(teacher_joined_at, :now),
                  meeting_live_status = CASE
                      WHEN meeting_live_status = "ended" THEN meeting_live_status
                      ELSE "pending"
@@ -97,6 +98,7 @@ class MeetingTrackingService
         $stmt->execute([
             'acknowledged_at' => $acknowledgedAt,
             'teacher_id' => $teacherId,
+            'now' => $now,
             'id' => $classId,
         ]);
 
@@ -327,23 +329,7 @@ class MeetingTrackingService
             ];
         }
 
-        $teacherRow = TeacherGoogleAccount::findByTeacherId((int) ($class['teacher_id'] ?? 0));
-        if (!TeacherGoogleAccount::recordingSupportedFromAccountRow($teacherRow)) {
-            $message = 'Google Drive recording sync is unavailable for this teacher account.';
-            $this->logRecordingSyncDebug([
-                'message' => 'Recording sync skipped because teacher account does not support Drive recordings',
-                'class_id' => $classId,
-                'teacher_id' => (int) ($class['teacher_id'] ?? 0),
-                'teacher_email' => $class['teacher_google_email'] ?? null,
-                'status' => 'disabled',
-            ]);
 
-            return [
-                'status' => 'disabled',
-                'message' => $message,
-                'recording' => null,
-            ];
-        }
 
         $this->setClassRecordingSyncState($classId, 'processing', null);
 
@@ -852,17 +838,7 @@ class MeetingTrackingService
      */
     private function isRecordingSyncEligible(array $class): bool
     {
-        if ((int) ($class['recording_enabled'] ?? 0) !== 1) {
-            return false;
-        }
-
-        $teacherId = (int) ($class['teacher_id'] ?? 0);
-        if ($teacherId <= 0) {
-            return false;
-        }
-
-        $teacherRow = TeacherGoogleAccount::findByTeacherId($teacherId);
-        return TeacherGoogleAccount::recordingSupportedFromAccountRow($teacherRow);
+        return (int) ($class['recording_enabled'] ?? 0) === 1;
     }
 
     /**

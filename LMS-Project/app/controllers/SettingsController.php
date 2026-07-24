@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/lib/Auth.php';
 require_once dirname(__DIR__) . '/lib/View.php';
 require_once dirname(__DIR__) . '/models/SystemConfig.php';
+require_once dirname(__DIR__) . '/models/AdminGoogleAccount.php';
 
 class SettingsController
 {
@@ -40,6 +41,8 @@ class SettingsController
         $mailFrom = SystemConfig::get('mail_from', '');
         $mailFromName = SystemConfig::get('mail_from_name', APP_NAME);
 
+        $adminGoogleAccount = AdminGoogleAccount::getCredentials();
+
         View::render('admin/settings', [
             'pageTitle' => 'System Settings',
             'payoutRatePerHour' => $rate,
@@ -60,6 +63,7 @@ class SettingsController
             'notifyAdminClassScheduled' => SystemConfig::get('notify_admin_class_scheduled', '1'),
             'notifyAdminReschedule' => SystemConfig::get('notify_admin_reschedule', '1'),
             'notifyTeacherStudentAssigned' => SystemConfig::get('notify_teacher_student_assigned', '1'),
+            'adminGoogleAccount' => $adminGoogleAccount,
         ]);
     }
 

@@ -7,7 +7,7 @@ require_once dirname(__DIR__) . '/lib/ClassRecurrenceHelper.php';
 require_once dirname(__DIR__) . '/lib/GoogleCalendarMeetingService.php';
 require_once dirname(__DIR__) . '/lib/GoogleMeetLiveTrackingService.php';
 require_once dirname(__DIR__) . '/models/StudentPayment.php';
-require_once dirname(__DIR__) . '/models/TeacherGoogleAccount.php';
+require_once dirname(__DIR__) . '/models/User.php';
 
 /**
  * Creates Google Calendar-style recurring series: one series, one meet link, one email, many occurrences.
@@ -50,8 +50,11 @@ class RecurringSeriesService
         $meetingService = new GoogleCalendarMeetingService();
         $meetTrackingService = new GoogleMeetLiveTrackingService();
         $attendeeEmails = self::studentEmailsForIds($studentIds);
-        $teacherGoogleRow = TeacherGoogleAccount::findByTeacherId($teacherId);
-        $recordingEnabled = TeacherGoogleAccount::recordingSupportedFromAccountRow($teacherGoogleRow) ? 1 : 0;
+        $teacherUser = User::findById($teacherId);
+        if ($teacherUser && !empty($teacherUser['email'])) {
+            $attendeeEmails[] = $teacherUser['email'];
+        }
+        $recordingEnabled = 1; // Always supported since we use Admin Workspace
 
         $meeting = $meetingService->createMeeting(
             $teacherId,

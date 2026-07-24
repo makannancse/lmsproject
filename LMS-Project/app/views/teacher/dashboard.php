@@ -4,11 +4,6 @@ use function htmlspecialchars as h;
 
 $base = appWebPath();
 $pb = $payoutBreakdown ?? ['pending' => 0, 'paid' => 0, 'total' => 0, 'completed_classes' => 0];
-$googleAccount = $googleAccount ?? null;
-$googleStatus = is_array($googleAccount) ? (string) ($googleAccount['status'] ?? 'disconnected') : 'disconnected';
-$googleEmail = is_array($googleAccount) ? (string) ($googleAccount['google_email'] ?? '') : '';
-$teacherGoogleAccountKind = (string) ($teacherGoogleAccountKind ?? 'workspace');
-$teacherGoogleRecordingCapability = (bool) ($teacherGoogleRecordingCapability ?? true);
 $recordings = $recordings ?? [];
 $teacherTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
 ?>
@@ -142,47 +137,6 @@ $teacherTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
         </div>
     </div>
 
-    <div class="col-12">
-        <div class="card shadow-sm">
-            <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
-                <div>
-                    <h2 class="h6 text-muted text-uppercase mb-2">Google Calendar Connection</h2>
-                    <?php if ($googleStatus === 'active' && $googleEmail !== ''): ?>
-                        <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
-                            <span class="badge text-bg-secondary text-uppercase"><?= h($teacherGoogleAccountKind === 'personal' ? 'Personal Gmail' : 'Workspace / custom domain') ?></span>
-                            <?php if ($teacherGoogleRecordingCapability): ?>
-                                <span class="badge text-bg-success">Recording / Drive sync eligible</span>
-                            <?php else: ?>
-                                <span class="badge text-bg-warning text-dark">Cloud recording sync N/A</span>
-                            <?php endif; ?>
-                        </div>
-                        <p class="mb-1"><strong>Connected:</strong> <?= h($googleEmail) ?></p>
-                        <p class="small text-muted mb-0">This account creates Google Meet meetings as organizer. <?= $teacherGoogleRecordingCapability ? 'Recording reminders and Drive sync are enabled.' : 'Personal Gmail hosts Meet normally; Workspace is required for cloud recording sync.' ?></p>
-                    <?php elseif ($googleStatus === 'error'): ?>
-                        <p class="mb-1"><strong>Connection Error:</strong> <?= h($googleEmail !== '' ? $googleEmail : 'Invalid account') ?></p>
-                        <p class="small text-danger mb-0">Reconnect your Google account. If your school enforces Workspace-only logins, set <code class="small">GOOGLE_REQUIRE_WORKSPACE_DOMAIN=1</code> and <code class="small">GOOGLE_WORKSPACE_DOMAIN</code> accordingly.</p>
-                    <?php else: ?>
-                        <p class="mb-1">No Google account connected.</p>
-                        <p class="small text-muted mb-0">Connect Google (Workspace <em>or</em> Gmail) to host Meet. Recording sync needs Workspace-style domains.</p>
-                    <?php endif; ?>
-                </div>
-                <div class="d-flex flex-wrap gap-2">
-                    <form method="post" action="<?= h($base . '/connect-google') ?>">
-                        <button type="submit" class="btn btn-primary btn-sm">Connect Google Account</button>
-                    </form>
-                    <?php if ($googleStatus === 'active'): ?>
-                        <form method="post" action="<?= h($base . '/disconnect-google') ?>"
-                              data-confirm="1"
-                              data-confirm-title="Disconnect Google account?"
-                              data-confirm-text="New classes will stop using this account until it is connected again."
-                              data-confirm-button="Disconnect">
-                            <button type="submit" class="btn btn-outline-danger btn-sm">Disconnect Google</button>
-                        </form>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <div class="col-12">
         <div class="card shadow-sm">

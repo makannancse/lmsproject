@@ -70,10 +70,7 @@ $viewerTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
                                 <td><span class="badge <?= h(classStatusBadgeClass((string) ($cls['status'] ?? 'scheduled'))) ?> text-uppercase"><?= h((string) ($cls['status'] ?? 'scheduled')) ?></span><?= teacherLateJoinBadgeHtml($cls) ?></td>
                                 <td class="small text-muted"><?= h(ClassSession::formatActualDuration($cls)) ?></td>
                                 <td>
-                                    <?php if (Auth::isAdmin()):
-                                        $tgaForClass = TeacherGoogleAccount::findByTeacherId((int) ($cls['teacher_id'] ?? 0));
-                                        $recCapClass = TeacherGoogleAccount::recordingSupportedFromAccountRow($tgaForClass);
-                                        ?>
+                                    <?php if (Auth::isAdmin()): ?>
                                         <form method="post"
                                               action="<?= h($base . '/classes/recording-toggle') ?>"
                                               class="mb-2 d-flex gap-2 align-items-center"
@@ -82,14 +79,11 @@ $viewerTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
                                             <input type="hidden" name="class_id" value="<?= (int) ($cls['id'] ?? 0) ?>">
                                             <input type="hidden" name="recording_enabled" value="0">
                                             <div class="form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" role="switch" id="rec_<?= (int) ($cls['id'] ?? 0) ?>" name="recording_enabled" value="1" <?= !$recCapClass ? 'disabled' : '' ?> <?= (int) ($cls['recording_enabled'] ?? 0) === 1 ? 'checked' : '' ?>>
+                                                <input class="form-check-input" type="checkbox" role="switch" id="rec_<?= (int) ($cls['id'] ?? 0) ?>" name="recording_enabled" value="1" <?= (int) ($cls['recording_enabled'] ?? 0) === 1 ? 'checked' : '' ?>>
                                                 <label class="form-check-label small" for="rec_<?= (int) ($cls['id'] ?? 0) ?>">Recording reminder</label>
                                             </div>
-                                            <button type="submit" class="btn btn-sm btn-outline-secondary" <?= !$recCapClass ? 'disabled' : '' ?>>Save</button>
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary">Save</button>
                                         </form>
-                                        <?php if (!$recCapClass): ?>
-                                            <p class="small text-muted mb-0">Gmail host — Drive sync unavailable.</p>
-                                        <?php endif; ?>
                                     <?php endif; ?>
                                     <?php if (!empty($cls['recording_url'])): ?>
                                         <a href="<?= h((string) $cls['recording_url']) ?>" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">View Recording</a>
