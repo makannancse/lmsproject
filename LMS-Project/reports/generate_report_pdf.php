@@ -10,6 +10,10 @@ function generate_student_report_pdf(array $report): array
 {
     require_once dirname(__DIR__) . '/app/lib/ReportLog.php';
 
+    // Boost limits for PDF generation — production servers often cap at 128M/30s
+    @ini_set('memory_limit', '256M');
+    @ini_set('max_execution_time', '120');
+
     $autoload = dirname(__DIR__) . '/vendor/autoload.php';
     if (!is_file($autoload)) {
         ReportLog::line('PDF FAILED: Composer autoload missing. Run composer install.');
@@ -19,9 +23,15 @@ function generate_student_report_pdf(array $report): array
 
     $projectRoot = dirname(__DIR__);
     $uploadsDir = $projectRoot . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'reports';
-    if (!is_dir($uploadsDir) && !mkdir($uploadsDir, 0755, true) && !is_dir($uploadsDir)) {
-        ReportLog::line('PDF FAILED: Could not create uploads/reports directory.');
-        return ['ok' => false, 'error' => 'Could not create reports upload directory'];
+    if (!is_dir($uploadsDir)) {
+        if (!@mkdir($uploadsDir, 0755, true) && !is_dir($uploadsDir)) {
+            ReportLog::line('PDF FAILED: Could not create uploads/reports directory at ' . $uploadsDir);
+            return ['ok' => false, 'error' => 'Could not create reports upload directory'];
+        }
+    }
+    if (!is_writable($uploadsDir)) {
+        ReportLog::line('PDF FAILED: uploads/reports directory is not writable: ' . $uploadsDir);
+        return ['ok' => false, 'error' => 'Reports upload directory is not writable — check server file permissions.'];
     }
 
     $reportId = (int) ($report['id'] ?? 0);
@@ -34,7 +44,7 @@ function generate_student_report_pdf(array $report): array
     $outputPdf = $uploadsDir . DIRECTORY_SEPARATOR . $fileName;
     $relativePath = 'uploads/reports/' . $fileName;
 
-    $e = static function (string $s): string {
+    $esc = static function (string $s): string {
         return htmlspecialchars($s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     };
 
@@ -58,7 +68,7 @@ function generate_student_report_pdf(array $report): array
         ['Report Date', (string) ($report['report_date'] ?? '')],
     ];
     foreach ($rows as [$lbl, $val]) {
-        $html .= '<tr><td class="lbl">' . $e($lbl) . '</td><td>' . $e($val) . '</td></tr>';
+        $html .= '<tr><td class="lbl">' . $esc($lbl) . '</td><td>' . $esc($val) . '</td></tr>';
     }
     $html .= '</table>';
 
@@ -83,8 +93,8 @@ function generate_student_report_pdf(array $report): array
         if ($val === '') {
             $val = '—';
         }
-        $html .= '<h2>' . $e($title) . '</h2>';
-        $html .= '<div class="block">' . nl2br($e($val)) . '</div>';
+        $html .= '<h2>' . $esc($title) . '</h2>';
+        $html .= '<div class="block">' . nl2br($esc($val)) . '</div>';
     }
 
     $html .= '</body></html>';
@@ -104,13 +114,13 @@ function generate_student_report_pdf(array $report): array
             ReportLog::line('PDF FAILED: Dompdf returned empty output for report id ' . $reportId);
             return ['ok' => false, 'error' => 'PDF render returned empty output'];
         }
-        if (file_put_contents($outputPdf, $pdfOutput) === false) {
+        if (@file_put_contents($outputPdf, $pdfOutput) === false) {
             ReportLog::line('PDF FAILED: Could not write file ' . $outputPdf);
-            return ['ok' => false, 'error' => 'Could not write PDF file'];
+            return ['ok' => false, 'error' => 'Could not write PDF file — check server file permissions on uploads/reports/'];
         }
-    } catch (\Throwable $e) {
-        ReportLog::line('PDF FAILED: ' . $e->getMessage());
-        return ['ok' => false, 'error' => $e->getMessage()];
+    } catch (\Throwable $ex) {
+        ReportLog::line('PDF FAILED: ' . $ex->getMessage() . ' in ' . $ex->getFile() . ':' . $ex->getLine());
+        return ['ok' => false, 'error' => 'PDF generation error: ' . $ex->getMessage()];
     }
 
     if (!file_exists($outputPdf)) {

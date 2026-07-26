@@ -413,8 +413,24 @@ class User
                 $pdo->prepare('DELETE FROM enrollments WHERE student_id = :id')->execute(['id' => $userId]);
                 $pdo->prepare('DELETE FROM teacher_students WHERE student_id = :id')->execute(['id' => $userId]);
                 $pdo->prepare('DELETE FROM student_payments WHERE student_id = :id')->execute(['id' => $userId]);
+                $pdo->prepare('DELETE FROM recurring_series_students WHERE student_id = :id')->execute(['id' => $userId]);
+                $pdo->prepare('DELETE FROM reschedule_requests WHERE student_id = :id')->execute(['id' => $userId]);
+                $pdo->prepare('DELETE FROM student_reports WHERE student_id = :id')->execute(['id' => $userId]);
                 $pdo->prepare('DELETE FROM students WHERE user_id = :id')->execute(['id' => $userId]);
             } else {
+                // 1. Delete recurring series and dependencies for this teacher
+                $seriesIdsStmt = $pdo->prepare('SELECT id FROM recurring_series WHERE teacher_id = :id');
+                $seriesIdsStmt->execute(['id' => $userId]);
+                $seriesIds = array_map(static fn(array $r): int => (int) $r['id'], $seriesIdsStmt->fetchAll() ?: []);
+                if ($seriesIds !== []) {
+                    $inSeries = implode(',', array_fill(0, count($seriesIds), '?'));
+                    $pdo->prepare("DELETE FROM recurring_series_students WHERE series_id IN ($inSeries)")->execute($seriesIds);
+                    $pdo->prepare("DELETE FROM recurring_occurrences WHERE series_id IN ($inSeries)")->execute($seriesIds);
+                    $pdo->prepare("DELETE FROM recurring_series WHERE id IN ($inSeries)")->execute($seriesIds);
+                }
+                $pdo->prepare('DELETE FROM recurring_series WHERE teacher_id = :id')->execute(['id' => $userId]);
+
+                // 2. Delete class sessions and dependencies for this teacher
                 $classIdsStmt = $pdo->prepare('SELECT id FROM class_sessions WHERE teacher_id = :id');
                 $classIdsStmt->execute(['id' => $userId]);
                 $classIds = array_map(static fn(array $r): int => (int) $r['id'], $classIdsStmt->fetchAll() ?: []);
@@ -424,10 +440,15 @@ class User
                     $pdo->prepare("DELETE FROM class_recordings WHERE class_id IN ($in)")->execute($classIds);
                     $pdo->prepare("DELETE FROM reschedule_requests WHERE class_id IN ($in)")->execute($classIds);
                     $pdo->prepare("DELETE FROM class_attendance WHERE class_id IN ($in)")->execute($classIds);
+                    $pdo->prepare("DELETE FROM teacher_payouts WHERE class_id IN ($in)")->execute($classIds);
+                    $pdo->prepare("DELETE FROM teacher_payment_logs WHERE class_id IN ($in)")->execute($classIds);
+                    $pdo->prepare("DELETE FROM student_payments WHERE class_id IN ($in)")->execute($classIds);
+                    $pdo->prepare("DELETE FROM meeting_activity_logs WHERE class_id IN ($in)")->execute($classIds);
                 }
                 $pdo->prepare('DELETE FROM class_sessions WHERE teacher_id = :id')->execute(['id' => $userId]);
 
-                $hwStmt = $pdo->prepare('SELECT id FROM homeworks WHERE teacher_id = :id');
+                // 3. Delete homeworks created by or assigned to this teacher
+                $hwStmt = $pdo->prepare('SELECT id FROM homeworks WHERE teacher_id = :id OR created_by = :id');
                 $hwStmt->execute(['id' => $userId]);
                 $hwIds = array_map(static fn(array $r): int => (int) $r['id'], $hwStmt->fetchAll() ?: []);
                 if ($hwIds !== []) {
@@ -437,10 +458,18 @@ class User
                     $pdo->prepare("DELETE FROM homework_assigned_students WHERE homework_id IN ($inHw)")->execute($hwIds);
                     $pdo->prepare("DELETE FROM homeworks WHERE id IN ($inHw)")->execute($hwIds);
                 }
+                $pdo->prepare('DELETE FROM homeworks WHERE teacher_id = :id OR created_by = :id')->execute(['id' => $userId]);
 
+                // 4. Delete remaining teacher-specific table entries
                 $pdo->prepare('DELETE FROM feedback WHERE teacher_id = :id')->execute(['id' => $userId]);
                 $pdo->prepare('DELETE FROM teacher_students WHERE teacher_id = :id')->execute(['id' => $userId]);
                 $pdo->prepare('DELETE FROM teacher_google_accounts WHERE teacher_id = :id')->execute(['id' => $userId]);
+                $pdo->prepare('DELETE FROM teacher_payments WHERE teacher_id = :id')->execute(['id' => $userId]);
+                $pdo->prepare('DELETE FROM teacher_payment_logs WHERE teacher_id = :id')->execute(['id' => $userId]);
+                $pdo->prepare('DELETE FROM teacher_payouts WHERE teacher_id = :id')->execute(['id' => $userId]);
+                $pdo->prepare('DELETE FROM teacher_availability WHERE teacher_id = :id')->execute(['id' => $userId]);
+                $pdo->prepare('DELETE FROM student_reports WHERE teacher_id = :id')->execute(['id' => $userId]);
+                $pdo->prepare('DELETE FROM reschedule_requests WHERE teacher_id = :id OR requested_by = :id')->execute(['id' => $userId]);
                 $pdo->prepare('DELETE FROM teachers WHERE user_id = :id')->execute(['id' => $userId]);
             }
 

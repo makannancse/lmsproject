@@ -136,38 +136,51 @@ class ReportController
 
         $mailResult = null;
 
-        $reportId = StudentReport::create([
-            'student_id' => $studentId,
-            'teacher_id' => $teacherId,
-            'email' => (string) ($studentProfile['email'] ?? ''),
-            'student_name' => (string) ($studentProfile['name'] ?? ''),
-            'teacher_name' => (string) ($teacherProfile['name'] ?? ''),
-            'subject' => $subject,
-            'overall_performance' => $overallPerformance,
-            'concept_understanding' => $conceptUnderstanding,
-            'application_ability' => $applicationAbility,
-            'homework_completion' => $homeworkCompletion,
-            'attention_level' => $attentionLevel,
-            'participation_level' => $participationLevel,
-            'behaviour' => $behaviour,
-            'subjects_addressed' => $subjectsAddressed,
-            'future_focus' => $futureFocus,
-            'recommended_focus' => $recommendedFocus,
-            'study_strategies' => $studyStrategies,
-            'additional_support' => $additionalSupport,
-            'overall_feedback' => $overallFeedback,
-            'report_date' => $reportDate,
-            'pdf_path' => '',
-        ]);
+        try {
+            $reportId = StudentReport::create([
+                'student_id' => $studentId,
+                'teacher_id' => $teacherId,
+                'email' => (string) ($studentProfile['email'] ?? ''),
+                'student_name' => (string) ($studentProfile['name'] ?? ''),
+                'teacher_name' => (string) ($teacherProfile['name'] ?? ''),
+                'subject' => $subject,
+                'overall_performance' => $overallPerformance,
+                'concept_understanding' => $conceptUnderstanding,
+                'application_ability' => $applicationAbility,
+                'homework_completion' => $homeworkCompletion,
+                'attention_level' => $attentionLevel,
+                'participation_level' => $participationLevel,
+                'behaviour' => $behaviour,
+                'subjects_addressed' => $subjectsAddressed,
+                'future_focus' => $futureFocus,
+                'recommended_focus' => $recommendedFocus,
+                'study_strategies' => $studyStrategies,
+                'additional_support' => $additionalSupport,
+                'overall_feedback' => $overallFeedback,
+                'report_date' => $reportDate,
+                'pdf_path' => '',
+            ]);
+        } catch (\Throwable $e) {
+            ReportLog::line('Report DB save FAILED: ' . $e->getMessage());
+            $_SESSION['flash_error'] = 'Report could not be saved: ' . $e->getMessage();
+            redirectTo($role === 'admin' ? '/admin/reports' : '/teacher/reports');
+            return;
+        }
 
-        $report = StudentReport::findByIdForUser($reportId, $role === 'admin' ? 'admin' : 'teacher', (int) ($user['id'] ?? 0));
-        $pdfInfo = generate_student_report_pdf($report ?: ['id' => $reportId]);
-        if (!empty($pdfInfo['ok'])) {
-            StudentReport::updatePdfPath($reportId, (string) $pdfInfo['relative_path']);
-        } else {
-            ReportLog::line(
-                'Report id ' . $reportId . ' saved but PDF failed: ' . (string) ($pdfInfo['error'] ?? 'unknown')
-            );
+        $pdfInfo = ['ok' => false, 'error' => 'PDF not attempted'];
+        try {
+            $report = StudentReport::findByIdForUser($reportId, $role === 'admin' ? 'admin' : 'teacher', (int) ($user['id'] ?? 0));
+            $pdfInfo = generate_student_report_pdf($report ?: ['id' => $reportId]);
+            if (!empty($pdfInfo['ok'])) {
+                StudentReport::updatePdfPath($reportId, (string) $pdfInfo['relative_path']);
+            } else {
+                ReportLog::line(
+                    'Report id ' . $reportId . ' saved but PDF failed: ' . (string) ($pdfInfo['error'] ?? 'unknown')
+                );
+            }
+        } catch (\Throwable $e) {
+            ReportLog::line('PDF generation threw exception for report id ' . $reportId . ': ' . $e->getMessage());
+            $pdfInfo = ['ok' => false, 'error' => $e->getMessage()];
         }
 
         $parentEmail = trim((string) ($studentProfile['parent_email'] ?? ''));
@@ -176,20 +189,25 @@ class ReportController
         } elseif (empty($pdfInfo['ok'])) {
             ReportLog::line('Email skipped: PDF not generated for report id ' . $reportId);
         } else {
-            $subjectLine = EmailTemplate::subject('default', 'Student Performance Report');
-            $intro = '<p>Please find attached the student report card from '
-                . htmlspecialchars(EmailTemplate::brandName(), ENT_QUOTES, 'UTF-8') . '.</p>';
-            $body = EmailTemplate::wrap('Report Card', $intro, [], null, null, true);
-            $mailResult = Mailer::send($parentEmail, $subjectLine, $body, true, [[
-                'path' => (string) $pdfInfo['absolute_path'],
-                'name' => 'report_' . $reportId . '.pdf',
-            ]]);
-            if (!empty($mailResult['success'])) {
-                ReportLog::line('Email sent to parent: ' . $parentEmail . ' (report id ' . $reportId . ')');
-            } else {
-                ReportLog::line(
-                    'Email failed for report id ' . $reportId . ' to ' . $parentEmail . ': ' . (string) ($mailResult['error'] ?? '')
-                );
+            try {
+                $subjectLine = EmailTemplate::subject('default', 'Student Performance Report');
+                $intro = '<p>Please find attached the student report card from '
+                    . htmlspecialchars(EmailTemplate::brandName(), ENT_QUOTES, 'UTF-8') . '.</p>';
+                $body = EmailTemplate::wrap('Report Card', $intro, [], null, null, true);
+                $mailResult = Mailer::send($parentEmail, $subjectLine, $body, true, [[
+                    'path' => (string) $pdfInfo['absolute_path'],
+                    'name' => 'report_' . $reportId . '.pdf',
+                ]]);
+                if (!empty($mailResult['success'])) {
+                    ReportLog::line('Email sent to parent: ' . $parentEmail . ' (report id ' . $reportId . ')');
+                } else {
+                    ReportLog::line(
+                        'Email failed for report id ' . $reportId . ' to ' . $parentEmail . ': ' . (string) ($mailResult['error'] ?? '')
+                    );
+                }
+            } catch (\Throwable $e) {
+                ReportLog::line('Email threw exception for report id ' . $reportId . ': ' . $e->getMessage());
+                $mailResult = ['success' => false, 'error' => $e->getMessage()];
             }
         }
 
