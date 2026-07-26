@@ -12,12 +12,14 @@ class StudentReport
         $stmt = $pdo->prepare(
             'INSERT INTO student_reports (
                 student_id, teacher_id, email, student_name, teacher_name, subject,
+                performance_rating, understanding_level, strengths, improvements, comments,
                 overall_performance, concept_understanding, application_ability,
                 homework_completion, attention_level, participation_level, behaviour,
                 subjects_addressed, future_focus, recommended_focus,
                 study_strategies, additional_support, overall_feedback, report_date, pdf_path
              ) VALUES (
                 :student_id, :teacher_id, :email, :student_name, :teacher_name, :subject,
+                :performance_rating, :understanding_level, :strengths, :improvements, :comments,
                 :overall_performance, :concept_understanding, :application_ability,
                 :homework_completion, :attention_level, :participation_level, :behaviour,
                 :subjects_addressed, :future_focus, :recommended_focus,
@@ -31,6 +33,11 @@ class StudentReport
             'student_name' => (string) $data['student_name'],
             'teacher_name' => (string) $data['teacher_name'],
             'subject' => (string) $data['subject'],
+            'performance_rating' => (string) ($data['overall_performance'] ?? ''),
+            'understanding_level' => (string) ($data['concept_understanding'] ?? ''),
+            'strengths' => (string) ($data['subjects_addressed'] ?? ''),
+            'improvements' => (string) ($data['recommended_focus'] ?? ''),
+            'comments' => (string) ($data['overall_feedback'] ?? ''),
             'overall_performance' => (string) $data['overall_performance'],
             'concept_understanding' => (string) $data['concept_understanding'],
             'application_ability' => (string) $data['application_ability'],

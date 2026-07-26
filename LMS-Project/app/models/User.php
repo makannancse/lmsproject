@@ -448,8 +448,8 @@ class User
                 $pdo->prepare('DELETE FROM class_sessions WHERE teacher_id = :id')->execute(['id' => $userId]);
 
                 // 3. Delete homeworks created by or assigned to this teacher
-                $hwStmt = $pdo->prepare('SELECT id FROM homeworks WHERE teacher_id = :id OR created_by = :id');
-                $hwStmt->execute(['id' => $userId]);
+                $hwStmt = $pdo->prepare('SELECT id FROM homeworks WHERE teacher_id = :id1 OR created_by = :id2');
+                $hwStmt->execute(['id1' => $userId, 'id2' => $userId]);
                 $hwIds = array_map(static fn(array $r): int => (int) $r['id'], $hwStmt->fetchAll() ?: []);
                 if ($hwIds !== []) {
                     $inHw = implode(',', array_fill(0, count($hwIds), '?'));
@@ -458,7 +458,7 @@ class User
                     $pdo->prepare("DELETE FROM homework_assigned_students WHERE homework_id IN ($inHw)")->execute($hwIds);
                     $pdo->prepare("DELETE FROM homeworks WHERE id IN ($inHw)")->execute($hwIds);
                 }
-                $pdo->prepare('DELETE FROM homeworks WHERE teacher_id = :id OR created_by = :id')->execute(['id' => $userId]);
+                $pdo->prepare('DELETE FROM homeworks WHERE teacher_id = :id1 OR created_by = :id2')->execute(['id1' => $userId, 'id2' => $userId]);
 
                 // 4. Delete remaining teacher-specific table entries
                 $pdo->prepare('DELETE FROM feedback WHERE teacher_id = :id')->execute(['id' => $userId]);
@@ -469,7 +469,7 @@ class User
                 $pdo->prepare('DELETE FROM teacher_payouts WHERE teacher_id = :id')->execute(['id' => $userId]);
                 $pdo->prepare('DELETE FROM teacher_availability WHERE teacher_id = :id')->execute(['id' => $userId]);
                 $pdo->prepare('DELETE FROM student_reports WHERE teacher_id = :id')->execute(['id' => $userId]);
-                $pdo->prepare('DELETE FROM reschedule_requests WHERE teacher_id = :id OR requested_by = :id')->execute(['id' => $userId]);
+                $pdo->prepare('DELETE FROM reschedule_requests WHERE teacher_id = :id1 OR requested_by = :id2')->execute(['id1' => $userId, 'id2' => $userId]);
                 $pdo->prepare('DELETE FROM teachers WHERE user_id = :id')->execute(['id' => $userId]);
             }
 
