@@ -617,5 +617,14 @@ $timezoneOptions = calendarTimezoneOptions(resolveUserTimezone(Auth::user() ?: n
             }
         });
     }
+    // Expose calendar for external scripts (e.g. meet-status-poll)
+    window.__LMS_CALENDAR__ = calendar;
+
+    // Auto-refetch calendar events every 30 seconds so status changes appear automatically
+    window.setInterval(function () {
+        if (document.visibilityState === 'visible' && typeof calendar !== 'undefined' && calendar) {
+            calendar.refetchEvents();
+        }
+    }, 30000);
 })();
 </script>

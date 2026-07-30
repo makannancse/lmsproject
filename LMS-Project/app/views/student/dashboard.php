@@ -76,9 +76,10 @@ $primaryTeacher = $assignedTeachers[0] ?? null;
                                     <div class="small text-muted mb-1"><i class="fa-regular fa-clock me-1"></i><?= h(formatClassScheduledAt($nextClass, 'l, d M Y h:i A T')) ?></div>
                                     <div class="small text-muted"><i class="fa-solid fa-globe me-1"></i><?= h(formatClassScheduledTimezoneLabel($nextClass)) ?></div>
                                     <div class="small mt-2">Teacher: <?= h((string) ($nextClass['teacher_name'] ?? '')) ?></div>
+                                    <?= teacherLateJoinNoticeHtml($nextClass, '', 'student') ?>
                                 </div>
                                 <?php if (!empty($nextClass['meeting_link'])): ?>
-                                    <a href="<?= h(path('join-class?class_id=' . (int) ($nextClass['id'] ?? 0))) ?>" class="btn btn-student-primary btn-lg px-4">
+                                    <a href="<?= h(path('join-class?class_id=' . (int) ($nextClass['id'] ?? 0))) ?>" class="btn btn-student-primary btn-lg px-4" target="_blank" rel="noopener">
                                         <i class="fa-solid fa-play me-2"></i>Join Class
                                     </a>
                                 <?php endif; ?>

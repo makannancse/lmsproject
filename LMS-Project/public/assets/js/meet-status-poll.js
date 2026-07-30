@@ -30,6 +30,11 @@
                 return;
             }
 
+            // Always signal the calendar to refetch events so status changes appear live
+            if (window.__LMS_CALENDAR__ && typeof window.__LMS_CALENDAR__.refetchEvents === 'function') {
+                window.__LMS_CALENDAR__.refetchEvents();
+            }
+
             if (data.reload && Array.isArray(data.completed) && data.completed.length > 0) {
                 const message = data.completed.length === 1
                     ? 'The class was marked completed from Google Meet activity.'

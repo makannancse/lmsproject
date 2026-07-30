@@ -422,6 +422,23 @@ class GoogleDriveRecordingService
             $signals[] = 'name_contains_record';
         }
 
+        $targetCode = $this->extractMeetingCodeFromClassRow($classRow);
+        if ($targetCode !== null) {
+            $rawCode = str_replace('-', '', $targetCode);
+            if (str_contains($nameLower, $targetCode) || str_contains($nameLower, $rawCode)) {
+                $score += 80;
+                $signals[] = 'meeting_code_match:' . $targetCode;
+            } else {
+                if (preg_match('/[a-z]{3}-[a-z]{4}-[a-z]{3}/i', $nameLower, $fileCodeMatch) === 1) {
+                    $otherCode = strtolower($fileCodeMatch[0]);
+                    if ($otherCode !== $targetCode && str_replace('-', '', $otherCode) !== $rawCode) {
+                        $score -= 100;
+                        $signals[] = 'mismatched_meeting_code:' . $otherCode;
+                    }
+                }
+            }
+        }
+
         $titleHits = $this->countTitleWordHits((string) ($classRow['title'] ?? ''), $nameLower);
         if ($titleHits > 0) {
             $score += min(20, $titleHits * 5);
@@ -575,6 +592,21 @@ class GoogleDriveRecordingService
         }
 
         return $hits;
+    }
+
+    private function extractMeetingCodeFromClassRow(array $classRow): ?string
+    {
+        $code = trim((string) ($classRow['google_meeting_code'] ?? ''));
+        if ($code !== '') {
+            return strtolower($code);
+        }
+
+        $link = trim((string) ($classRow['meeting_link'] ?? ''));
+        if ($link !== '' && preg_match('~meet\.google\.com/([a-z]{3}-[a-z]{4}-[a-z]{3})~i', $link, $matches) === 1) {
+            return strtolower($matches[1]);
+        }
+
+        return null;
     }
 
     private function escapeDriveQueryValue(string $value): string

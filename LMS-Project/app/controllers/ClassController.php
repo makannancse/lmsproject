@@ -843,11 +843,9 @@ class ClassController
         if ($status === 'completed') {
             $liveService = new GoogleMeetLiveTrackingService();
             $sync = $liveService->syncClass($classId, 'admin_status_update');
-            if (($sync['status'] ?? '') === 'completed') {
-                $_SESSION['flash_success'] = 'Class completed using actual Google Meet timings.';
-            } else {
-                $_SESSION['flash_warning'] = 'Google Meet has not reported the teacher session as ended yet.';
-            }
+            $trackingService = new MeetingTrackingService();
+            $trackingService->completeClass($classId, gmdate('Y-m-d H:i:s'), 'admin_status_update');
+            $_SESSION['flash_success'] = 'Class marked as completed.';
             redirectTo('/classes');
             return;
         }

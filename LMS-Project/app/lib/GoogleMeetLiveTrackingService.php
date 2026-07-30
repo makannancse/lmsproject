@@ -13,6 +13,7 @@ require_once dirname(__DIR__) . '/lib/SyncLog.php';
 require_once dirname(__DIR__) . '/models/ClassAttendance.php';
 require_once dirname(__DIR__) . '/models/MeetingActivityLog.php';
 require_once dirname(__DIR__) . '/models/TeacherGoogleAccount.php';
+require_once dirname(__DIR__) . '/models/AdminGoogleAccount.php';
 require_once dirname(__DIR__) . '/models/TeacherPayout.php';
 require_once dirname(__DIR__) . '/lib/MeetingSyncDebugService.php';
 require_once dirname(__DIR__) . '/lib/helpers.php';
@@ -482,8 +483,13 @@ class GoogleMeetLiveTrackingService
     private function ensureTeacherIdentity(int $teacherId): array
     {
         $account = TeacherGoogleAccount::getCredentialsForTeacher($teacherId);
+        $isAdminFallback = false;
         if ($account === null) {
-            throw new RuntimeException('Teacher Google account is not connected.');
+            $account = AdminGoogleAccount::getCredentials();
+            $isAdminFallback = true;
+        }
+        if ($account === null) {
+            throw new RuntimeException('Teacher or Admin Google account is not connected.');
         }
 
         $existingUserId = trim((string) ($account['google_user_id'] ?? ''));
@@ -500,7 +506,20 @@ class GoogleMeetLiveTrackingService
 
         $oauth = new GoogleOAuthService();
         $client = $oauth->client();
-        $client->setAccessToken($oauth->getActiveAccessTokenForTeacher($teacherId));
+        try {
+            $tokens = $isAdminFallback
+                ? $oauth->getActiveAccessTokenForAdmin()
+                : $oauth->getActiveAccessTokenForTeacher($teacherId);
+            $client->setAccessToken($tokens);
+        } catch (\Throwable $e) {
+            if (!$isAdminFallback) {
+                $tokens = $oauth->getActiveAccessTokenForAdmin();
+                $client->setAccessToken($tokens);
+                $isAdminFallback = true;
+            } else {
+                throw $e;
+            }
+        }
 
         $googleUserId = null;
         try {
@@ -544,7 +563,9 @@ class GoogleMeetLiveTrackingService
             throw new RuntimeException('Unable to resolve the teacher Google user id for Meet tracking. Reconnect the Google account.');
         }
 
-        TeacherGoogleAccount::updateIdentity($teacherId, $resourceName, $personId, $googleUserId);
+        if (!$isAdminFallback && $teacherId > 0) {
+            TeacherGoogleAccount::updateIdentity($teacherId, $resourceName, $personId, $googleUserId);
+        }
 
         return [
             'google_person_resource_name' => $resourceName,
@@ -1024,14 +1045,12 @@ class GoogleMeetLiveTrackingService
 
         if ($status === 'completed') {
             TeacherPayout::ensureForCompletedClass($classId);
-            if (!empty($class['recurring_occurrence_id']) || !empty($class['recurring_series_id'])) {
-                require_once dirname(__DIR__) . '/lib/RecurringSeriesService.php';
-                $freshStmt = $pdo->prepare('SELECT * FROM class_sessions WHERE id = :id LIMIT 1');
-                $freshStmt->execute(['id' => $classId]);
-                $freshClass = $freshStmt->fetch();
-                if ($freshClass) {
-                    RecurringSeriesService::syncOccurrenceFromClassSession($classId, $freshClass);
-                }
+            require_once dirname(__DIR__) . '/lib/RecurringSeriesService.php';
+            $freshStmt = $pdo->prepare('SELECT * FROM class_sessions WHERE id = :id LIMIT 1');
+            $freshStmt->execute(['id' => $classId]);
+            $freshClass = $freshStmt->fetch();
+            if ($freshClass) {
+                RecurringSeriesService::syncOccurrenceFromClassSession($classId, $freshClass);
             }
         }
 

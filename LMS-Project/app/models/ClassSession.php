@@ -17,7 +17,7 @@ class ClassSession
              WHERE e.student_id = :student_id
                AND e.status = "active"
                AND cs.status IN ("scheduled", "rescheduled", "ongoing")
-               AND COALESCE(cs.start_time_utc, cs.scheduled_time_utc, cs.start_datetime) >= UTC_TIMESTAMP()
+               AND COALESCE(cs.start_time_utc, cs.scheduled_time_utc, cs.start_datetime) >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 HOUR)
              ORDER BY COALESCE(cs.start_time_utc, cs.scheduled_time_utc, cs.start_datetime) ASC
              LIMIT :limit'
         );
@@ -211,7 +211,7 @@ class ClassSession
             SELECT 1 FROM enrollments e
             WHERE e.class_id = class_sessions.id AND e.student_id = :scope_id AND e.status = "active"
         )
-        AND COALESCE(class_sessions.start_time_utc, class_sessions.scheduled_time_utc, class_sessions.start_datetime) >= UTC_TIMESTAMP()';
+        AND COALESCE(class_sessions.start_time_utc, class_sessions.scheduled_time_utc, class_sessions.start_datetime) >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 HOUR)';
 
         return self::countStandaloneByStatuses($pdo, $statuses, $enrolled, ['scope_id' => $studentId])
             + self::countDistinctRecurringSeriesByStatuses($pdo, $statuses, $enrolled, ['scope_id' => $studentId]);

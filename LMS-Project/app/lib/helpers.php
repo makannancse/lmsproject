@@ -341,6 +341,12 @@ if (!function_exists('timezoneAliasMap')) {
             'IST' => 'Asia/Kolkata',
             'EST' => 'America/New_York',
             'PST' => 'America/Los_Angeles',
+            'AST' => 'Asia/Qatar',
+            'GST' => 'Asia/Dubai',
+            'CST' => 'America/Chicago',
+            'MST' => 'America/Denver',
+            'SGT' => 'Asia/Singapore',
+            'AEST' => 'Australia/Sydney',
         ];
     }
 }
@@ -471,19 +477,35 @@ if (!function_exists('supportedSchedulingTimezones')) {
     function supportedSchedulingTimezones(): array
     {
         return [
+            ['value' => 'Asia/Qatar', 'label' => 'Asia/Qatar (AST — Doha, Qatar UTC+3)'],
+            ['value' => 'Asia/Riyadh', 'label' => 'Asia/Riyadh (AST — Riyadh, Saudi Arabia UTC+3)'],
+            ['value' => 'Asia/Kuwait', 'label' => 'Asia/Kuwait (AST — Kuwait UTC+3)'],
+            ['value' => 'Asia/Bahrain', 'label' => 'Asia/Bahrain (AST — Bahrain UTC+3)'],
+            ['value' => 'Asia/Dubai', 'label' => 'Asia/Dubai (GST — Dubai, UAE UTC+4)'],
+            ['value' => 'Asia/Muscat', 'label' => 'Asia/Muscat (GST — Muscat, Oman UTC+4)'],
+            ['value' => 'Asia/Kolkata', 'label' => 'Asia/Kolkata (IST — India UTC+5:30)'],
+            ['value' => 'Asia/Karachi', 'label' => 'Asia/Karachi (PKT — Pakistan UTC+5)'],
+            ['value' => 'Asia/Dhaka', 'label' => 'Asia/Dhaka (BST — Bangladesh UTC+6)'],
+            ['value' => 'Asia/Bangkok', 'label' => 'Asia/Bangkok (ICT — Thailand, Vietnam UTC+7)'],
+            ['value' => 'Asia/Singapore', 'label' => 'Asia/Singapore (SGT — Singapore UTC+8)'],
+            ['value' => 'Asia/Hong_Kong', 'label' => 'Asia/Hong_Kong (HKT — Hong Kong UTC+8)'],
+            ['value' => 'Asia/Tokyo', 'label' => 'Asia/Tokyo (JST — Japan UTC+9)'],
             ['value' => 'UTC', 'label' => 'UTC (Coordinated Universal Time)'],
-            ['value' => 'Asia/Kolkata', 'label' => 'Asia/Kolkata (IST — India)'],
-            ['value' => 'America/Los_Angeles', 'label' => 'America/Los_Angeles (PST/PDT)'],
-            ['value' => 'America/Denver', 'label' => 'America/Denver (MST/MDT)'],
-            ['value' => 'America/Chicago', 'label' => 'America/Chicago (CST/CDT)'],
-            ['value' => 'America/New_York', 'label' => 'America/New_York (EST/EDT)'],
             ['value' => 'Europe/London', 'label' => 'Europe/London (GMT/BST — UK)'],
             ['value' => 'Europe/Paris', 'label' => 'Europe/Paris (CET — Central Europe)'],
             ['value' => 'Europe/Berlin', 'label' => 'Europe/Berlin (CET — Germany)'],
-            ['value' => 'Asia/Dubai', 'label' => 'Asia/Dubai (GST — UAE)'],
-            ['value' => 'Asia/Singapore', 'label' => 'Asia/Singapore (SGT)'],
-            ['value' => 'Australia/Sydney', 'label' => 'Australia/Sydney (AEST)'],
-            ['value' => 'Australia/Melbourne', 'label' => 'Australia/Melbourne (AEST)'],
+            ['value' => 'Europe/Moscow', 'label' => 'Europe/Moscow (MSK — Russia UTC+3)'],
+            ['value' => 'Africa/Cairo', 'label' => 'Africa/Cairo (EEST — Egypt UTC+3)'],
+            ['value' => 'America/Los_Angeles', 'label' => 'America/Los_Angeles (PST/PDT — US Pacific)'],
+            ['value' => 'America/Denver', 'label' => 'America/Denver (MST/MDT — US Mountain)'],
+            ['value' => 'America/Chicago', 'label' => 'America/Chicago (CST/CDT — US Central)'],
+            ['value' => 'America/New_York', 'label' => 'America/New_York (EST/EDT — US Eastern)'],
+            ['value' => 'America/Halifax', 'label' => 'America/Halifax (AST — Atlantic Canada UTC-4)'],
+            ['value' => 'America/Sao_Paulo', 'label' => 'America/Sao_Paulo (BRT — Brazil UTC-3)'],
+            ['value' => 'Australia/Perth', 'label' => 'Australia/Perth (AWST — West Australia UTC+8)'],
+            ['value' => 'Australia/Sydney', 'label' => 'Australia/Sydney (AEST — East Australia UTC+10)'],
+            ['value' => 'Australia/Melbourne', 'label' => 'Australia/Melbourne (AEST — East Australia UTC+10)'],
+            ['value' => 'Pacific/Auckland', 'label' => 'Pacific/Auckland (NZST — New Zealand UTC+12)'],
         ];
     }
 }
@@ -1084,12 +1106,12 @@ if (!function_exists('teacherCurrentLateMinutes')) {
         }
 
         if ($status === 'completed') {
-            $endTimeStr = $classRow['completed_at'] ?? $classRow['actual_end_time'] ?? classEndUtcValue($classRow);
-            $endUtc = utcDateTimeImmutable(is_string($endTimeStr) ? $endTimeStr : null);
-            if ($endUtc === null) {
+            $actStartStr = $classRow['actual_start_time'] ?? null;
+            $actStartUtc = utcDateTimeImmutable(is_string($actStartStr) ? $actStartStr : null);
+            if ($actStartUtc === null) {
                 return null;
             }
-            $secondsLate = $endUtc->getTimestamp() - $start->getTimestamp();
+            $secondsLate = $actStartUtc->getTimestamp() - $start->getTimestamp();
         } else {
             $nowUtc ??= new DateTimeImmutable('now', new DateTimeZone('UTC'));
             $secondsLate = $nowUtc->getTimestamp() - $start->getTimestamp();

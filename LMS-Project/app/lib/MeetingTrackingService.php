@@ -80,6 +80,16 @@ class MeetingTrackingService
             throw new RuntimeException('Only the assigned teacher can start this class.');
         }
 
+        $startUtc = classStartUtcValue($class);
+        $delayMinutes = null;
+        if ($startUtc !== null && $startUtc !== '') {
+            $schedTs = $this->parseUtcTimestamp($startUtc);
+            $nowTs = $this->parseUtcTimestamp($now);
+            if ($schedTs !== null && $nowTs !== null) {
+                $delayMinutes = max(0, (int) ceil(($nowTs - $schedTs) / 60));
+            }
+        }
+
         $stmt = $pdo->prepare(
             'UPDATE class_sessions
              SET recording_acknowledged_at = COALESCE(recording_acknowledged_at, :acknowledged_at),
@@ -89,6 +99,7 @@ class MeetingTrackingService
                      ELSE status
                  END,
                  teacher_joined_at = COALESCE(teacher_joined_at, :now),
+                 teacher_join_delay_minutes = COALESCE(teacher_join_delay_minutes, :delay_minutes),
                  meeting_live_status = CASE
                      WHEN meeting_live_status = "ended" THEN meeting_live_status
                      ELSE "pending"
@@ -99,6 +110,7 @@ class MeetingTrackingService
             'acknowledged_at' => $acknowledgedAt,
             'teacher_id' => $teacherId,
             'now' => $now,
+            'delay_minutes' => $delayMinutes,
             'id' => $classId,
         ]);
 
@@ -205,6 +217,8 @@ class MeetingTrackingService
 
         if ((string) ($class['status'] ?? '') === 'completed') {
             TeacherPayout::ensureForCompletedClass($classId);
+            require_once dirname(__DIR__) . '/lib/RecurringSeriesService.php';
+            RecurringSeriesService::syncOccurrenceFromClassSession($classId, $class);
             SyncLog::write('google_meet_status.log', [
                 'event' => 'class_already_completed',
                 'class_id' => $classId,
@@ -216,18 +230,39 @@ class MeetingTrackingService
 
         $endTime = $this->normalizeUtcValue((string) ($class['actual_end_time'] ?? ''));
         if ($endTime === null) {
-            throw new RuntimeException(
-                'Google Meet has not reported the host leaving yet. Leave the Google Meet call, wait a few seconds, then click End Class again.'
-            );
+            $endTime = $this->normalizeUtcValue((string) $endedAt) ?? $this->utcNow();
         }
 
         $actualStart = $this->resolveActualClassStartUtc($class);
+        if ($actualStart === null) {
+            $actualStart = $this->normalizeUtcValue((string) ($class['teacher_joined_at'] ?? ''))
+                ?? classStartUtcValue($class)
+                ?? $this->utcNow();
+        }
+
         $endTimeTs = $this->parseUtcTimestamp($endTime) ?? time();
         $actualStartTs = $this->parseUtcTimestamp($actualStart);
         $duration = null;
         if ($actualStartTs !== null) {
             $duration = max(0, (int) round(($endTimeTs - $actualStartTs) / 60));
         }
+
+        $teacherJoinDelay = null;
+        $joinTimeUtc = $class['teacher_joined_at'] ?? $actualStart;
+        $schedStartUtc = classStartUtcValue($class);
+        if ($joinTimeUtc !== null && $joinTimeUtc !== '' && $schedStartUtc !== null && $schedStartUtc !== '') {
+            $joinTs = $this->parseUtcTimestamp((string) $joinTimeUtc);
+            $schedTs = $this->parseUtcTimestamp((string) $schedStartUtc);
+            if ($joinTs !== null && $schedTs !== null && $joinTs > $schedTs) {
+                $teacherJoinDelay = (int) ceil(($joinTs - $schedTs) / 60);
+            } elseif ($joinTs !== null && $schedTs !== null) {
+                $teacherJoinDelay = 0;
+            }
+        }
+        if ($teacherJoinDelay === null && isset($class['teacher_join_delay_minutes']) && $class['teacher_join_delay_minutes'] !== null) {
+            $teacherJoinDelay = (int) $class['teacher_join_delay_minutes'];
+        }
+
         $recordingStatus = $this->isRecordingSyncEligible($class)
             ? (trim((string) ($class['recording_url'] ?? '')) === '' ? 'processing' : 'ready')
             : 'pending';
@@ -238,6 +273,7 @@ class MeetingTrackingService
              SET status = "completed",
                  actual_start_time = COALESCE(actual_start_time, :actual_start_time),
                  actual_end_time = COALESCE(actual_end_time, :actual_end_time),
+                 teacher_join_delay_minutes = COALESCE(teacher_join_delay_minutes, :teacher_join_delay_minutes),
                  actual_duration = CASE
                      WHEN :has_actual_start_for_duration = 1 AND (actual_duration IS NULL OR actual_duration <= 0) THEN :actual_duration
                      ELSE actual_duration
@@ -257,6 +293,7 @@ class MeetingTrackingService
         $stmt->execute([
             'actual_start_time' => $actualStart,
             'actual_end_time' => $endTime,
+            'teacher_join_delay_minutes' => $teacherJoinDelay,
             'actual_duration' => $duration,
             'actual_duration_minutes' => $duration,
             'has_actual_start_for_duration' => $actualStartTs !== null ? 1 : 0,
@@ -266,6 +303,12 @@ class MeetingTrackingService
             'clear_recording_sync_error' => $recordingStatus !== 'processing' ? 1 : 0,
             'id' => $classId,
         ]);
+
+        $refreshedClass = $this->getClassById($classId);
+        if (is_array($refreshedClass)) {
+            require_once dirname(__DIR__) . '/lib/RecurringSeriesService.php';
+            RecurringSeriesService::syncOccurrenceFromClassSession($classId, $refreshedClass);
+        }
 
         TeacherPayout::ensureForCompletedClass($classId);
         MeetingTrackingLog::write('meeting_ended', [
@@ -466,7 +509,7 @@ class MeetingTrackingService
         $stmt = $pdo->query(
             'SELECT *
              FROM class_sessions
-             WHERE status = "ongoing"
+             WHERE (status = "ongoing" OR (status IN ("scheduled", "rescheduled") AND COALESCE(start_time_utc, scheduled_time_utc, start_datetime) <= UTC_TIMESTAMP()))
                AND meeting_link IS NOT NULL
                AND TRIM(meeting_link) <> ""
              ORDER BY COALESCE(actual_start_time, teacher_joined_at, start_datetime) ASC'
@@ -490,7 +533,7 @@ class MeetingTrackingService
             $stmt = $pdo->prepare(
                 'SELECT *
                  FROM class_sessions
-                 WHERE status = "ongoing"
+                 WHERE (status = "ongoing" OR (status IN ("scheduled", "rescheduled") AND COALESCE(start_time_utc, scheduled_time_utc, start_datetime) <= UTC_TIMESTAMP()))
                    AND teacher_id = :teacher_id
                    AND meeting_link IS NOT NULL
                    AND TRIM(meeting_link) <> ""
@@ -506,7 +549,7 @@ class MeetingTrackingService
                 'SELECT cs.*
                  FROM class_sessions cs
                  INNER JOIN enrollments e ON e.class_id = cs.id AND e.status = "active"
-                 WHERE cs.status = "ongoing"
+                 WHERE (cs.status = "ongoing" OR (cs.status IN ("scheduled", "rescheduled") AND COALESCE(cs.start_time_utc, cs.scheduled_time_utc, cs.start_datetime) <= UTC_TIMESTAMP()))
                    AND e.student_id = :student_id
                    AND cs.meeting_link IS NOT NULL
                    AND TRIM(cs.meeting_link) <> ""
@@ -558,17 +601,25 @@ class MeetingTrackingService
 
                 $liveStatus = (string) ($sync['meeting_live_status'] ?? ($refreshed['meeting_live_status'] ?? ''));
                 $hasHostEnd = trim((string) ($sync['actual_end_time'] ?? ($refreshed['actual_end_time'] ?? ''))) !== '';
+                $scheduledEndUtc = classEndUtcValue($refreshed);
+                $isTimeExpired = false;
+                if ($scheduledEndUtc !== null) {
+                    $schedEndTs = $this->parseUtcTimestamp($scheduledEndUtc);
+                    if ($schedEndTs !== null && time() >= $schedEndTs) {
+                        $isTimeExpired = true;
+                    }
+                }
 
-                if ($liveStatus === 'ended' || $hasHostEnd) {
+                if ($liveStatus === 'ended' || $hasHostEnd || $isTimeExpired) {
                     $leaveSync = $liveService->syncClassAfterHostLeave($classId, 'auto_poll');
                     $refreshed = $this->getClassById($classId) ?? $refreshed;
 
                     if ((string) ($refreshed['status'] ?? '') !== 'completed') {
                         try {
-                            $this->completeClass($classId, null, 'auto_poll');
+                            $this->completeClass($classId, null, $isTimeExpired ? 'auto_poll_time_expired' : 'auto_poll');
                             $refreshed = $this->getClassById($classId) ?? $refreshed;
                         } catch (\Throwable $ignored) {
-                            // Meet API may not have published host end yet; next poll will retry.
+                            // Fall through to mark completed if retry fails
                         }
                     }
 

@@ -29,7 +29,7 @@ class RecurringOccurrence
                     ro.actual_start_utc,
                     ro.actual_end_utc,
                     ro.duration_minutes,
-                    ro.status,
+                    COALESCE(cs.status, ro.status) AS status,
                     ro.teacher_payment,
                     ro.meeting_live_status,
                     ro.teacher_joined_at,
@@ -64,6 +64,7 @@ class RecurringOccurrence
              FROM recurring_occurrences ro
              INNER JOIN recurring_series rs ON rs.id = ro.series_id
              INNER JOIN users u ON u.id = rs.teacher_id
+             LEFT JOIN class_sessions cs ON cs.id = ro.class_session_id
              WHERE rs.status = "active"
                AND ro.scheduled_start_utc < :rng_end
                AND ro.scheduled_end_utc > :rng_start';

@@ -350,11 +350,21 @@ class RecurringSeriesService
     {
         $occurrenceId = (int) ($classRow['recurring_occurrence_id'] ?? 0);
         $seriesId = (int) ($classRow['recurring_series_id'] ?? 0);
-        if ($occurrenceId <= 0 || $seriesId <= 0) {
-            return;
-        }
 
         $pdo = Database::connection();
+        if ($occurrenceId <= 0 && $classSessionId > 0) {
+            $stmt = $pdo->prepare('SELECT id, series_id FROM recurring_occurrences WHERE class_session_id = :cid LIMIT 1');
+            $stmt->execute(['cid' => $classSessionId]);
+            $occ = $stmt->fetch();
+            if ($occ) {
+                $occurrenceId = (int) $occ['id'];
+                $seriesId = (int) ($seriesId > 0 ? $seriesId : $occ['series_id']);
+            }
+        }
+
+        if ($occurrenceId <= 0) {
+            return;
+        }
         $series = $pdo->prepare('SELECT teacher_rate FROM recurring_series WHERE id = :id LIMIT 1');
         $series->execute(['id' => $seriesId]);
         $teacherRate = (float) ($series->fetchColumn() ?: 0);
