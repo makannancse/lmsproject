@@ -53,7 +53,8 @@ $base = appWebPath();
                         <?php
                         $fieldId = 'timezone';
                         $fieldName = 'timezone';
-                        $selectedValue = (string) ($old['timezone'] ?? APP_TIMEZONE);
+                        $adminTz = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
+                        $selectedValue = (string) ($old['timezone'] ?? $adminTz);
                         $required = false;
                         require dirname(__DIR__, 2) . '/partials/timezone-select.php';
                         ?>

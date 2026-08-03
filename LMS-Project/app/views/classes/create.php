@@ -95,7 +95,7 @@ $old = $old ?? [];
                     </div>
                     <div class="mb-3">
                         <label class="form-label" for="timezone">Timezone</label>
-                        <?php $timezoneValue = (string) ($old['timezone'] ?? APP_TIMEZONE); ?>
+                        <?php $timezoneValue = (string) ($old['timezone'] ?? resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE)); ?>
                         <select id="timezone" name="timezone" class="form-select">
                             <?php foreach (supportedSchedulingTimezones() as $tz): ?>
                                 <option value="<?= h($tz['value']) ?>" <?= $timezoneValue === $tz['value'] ? 'selected' : '' ?>><?= h($tz['label']) ?></option>

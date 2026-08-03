@@ -45,6 +45,94 @@ class GoogleMeetLiveTrackingService
     }
 
     /**
+     * Patch the Google Meet space so that anyone with the link can join immediately
+     * without waiting in the lobby ("Ask to join" disappears).
+     *
+     * This sets accessType=OPEN and entryPointAccess=ALL on the Meet Space resource.
+     * Call this once after a class is created or on-demand via the admin UI.
+     *
+     * @param string $spaceName  The Google Meet space resource name (e.g., "spaces/abc-defg-hij")
+     * @param int    $teacherId  Used to resolve OAuth credentials (falls back to admin)
+     * @param string $meetingLink Fallback: extract space from the meeting link if spaceName is empty
+     */
+    public function setMeetSpaceOpenToAll(string $spaceName, int $teacherId, string $meetingLink = ''): bool
+    {
+        $spaceName = trim($spaceName);
+        $meetingCode = null;
+        if ($meetingLink !== '') {
+            $meetingCode = $this->extractMeetingCodeFromLink($meetingLink);
+        }
+
+        try {
+            $meet = $this->meetServiceForTeacher($teacherId);
+
+            // Resolve the true Google Meet space resource name (e.g. spaces/8dhciw7b5JwB)
+            $realSpaceName = $spaceName;
+            if ($realSpaceName === '' || (str_starts_with($realSpaceName, 'spaces/') && preg_match('~spaces/[a-z]{3}-[a-z]{4}-[a-z]{3}$~i', $realSpaceName))) {
+                $codeToUse = $meetingCode ?? str_replace('spaces/', '', $realSpaceName);
+                if ($codeToUse !== '' && $codeToUse !== null) {
+                    try {
+                        $spaceObj = $meet->spaces->get('spaces/' . $codeToUse);
+                        if ($spaceObj !== null && $spaceObj->getName()) {
+                            $realSpaceName = trim((string) $spaceObj->getName());
+                        }
+                    } catch (\Throwable $ignored) {
+                        if ($realSpaceName === '' && $codeToUse !== '') {
+                            $realSpaceName = 'spaces/' . $codeToUse;
+                        }
+                    }
+                }
+            }
+
+            if ($realSpaceName === '') {
+                $this->logLiveTracking([
+                    'message' => 'setMeetSpaceOpenToAll: no valid space name or meeting link provided',
+                    'meeting_link' => $meetingLink,
+                ]);
+                return false;
+            }
+
+            // Build Space patch body with accessType=OPEN and entryPointAccess=ALL
+            $spaceConfig = new \Google\Service\Meet\SpaceConfig([
+                'accessType' => 'OPEN',
+                'entryPointAccess' => 'ALL',
+            ]);
+            $spaceBody = new \Google\Service\Meet\Space([
+                'config' => $spaceConfig,
+            ]);
+
+            // Google Meet REST API v2 requires exact snake_case field paths for updateMask
+            $meet->spaces->patch($realSpaceName, $spaceBody, [
+                'updateMask' => 'config.access_type,config.entry_point_access',
+            ]);
+
+            $this->logLiveTracking([
+                'message' => 'Meet space set to OPEN (anyone can join without lobby)',
+                'space_name' => $realSpaceName,
+                'meeting_link' => $meetingLink,
+            ]);
+
+            return true;
+        } catch (\Throwable $e) {
+            $this->logLiveTracking([
+                'message' => 'Failed to set Meet space to OPEN',
+                'space_name' => $spaceName,
+                'error' => $e->getMessage(),
+            ]);
+
+            if (GoogleOAuthService::isScopeInsufficientError($e)) {
+                throw new RuntimeException(
+                    'Google OAuth token is missing Meet Space Settings permission. '
+                    . 'Please disconnect and reconnect the Google account on the Admin dashboard to grant full Meet permissions.'
+                );
+            }
+
+            throw $e;
+        }
+    }
+
+
+    /**
      * @return array{checked:int,started:int,completed:int,unchanged:int,failed:int,skipped:int,skip_reasons:array<string,int>}
      */
     public function syncClassesForLiveWindow(int $lookbackHours = 12, int $lookaheadHours = 6): array
@@ -1260,7 +1348,12 @@ class GoogleMeetLiveTrackingService
     {
         $oauth = new GoogleOAuthService();
         $client = $oauth->client();
-        $client->setAccessToken($oauth->getActiveAccessTokenForAdmin());
+        try {
+            $tokens = $teacherId > 0 ? $oauth->getActiveAccessTokenForTeacher($teacherId) : $oauth->getActiveAccessTokenForAdmin();
+        } catch (\Throwable $e) {
+            $tokens = $oauth->getActiveAccessTokenForAdmin();
+        }
+        $client->setAccessToken($tokens);
 
         return new GoogleMeet($client);
     }

@@ -122,6 +122,11 @@ $adminTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
                             <div class="small text-muted">Class #<?= $cid ?> - <?= h((string) ($recording['class_title'] ?? '')) ?></div>
                             <div class="small text-muted">Scheduled: <?= h(formatClassScheduledAt($recording, 'd M Y h:i A T')) ?></div>
                             <div class="small text-muted"><?= h(formatClassScheduledTimezoneLabel($recording)) ?></div>
+                            <?php if (!empty($recording['recording_file_id'])): ?>
+                                <div class="small text-muted font-monospace mt-1" title="Google Drive file ID">
+                                    <span class="badge text-bg-light border">File: <?= h(substr((string) $recording['recording_file_id'], 0, 20)) ?>…</span>
+                                </div>
+                            <?php endif; ?>
                             <?php if (classActualStartUtcValue($recording) !== null || classActualEndUtcValue($recording) !== null): ?>
                                 <?php if (classActualStartUtcValue($recording) !== null): ?><div class="small text-muted mt-1">Started: <?= h(formatClassActualAt($recording, 'start', $adminTimezone)) ?></div><?php endif; ?>
                                 <?php if (classActualEndUtcValue($recording) !== null): ?><div class="small text-muted">Ended: <?= h(formatClassActualAt($recording, 'end', $adminTimezone)) ?></div><?php endif; ?>
@@ -179,6 +184,19 @@ $adminTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
                                         <input type="hidden" name="class_id" value="<?= $cid ?>">
                                         <input type="hidden" name="event" value="sync-recording">
                                         <button type="submit" class="btn btn-sm btn-outline-primary">Retry Sync</button>
+                                    </form>
+                                <?php endif; ?>
+                                <?php if ($rid > 0 && (!empty($recording['recording_file_id']) || !empty($recording['recording_url']))): ?>
+                                    <form method="post"
+                                          action="<?= h($base . '/recordings/clear') ?>"
+                                          class="d-inline"
+                                          data-confirm-title="Clear this recording?"
+                                          data-confirm-text="This will detach the current Drive file from the class and reset sync status so it can be re-synced cleanly."
+                                          data-confirm-button="Clear recording"
+                                          data-loader-title="Clearing recording..."
+                                          data-loader-text="Detaching the recording file so a fresh sync can find the correct file.">
+                                        <input type="hidden" name="recording_id" value="<?= $rid ?>">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Clear</button>
                                     </form>
                                 <?php endif; ?>
                             </div>

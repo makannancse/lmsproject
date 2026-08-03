@@ -102,9 +102,9 @@ class MeetingTrackingController
                 if ($role === 'teacher' || $role === 'admin') {
                     $result = $service->finalizeTeacherHostLeave($classId, 'teacher_leave_request');
                     if (($result['status'] ?? '') === 'completed') {
-                        $_SESSION['flash_success'] = 'Class completed using the host\'s actual Google Meet end time.';
+                        $_SESSION['flash_success'] = 'Class marked as completed — all participants have left the meeting.';
                     } else {
-                        $_SESSION['flash_warning'] = 'Google Meet has not confirmed the host left yet. Leave the Meet call, wait a few seconds, then try again.';
+                        $_SESSION['flash_info'] = 'You have left the meeting. The class will automatically be marked completed once all remaining students leave Google Meet.';
                     }
                 } else {
                     $service->markLeave($classId, $userId, $role);
@@ -114,12 +114,34 @@ class MeetingTrackingController
                 try {
                     $result = $service->finalizeTeacherHostLeave($classId, 'manual_end_request');
                     if (($result['status'] ?? '') === 'completed') {
-                        $_SESSION['flash_success'] = 'Class completed using real Google Meet timings.';
+                        $_SESSION['flash_success'] = 'Class completed — all participants have left the meeting.';
                     } else {
-                        $_SESSION['flash_warning'] = 'Google Meet has not reported the host session as ended yet.';
+                        $_SESSION['flash_info'] = 'End class request received. The class will be marked completed automatically once all participants leave Google Meet.';
                     }
                 } catch (\Throwable $endError) {
                     $_SESSION['flash_warning'] = $endError->getMessage();
+                }
+            } elseif ($event === 'open-to-all') {
+                Auth::requireRole(['admin']);
+                require_once dirname(__DIR__) . '/lib/GoogleMeetLiveTrackingService.php';
+                $classRow = $service->getClassById($classId);
+                if ($classRow === null) {
+                    throw new RuntimeException('Class not found.');
+                }
+                $liveService2 = new GoogleMeetLiveTrackingService();
+                try {
+                    $ok = $liveService2->setMeetSpaceOpenToAll(
+                        (string) ($classRow['google_meet_space_name'] ?? ''),
+                        (int) ($classRow['teacher_id'] ?? 0),
+                        (string) ($classRow['meeting_link'] ?? '')
+                    );
+                    if ($ok) {
+                        $_SESSION['flash_success'] = 'Google Meet is now set to "Open to All" — students can join without waiting in the lobby.';
+                    } else {
+                        $_SESSION['flash_warning'] = 'Could not update the Meet space access. Please disconnect and reconnect the Google account on the Admin dashboard to grant full Meet permissions.';
+                    }
+                } catch (\Throwable $openErr) {
+                    $_SESSION['flash_warning'] = $openErr->getMessage();
                 }
             } elseif ($event === 'sync-recording') {
                 $result = $service->syncRecordingForClass($classId, true);

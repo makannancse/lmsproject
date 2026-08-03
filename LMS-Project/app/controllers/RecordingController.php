@@ -127,4 +127,61 @@ class RecordingController
         redirect($_SERVER['HTTP_REFERER'] ?? url('admin/recordings'));
         exit;
     }
+
+    /**
+     * Clear (detach) a mismatched or wrong Drive recording from a class so it can be re-synced.
+     * Resets recording_file_id, recording_url, and sync_status on both class_recordings and class_sessions.
+     */
+    public static function clearRecording(): void
+    {
+        Auth::requireRole(['admin']);
+        $recordingId = (int) ($_POST['recording_id'] ?? 0);
+        if ($recordingId <= 0) {
+            $_SESSION['flash_warning'] = 'Invalid recording ID.';
+            redirect($_SERVER['HTTP_REFERER'] ?? url('admin/recordings'));
+            exit;
+        }
+
+        $pdo = Database::connection();
+
+        // Fetch the recording row to get class_id for the class_sessions update.
+        $stmt = $pdo->prepare('SELECT class_id FROM class_recordings WHERE id = :id LIMIT 1');
+        $stmt->execute(['id' => $recordingId]);
+        $row = $stmt->fetch();
+        if (!$row) {
+            $_SESSION['flash_warning'] = 'Recording not found.';
+            redirect($_SERVER['HTTP_REFERER'] ?? url('admin/recordings'));
+            exit;
+        }
+
+        $classId = (int) ($row['class_id'] ?? 0);
+
+        // Reset the class_recordings row.
+        $pdo->prepare(
+            'UPDATE class_recordings
+             SET recording_url = NULL,
+                 recording_file_id = NULL,
+                 recording_title = NULL,
+                 recording_duration = NULL,
+                 sync_status = "processing",
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = :id'
+        )->execute(['id' => $recordingId]);
+
+        // Also reset the class_sessions snapshot.
+        if ($classId > 0) {
+            $pdo->prepare(
+                'UPDATE class_sessions
+                 SET recording_url = NULL,
+                     recording_sync_status = "processing",
+                     recording_sync_error = NULL,
+                     recording_synced_at = NULL
+                 WHERE id = :id'
+            )->execute(['id' => $classId]);
+        }
+
+        $_SESSION['flash_success'] = 'Recording cleared. You can now retry sync to find the correct file.';
+        redirect($_SERVER['HTTP_REFERER'] ?? url('admin/recordings'));
+        exit;
+    }
 }

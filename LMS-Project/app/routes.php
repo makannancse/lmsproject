@@ -105,6 +105,7 @@ $router->get('/student/payments', [StudentPaymentController::class, 'studentInde
 $router->get('/admin/recordings', [RecordingController::class, 'adminIndex']);
 $router->post('/admin/recordings/visibility', [RecordingController::class, 'toggleVisibility']);
 $router->post('/recordings/manual-save', [RecordingController::class, 'manualSave']);
+$router->post('/recordings/clear', [RecordingController::class, 'clearRecording']);
 
 // Google OAuth2 + Google Meet integration
 $router->get('/connect-google', [GoogleIntegrationController::class, 'connectGoogle']);

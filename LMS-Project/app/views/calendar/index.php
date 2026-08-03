@@ -9,7 +9,8 @@ $teachers = $teachers ?? [];
 $students = $students ?? [];
 $classTypes = $classTypes ?? [];
 $eventsUrl = path('calendar/events');
-$timezoneOptions = calendarTimezoneOptions(resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE));
+$userTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
+$timezoneOptions = calendarTimezoneOptions($userTimezone);
 ?>
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.css">
@@ -160,7 +161,7 @@ $timezoneOptions = calendarTimezoneOptions(resolveUserTimezone(Auth::user() ?: n
                         <label class="form-label" for="cal_timezone">Timezone</label>
                         <select name="timezone" id="cal_timezone" class="form-select form-select-sm">
                             <?php foreach (supportedSchedulingTimezones() as $tz): ?>
-                                <option value="<?= h($tz['value']) ?>" <?= APP_TIMEZONE === $tz['value'] ? 'selected' : '' ?>><?= h($tz['label']) ?></option>
+                                <option value="<?= h($tz['value']) ?>" <?= $userTimezone === $tz['value'] ? 'selected' : '' ?>><?= h($tz['label']) ?></option>
                             <?php endforeach; ?>
                         </select>
                         <div class="form-text">Stored in UTC; the event is created on the teacher’s Google Calendar.</div>
@@ -204,6 +205,7 @@ $timezoneOptions = calendarTimezoneOptions(resolveUserTimezone(Auth::user() ?: n
     var eventsUrl = <?= json_encode($eventsUrl, JSON_UNESCAPED_SLASHES) ?>;
     var calendarRole = <?= json_encode($calendarRole, JSON_UNESCAPED_SLASHES) ?>;
     var canSchedule = <?= $canSchedule ? 'true' : 'false' ?>;
+    var userProfileTimezone = <?= json_encode($userTimezone, JSON_UNESCAPED_SLASHES) ?>;
 
     function escapeHtml(s) {
         if (!s) return '';
@@ -576,10 +578,28 @@ $timezoneOptions = calendarTimezoneOptions(resolveUserTimezone(Auth::user() ?: n
 
     var tzEl = document.getElementById('calendarTimezone');
     if (tzEl) {
-        try {
-            tzEl.value = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-        } catch (e) {
-            tzEl.value = 'UTC';
+        // Prefer the user's profile timezone; fall back to browser timezone
+        var preferredTz = userProfileTimezone || '';
+        if (!preferredTz) {
+            try {
+                preferredTz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+            } catch (e) {
+                preferredTz = 'UTC';
+            }
+        }
+        // Only switch to browser tz if the profile value is not in the dropdown
+        // (i.e. a stored value always wins; browser tz is a true fallback)
+        var optionValues = Array.prototype.map.call(tzEl.options, function (o) { return o.value; });
+        if (preferredTz && optionValues.indexOf(preferredTz) !== -1) {
+            tzEl.value = preferredTz;
+        } else {
+            // Profile tz not in list — try browser tz, else keep whatever is selected
+            try {
+                var browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+                if (optionValues.indexOf(browserTz) !== -1) {
+                    tzEl.value = browserTz;
+                }
+            } catch (e) {}
         }
         if (!tzEl.value) {
             tzEl.value = 'UTC';

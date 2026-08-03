@@ -55,6 +55,8 @@ class GoogleOAuthService
         return [
             GoogleCalendar::CALENDAR,
             GoogleMeet::MEETINGS_SPACE_READONLY,
+            GoogleMeet::MEETINGS_SPACE_CREATED,
+            GoogleMeet::MEETINGS_SPACE_SETTINGS,
             'https://www.googleapis.com/auth/drive',
             GooglePeopleService::USERINFO_EMAIL,
             'openid',

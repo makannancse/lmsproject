@@ -31,6 +31,28 @@ class ClassRecording
     public static function upsertForClass(int $classId, int $teacherId, array $data): void
     {
         $pdo = Database::connection();
+
+        // Uniqueness guard: if this Drive file ID is already attached to a DIFFERENT class,
+        // do not overwrite that association. One Drive file = one class.
+        $incomingFileId = trim((string) ($data['recording_file_id'] ?? ''));
+        if ($incomingFileId !== '') {
+            $check = $pdo->prepare(
+                'SELECT class_id FROM class_recordings WHERE recording_file_id = :file_id LIMIT 1'
+            );
+            $check->execute(['file_id' => $incomingFileId]);
+            $existingClassId = $check->fetchColumn();
+            if ($existingClassId !== false && (int) $existingClassId !== $classId) {
+                // Another class already owns this file — skip to prevent mis-assignment.
+                error_log(sprintf(
+                    '[ClassRecording] Skipping upsert for class %d: file_id "%s" already belongs to class %d.',
+                    $classId,
+                    $incomingFileId,
+                    (int) $existingClassId
+                ));
+                return;
+            }
+        }
+
         $stmt = $pdo->prepare(
             'INSERT INTO class_recordings
                 (class_id, teacher_id, recording_url, recording_file_id, recording_title, recording_duration, visible_to_student, sync_status, source)

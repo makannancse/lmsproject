@@ -124,6 +124,19 @@ $viewerTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
                                     <div class="d-flex flex-wrap gap-2">
                                         <a href="<?= h($base . '/classes/edit?id=' . (int) ($cls['id'] ?? 0)) ?>" class="btn btn-sm btn-warning">Edit</a>
                                         <a href="<?= h($base . '/admin/reschedule/new') ?>" class="btn btn-sm btn-primary">Reschedule</a>
+                                        <?php if (Auth::isAdmin() && in_array($cls['status'] ?? '', ['scheduled', 'rescheduled', 'ongoing'], true)): ?>
+                                        <form method="post"
+                                              action="<?= h($base . '/meeting/track') ?>"
+                                              class="d-inline"
+                                              data-loader-title="Applying Open to All..."
+                                              data-loader-text="Patching the Google Meet space so students can join without waiting in the lobby.">
+                                            <input type="hidden" name="class_id" value="<?= (int) ($cls['id'] ?? 0) ?>">
+                                            <input type="hidden" name="event" value="open-to-all">
+                                            <button type="submit" class="btn btn-sm btn-outline-success" title="Remove 'Ask to join' lobby – anyone with the link can join immediately">
+                                                <i class="fa-solid fa-door-open me-1"></i>Open to All
+                                            </button>
+                                        </form>
+                                        <?php endif; ?>
                                     </div>
                                 </td>
                             </tr>

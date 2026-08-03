@@ -162,7 +162,11 @@ class MeetingTrackingService
     }
 
     /**
-     * After the host leaves Google Meet, poll conference activity and mark the class completed.
+     * After the host leaves Google Meet, poll conference activity and mark the class completed
+     * only when the Google Meet conference itself has ended (i.e., all participants have left).
+     *
+     * If the conference is still active after the host leaves (students still present),
+     * the class remains "ongoing" and the background cron will complete it once everyone leaves.
      *
      * @return array<string, mixed>
      */
@@ -171,25 +175,42 @@ class MeetingTrackingService
         $liveService = new GoogleMeetLiveTrackingService();
         $sync = $liveService->syncClassAfterHostLeave($classId, $trigger);
 
-        try {
-            $this->completeClass($classId, null, $trigger);
-        } catch (\Throwable $e) {
+        // Check if the sync already marked the class completed (conference fully ended).
+        $refreshed = $this->getClassById($classId);
+        $currentStatus = (string) ($refreshed['status'] ?? '');
+
+        if ($currentStatus === 'completed' || ($sync['status'] ?? '') === 'completed') {
+            // Already completed by the live sync — no further action needed.
             SyncLog::write('google_meet_status.log', [
-                'event' => 'host_leave_finalize_incomplete',
+                'event' => 'host_leave_class_already_completed',
                 'class_id' => $classId,
                 'trigger' => $trigger,
                 'sync_status' => $sync['status'] ?? 'unknown',
-                'error' => $e->getMessage(),
             ]);
-            throw $e;
+            return [
+                'sync' => $sync,
+                'class' => $refreshed ?? [],
+                'status' => 'completed',
+            ];
         }
 
-        $refreshed = $this->getClassById($classId) ?? [];
+        // Conference still active (other participants remain). Keep the class ongoing.
+        // The background cron (sync_meeting_status.php) will poll and complete it when the
+        // conference end_time is set by Google Meet (meaning all participants have left).
+        SyncLog::write('google_meet_status.log', [
+            'event' => 'host_left_conference_still_active',
+            'class_id' => $classId,
+            'trigger' => $trigger,
+            'sync_status' => $sync['status'] ?? 'unknown',
+            'meeting_live_status' => $sync['meeting_live_status'] ?? null,
+            'participant_count' => $sync['participant_count'] ?? null,
+            'note' => 'Class kept ongoing; cron will complete when all participants leave',
+        ]);
 
         return [
             'sync' => $sync,
-            'class' => $refreshed,
-            'status' => (string) ($refreshed['status'] ?? ''),
+            'class' => $refreshed ?? [],
+            'status' => $currentStatus,
         ];
     }
 

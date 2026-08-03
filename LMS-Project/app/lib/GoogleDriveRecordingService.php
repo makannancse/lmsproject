@@ -49,8 +49,9 @@ class GoogleDriveRecordingService
             'end_datetime',
         ]);
 
-        $windowStart = $this->offsetRfc3339($meetingStartUtc ?? $meetingEndUtc ?? 'now', '-2 hours');
-        $windowEnd = $this->offsetRfc3339($meetingEndUtc ?? $meetingStartUtc ?? 'now', '+2 hours');
+        // ±90 minutes: narrower window reduces cross-class recording collisions.
+        $windowStart = $this->offsetRfc3339($meetingStartUtc ?? $meetingEndUtc ?? 'now', '-90 minutes');
+        $windowEnd = $this->offsetRfc3339($meetingEndUtc ?? $meetingStartUtc ?? 'now', '+90 minutes');
         $meetingStartTs = $this->parseTimestamp($meetingStartUtc);
         $meetingEndTs = $this->parseTimestamp($meetingEndUtc);
         $windowStartTs = $this->parseTimestamp($windowStart);
@@ -125,7 +126,9 @@ class GoogleDriveRecordingService
             throw new RuntimeException('Google Drive search failed: ' . $queryErrors[0]);
         }
 
-        $matched = $candidates[0] ?? null;
+        // Require a minimum confidence score to prevent weak mis-assignments.
+        $topCandidate = $candidates[0] ?? null;
+        $matched = ($topCandidate !== null && (int) ($topCandidate['score'] ?? 0) >= 10) ? $topCandidate : null;
 
         return [
             'recording' => $matched['recording'] ?? null,
@@ -429,11 +432,13 @@ class GoogleDriveRecordingService
                 $score += 80;
                 $signals[] = 'meeting_code_match:' . $targetCode;
             } else {
+                // Hard-discard: if the filename contains a DIFFERENT Meet code, this file
+                // definitively belongs to another class — reject it immediately.
                 if (preg_match('/[a-z]{3}-[a-z]{4}-[a-z]{3}/i', $nameLower, $fileCodeMatch) === 1) {
                     $otherCode = strtolower($fileCodeMatch[0]);
                     if ($otherCode !== $targetCode && str_replace('-', '', $otherCode) !== $rawCode) {
-                        $score -= 100;
-                        $signals[] = 'mismatched_meeting_code:' . $otherCode;
+                        // Return null to exclude this file entirely from all candidates.
+                        return null;
                     }
                 }
             }

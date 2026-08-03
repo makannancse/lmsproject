@@ -105,7 +105,9 @@ class GoogleCalendarMeetingService
                 $sanitizedAttendees
             ),
             'guestsCanModify' => false,
-            'guestsCanInviteOthers' => false,
+            'guestsCanInviteOthers' => true,
+            'guestsCanSeeOtherGuests' => true,
+            'anyoneCanAddSelf' => true,
             'conferenceData' => new GoogleConferenceData([
                 'createRequest' => new GoogleCreateConferenceRequest([
                     'requestId' => $requestId,
@@ -209,6 +211,21 @@ class GoogleCalendarMeetingService
                 'response' => print_r($created, true),
             ]);
             throw new RuntimeException('Google Calendar created event without Meet link.');
+        }
+
+        // Automatically patch the Google Meet space to "Open to All" so students can join without lobby
+        try {
+            require_once __DIR__ . '/GoogleMeetLiveTrackingService.php';
+            $liveService = new GoogleMeetLiveTrackingService();
+            $liveService->setMeetSpaceOpenToAll('', $teacherId, $meet);
+        } catch (\Throwable $e) {
+            // Best-effort: log failure but don't block class creation
+            $this->logInfo([
+                'message' => 'Automatic setMeetSpaceOpenToAll attempt on meeting creation',
+                'teacher_id' => $teacherId,
+                'meeting_link' => $meet,
+                'error' => $e->getMessage(),
+            ]);
         }
 
         return [

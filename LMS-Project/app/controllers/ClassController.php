@@ -1562,6 +1562,18 @@ class ClassController
         $endUtc = (string) ($plannedMeets[0]['end_utc'] ?? '');
         $occurrenceCount = count($plannedMeets);
 
+        // Best-effort: set the Meet space to OPEN so students can join without the lobby.
+        // Failures are logged but do not block class creation.
+        foreach ($plannedMeets as $planned) {
+            try {
+                $spaceName = (string) ($planned['google_meet_space_name'] ?? '');
+                $meetLinkForOpen = (string) ($planned['meet_link'] ?? '');
+                $meetTrackingService->setMeetSpaceOpenToAll($spaceName, $teacherId, $meetLinkForOpen);
+            } catch (\Throwable $ignored) {
+                // Non-fatal: class is already saved.
+            }
+        }
+
         logTimezoneFix([
             'event' => 'class_scheduled_to_utc',
             'class_id' => $classId,
