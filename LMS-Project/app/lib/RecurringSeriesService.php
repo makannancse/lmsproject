@@ -56,13 +56,17 @@ class RecurringSeriesService
         }
         $recordingEnabled = 1; // Always supported since we use Admin Workspace
 
+        // Build an RFC 5545 RRULE so Google Calendar shows all occurrences as a recurring series.
+        $recurrenceRules = self::buildRrule($frequency, $occurrenceCount, $recurrenceEndDate, $occurrenceSlots);
+
         $meeting = $meetingService->createMeeting(
             $teacherId,
             utcToTimezoneIso8601($firstStartUtc, $timezone),
             utcToTimezoneIso8601($firstEndUtc, $timezone),
             $timezone,
             $title,
-            $attendeeEmails
+            $attendeeEmails,
+            $recurrenceRules
         );
 
         $meetLink = (string) ($meeting['meet_link'] ?? '');
@@ -415,6 +419,87 @@ class RecurringSeriesService
             return;
         }
         writeStructuredLog('recurring_schedule.log', $context);
+    }
+
+    /**
+     * Build RFC 5545 RRULE strings for Google Calendar API.
+     *
+     * @param list<array{start: DateTimeImmutable, end: DateTimeImmutable}> $occurrenceSlots
+     * @return list<string>  e.g. ['RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR;COUNT=4']
+     */
+    private static function buildRrule(
+        string $frequency,
+        ?int $occurrenceCount,
+        ?string $recurrenceEndDate,
+        array $occurrenceSlots
+    ): array {
+        $normalized = strtolower(trim($frequency));
+
+        $byDayMap = [1 => 'MO', 2 => 'TU', 3 => 'WE', 4 => 'TH', 5 => 'FR', 6 => 'SA', 7 => 'SU'];
+
+        $slotDays = [];
+        foreach ($occurrenceSlots as $slot) {
+            if (isset($slot['start']) && $slot['start'] instanceof \DateTimeInterface) {
+                $slotDays[(int) $slot['start']->format('N')] = true;
+            }
+        }
+        $uniqueDays = array_keys($slotDays);
+        sort($uniqueDays);
+
+        $isWeekdaysOnly = !empty($uniqueDays) && max($uniqueDays) <= 5;
+
+        $hasWeekendInSpan = false;
+        if (count($occurrenceSlots) > 1) {
+            $firstStart = $occurrenceSlots[0]['start'] ?? null;
+            $lastStart = $occurrenceSlots[count($occurrenceSlots) - 1]['start'] ?? null;
+            if ($firstStart instanceof \DateTimeInterface && $lastStart instanceof \DateTimeInterface) {
+                $diffDays = (int) $firstStart->diff($lastStart)->format('%a');
+                if ($diffDays >= 4) {
+                    $hasWeekendInSpan = true;
+                }
+            }
+        }
+
+        if ($normalized === 'weekdays' || $normalized === 'weekday' || ($normalized === 'daily' && $isWeekdaysOnly && $hasWeekendInSpan)) {
+            $parts = ['FREQ=WEEKLY', 'BYDAY=MO,TU,WE,TH,FR'];
+        } elseif ($normalized === 'daily') {
+            $parts = ['FREQ=DAILY'];
+        } elseif ($normalized === 'biweekly') {
+            $parts = ['FREQ=WEEKLY', 'INTERVAL=2'];
+            if (!empty($uniqueDays) && count($uniqueDays) < 7) {
+                $byDays = array_map(static fn(int $d): string => $byDayMap[$d], $uniqueDays);
+                $parts[] = 'BYDAY=' . implode(',', $byDays);
+            }
+        } elseif ($normalized === 'weekly' || $normalized === 'custom') {
+            $parts = ['FREQ=WEEKLY'];
+            if (!empty($uniqueDays) && count($uniqueDays) < 7) {
+                $byDays = array_map(static fn(int $d): string => $byDayMap[$d], $uniqueDays);
+                $parts[] = 'BYDAY=' . implode(',', $byDays);
+            }
+        } elseif ($normalized === 'monthly') {
+            $parts = ['FREQ=MONTHLY'];
+        } else {
+            return [];
+        }
+
+        // Prefer explicit occurrence count, then derive from slots, then use UNTIL.
+        if ($occurrenceCount !== null && $occurrenceCount > 0) {
+            $parts[] = 'COUNT=' . $occurrenceCount;
+        } elseif ($recurrenceEndDate !== null && $recurrenceEndDate !== '') {
+            try {
+                $until = new \DateTimeImmutable($recurrenceEndDate, new \DateTimeZone('UTC'));
+                $parts[] = 'UNTIL=' . $until->format('Ymd') . 'T235959Z';
+            } catch (\Throwable $ignored) {
+                $slotCount = count($occurrenceSlots);
+                if ($slotCount > 1) {
+                    $parts[] = 'COUNT=' . $slotCount;
+                }
+            }
+        } elseif (count($occurrenceSlots) > 1) {
+            $parts[] = 'COUNT=' . count($occurrenceSlots);
+        }
+
+        return ['RRULE:' . implode(';', $parts)];
     }
 }
 

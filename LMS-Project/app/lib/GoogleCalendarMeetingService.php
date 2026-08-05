@@ -69,7 +69,8 @@ class GoogleCalendarMeetingService
         string $endTime,
         string $timezone = 'Asia/Kolkata',
         string $summary = 'LMS Class',
-        array $attendeeEmails = []
+        array $attendeeEmails = [],
+        array $recurrenceRules = []
     ): array
     {
         $this->assertTeacherAvailability($teacherId, $startTime, $endTime);
@@ -91,12 +92,13 @@ class GoogleCalendarMeetingService
             'attendee_count' => count($sanitizedAttendees),
             'redirect_uri' => $oauth->configuredRedirectUri(),
             'access_token_preview' => $this->maskToken((string) ($token['access_token'] ?? '')),
+            'recurrence_rules' => $recurrenceRules,
         ]);
 
         $calendar = new GoogleCalendar($client);
 
         $requestId = 'learnwise_' . bin2hex(random_bytes(8));
-        $event = new GoogleCalendarEvent([
+        $eventData = [
             'summary' => $summary,
             'start' => new GoogleEventDateTime(['dateTime' => $startTime, 'timeZone' => $timezone]),
             'end' => new GoogleEventDateTime(['dateTime' => $endTime, 'timeZone' => $timezone]),
@@ -114,7 +116,14 @@ class GoogleCalendarMeetingService
                     'conferenceSolutionKey' => new GoogleConferenceSolutionKey(['type' => 'hangoutsMeet']),
                 ]),
             ]),
-        ]);
+        ];
+
+        // Attach RFC 5545 RRULE strings when this is a recurring series.
+        if ($recurrenceRules !== []) {
+            $eventData['recurrence'] = $recurrenceRules;
+        }
+
+        $event = new GoogleCalendarEvent($eventData);
 
         try {
             $created = $calendar->events->insert($calendarId, $event, [

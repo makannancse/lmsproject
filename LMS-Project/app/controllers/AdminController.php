@@ -633,7 +633,8 @@ class AdminController
         $safePassword = htmlspecialchars($plainPassword, ENT_QUOTES, 'UTF-8');
         $safeRole = htmlspecialchars(ucfirst($role), ENT_QUOTES, 'UTF-8');
 
-        $subject = EmailTemplate::subject('welcome');
+        $firstName = explode(' ', trim($name))[0];
+        $subject = 'Welcome to ' . EmailTemplate::brandName() . ', ' . $firstName . '!';
         $intro = '<p>Hi ' . $safeName . ',</p>'
             . '<p>Welcome to ' . htmlspecialchars(EmailTemplate::brandName(), ENT_QUOTES, 'UTF-8') . '! '
             . 'Your ' . $safeRole . ' account has been created.</p>'

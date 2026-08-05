@@ -99,13 +99,20 @@ class MeetingTrackingController
                 header('Location: ' . $meetingLink);
                 exit;
             } elseif ($event === 'leave') {
-                if ($role === 'teacher' || $role === 'admin') {
+                if ($role === 'teacher') {
+                    // Teacher is the meeting host — finalize and let the Meet API determine
+                    // if all participants have left before marking the class completed.
                     $result = $service->finalizeTeacherHostLeave($classId, 'teacher_leave_request');
                     if (($result['status'] ?? '') === 'completed') {
                         $_SESSION['flash_success'] = 'Class marked as completed — all participants have left the meeting.';
                     } else {
                         $_SESSION['flash_info'] = 'You have left the meeting. The class will automatically be marked completed once all remaining students leave Google Meet.';
                     }
+                } elseif ($role === 'admin') {
+                    // Admin is an observer — their departure must NOT update the class status.
+                    // Simply record the departure for attendance tracking.
+                    $service->markLeave($classId, $userId, 'admin');
+                    $_SESSION['flash_info'] = 'You have left the meeting. The class continues for the teacher and students.';
                 } else {
                     $service->markLeave($classId, $userId, $role);
                     $_SESSION['flash_info'] = 'Your attendance has been updated.';

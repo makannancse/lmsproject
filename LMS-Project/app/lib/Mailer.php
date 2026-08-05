@@ -83,16 +83,35 @@ class Mailer
                 $mail->SMTPOptions = $smtpOptions;
             }
 
-            // Verbose SMTP transcript (level 2) → logs/mail_debug.log
-            $mail->SMTPDebug = 2;
-            $mail->Debugoutput = static function (string $str, int $level): void {
-                self::logMailDebug('[SMTP-' . $level . '] ' . $str);
-            };
+            // SMTP debug transcript is disabled in production to avoid header pollution.
+            // Set SMTP_DEBUG=1 in .env to enable verbose logs temporarily.
+            $debugLevel = (int) ($_ENV['SMTP_DEBUG'] ?? 0);
+            $mail->SMTPDebug = $debugLevel;
+            if ($debugLevel > 0) {
+                $mail->Debugoutput = static function (string $str, int $level): void {
+                    self::logMailDebug('[SMTP-' . $level . '] ' . $str);
+                };
+            }
 
             // From address must match the authenticated mailbox (or a configured alias) for Gmail.
             $fromEmail = trim((string) ($_ENV['SMTP_FROM'] ?? $_ENV['SMTP_USERNAME'] ?? ''));
             $fromName = trim((string) ($_ENV['SMTP_FROM_NAME'] ?? ''));
-            $mail->setFrom($fromEmail, $fromName !== '' ? $fromName : EmailTemplate::brandName());
+            $resolvedFromName = $fromName !== '' ? $fromName : EmailTemplate::brandName();
+            $mail->setFrom($fromEmail, $resolvedFromName);
+
+            // Reply-To: ensure replies go to the correct address (prevents spam scoring).
+            $mail->addReplyTo($fromEmail, $resolvedFromName);
+
+            // Suppress default "PHPMailer" X-Mailer header that spam filters flag.
+            $mail->XMailer = ' ';
+
+            // Anchor Message-ID to our own domain to avoid being flagged as a forged header.
+            $domain = substr($fromEmail, (int) strpos($fromEmail, '@') + 1);
+            $mail->MessageID = '<' . bin2hex(random_bytes(12)) . '.' . time() . '@' . $domain . '>';
+
+            // Signal normal (non-bulk) priority so inbox filters treat it as transactional.
+            $mail->addCustomHeader('X-Priority', '3');
+            $mail->addCustomHeader('X-Mailer-Version', EmailTemplate::brandName() . '-Mailer-1.0');
 
             $mail->addAddress($to);
             $mail->CharSet = 'UTF-8';
@@ -100,7 +119,19 @@ class Mailer
             $mail->Subject = $subject;
             $mail->Body = $body;
             if ($isHtml) {
-                $mail->AltBody = trim(strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $body)));
+                // Build a human-readable plain-text fallback instead of raw stripped HTML.
+                $plainText = $body;
+                $plainText = preg_replace('/<br\s*\/?>/i', "\n", $plainText) ?? $plainText;
+                $plainText = preg_replace('/<\/p>/i', "\n\n", $plainText) ?? $plainText;
+                $plainText = preg_replace('/<\/tr>/i', "\n", $plainText) ?? $plainText;
+                $plainText = preg_replace('/<\/td>/i', " | ", $plainText) ?? $plainText;
+                $plainText = preg_replace('/<\/th>/i', " | ", $plainText) ?? $plainText;
+                $plainText = preg_replace('/<a[^>]+href=["\']([^"\']+)["\'][^>]*>(.*?)<\/a>/is', '$2 ($1)', $plainText) ?? $plainText;
+                $plainText = strip_tags($plainText);
+                $plainText = html_entity_decode($plainText, ENT_QUOTES, 'UTF-8');
+                $plainText = preg_replace('/[ \t]+/', ' ', $plainText) ?? $plainText;
+                $plainText = preg_replace('/\n{3,}/', "\n\n", $plainText) ?? $plainText;
+                $mail->AltBody = trim($plainText);
             }
             foreach ($attachments as $attachment) {
                 if (!is_array($attachment)) {

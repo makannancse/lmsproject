@@ -146,7 +146,7 @@ class MeetingTrackingService
         }
 
         $now = $this->utcNow();
-        MeetingTrackingLog::write($role === 'teacher' ? 'teacher_leave_requested' : 'student_left', [
+        MeetingTrackingLog::write($role === 'teacher' ? 'teacher_leave_requested' : ($role === 'admin' ? 'admin_left' : 'student_left'), [
             'class_id' => $classId,
             'user_id' => $userId,
             'role' => $role,
@@ -155,6 +155,12 @@ class MeetingTrackingService
 
         if ($role === 'teacher') {
             $this->finalizeTeacherHostLeave($classId, 'teacher_leave_request');
+            return;
+        }
+
+        if ($role === 'admin') {
+            // Admin is an observer — log departure but do NOT change class status or attendance records.
+            // The class must continue for teacher and students.
             return;
         }
 

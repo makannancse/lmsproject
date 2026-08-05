@@ -297,6 +297,33 @@ class GoogleMeetLiveTrackingService
             $hasActiveTeacherSession = (bool) $teacherSummary['has_active_session'];
             $hostJoined = $teacherSummary['authoritative_start_time'] !== null || $storedTeacherJoin !== null;
 
+            // Check if ANY participant (student or otherwise) still has an active session.
+            // The class must remain ongoing until everyone has left the Google Meet conference.
+            $anyParticipantActive = $hasActiveTeacherSession;
+            if (!$anyParticipantActive) {
+                foreach ($participants as $p) {
+                    // Skip the teacher — we already checked their sessions above.
+                    if ($teacherParticipant !== null && (string) ($p['name'] ?? '') === (string) ($teacherParticipant['name'] ?? '')) {
+                        continue;
+                    }
+                    foreach ((array) ($p['sessions'] ?? []) as $sess) {
+                        $sessEnd = $this->normalizeUtcValue((string) ($sess['end_time'] ?? ''));
+                        if ($sessEnd === null) {
+                            $anyParticipantActive = true;
+                            break 2;
+                        }
+                    }
+                }
+            }
+
+            // If students are still in the meeting, the class must stay ongoing even though
+            // the teacher has left.  Only use conferenceEnd (set by Google when ALL participants
+            // leave) as the authoritative end time.
+            if ($anyParticipantActive && $conferenceEnd === null) {
+                // Override: class is still active because participants remain.
+                $actualEnd = null;
+            }
+
             $this->logMeetStatus([
                 'event' => $hostJoined ? 'host_join_detected' : 'host_not_in_meet',
                 'class_id' => $classId,
@@ -306,6 +333,7 @@ class GoogleMeetLiveTrackingService
                 'host_joined' => $hostJoined,
                 'host_left' => !$hasActiveTeacherSession && $actualEnd !== null,
                 'host_active_session' => $hasActiveTeacherSession,
+                'any_participant_active' => $anyParticipantActive,
                 'actual_start_time' => $actualStart,
                 'actual_end_time' => $actualEnd,
                 'conference_end_time' => $conferenceEnd,
@@ -315,7 +343,8 @@ class GoogleMeetLiveTrackingService
 
             $previousDbStatus = (string) ($class['status'] ?? 'scheduled');
             $liveStatus = 'pending';
-            if ($hasActiveTeacherSession) {
+            if ($hasActiveTeacherSession || $anyParticipantActive) {
+                // Meeting is still active — either teacher or students are still connected.
                 $liveStatus = 'active';
             } elseif (
                 $actualEnd !== null
@@ -335,6 +364,7 @@ class GoogleMeetLiveTrackingService
 
             $wouldComplete = $actualEnd !== null
                 && $liveStatus === 'ended'
+                && !$anyParticipantActive
                 && (
                     $teacherSummary['authoritative_start_time'] !== null
                     || $storedTeacherJoin !== null
