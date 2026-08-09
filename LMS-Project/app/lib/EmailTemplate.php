@@ -4,36 +4,88 @@ declare(strict_types=1);
 
 /**
  * Branded LearnWise HTML email layout for all transactional emails.
+ *
+ * IMPORTANT — localhost URLs in email bodies:
+ * Any link pointing to http://localhost/... inside an email body is a hard spam
+ * signal for Gmail's content filter. This class provides sanitizeUrlForEmail()
+ * which MUST be called on every URL before embedding it in an outgoing email.
+ * It replaces the local APP_URL origin with the PUBLIC_URL (real domain).
  */
 class EmailTemplate
 {
     public static function brandName(): string
     {
-        return (string) (defined('APP_NAME') && APP_NAME !== 'LMS' ? APP_NAME : 'LearnWise');
+        $name = defined('APP_NAME') ? trim((string) APP_NAME) : '';
+        return ($name !== '' && $name !== 'LMS') ? $name : 'LearnWise';
     }
 
-    public static function logoUrl(): string
+    /**
+     * Returns the publicly accessible base URL (used for email links and assets).
+     * Uses PUBLIC_URL from .env when set; falls back to APP_URL only if it is
+     * NOT a localhost address, otherwise falls back to a hardcoded domain.
+     */
+    public static function publicBaseUrl(): string
     {
-        if (defined('APP_URL') && APP_URL !== '') {
-            return rtrim((string) APP_URL, '/') . '/assets/images/logo.png';
+        // 1. Explicit PUBLIC_URL in .env — always preferred.
+        if (function_exists('env')) {
+            $pub = trim((string) env('PUBLIC_URL', ''));
+            if ($pub !== '' && !self::isLocalhost($pub)) {
+                return rtrim($pub, '/');
+            }
+        }
+        if (!empty($_ENV['PUBLIC_URL']) && !self::isLocalhost((string) $_ENV['PUBLIC_URL'])) {
+            return rtrim((string) $_ENV['PUBLIC_URL'], '/');
         }
 
-        if (function_exists('url')) {
-            $absolute = url('assets/images/logo.png');
-            if (preg_match('#^https?://#i', $absolute)) {
-                return $absolute;
+        // 2. APP_URL if it is a real (non-localhost) domain.
+        if (defined('APP_URL') && APP_URL !== '' && !self::isLocalhost((string) APP_URL)) {
+            return rtrim((string) APP_URL, '/');
+        }
+
+        // 3. Hardcoded fallback — update if the domain changes.
+        return 'https://www.edulearnwise.com';
+    }
+
+    /**
+     * Replaces the local development origin in any URL with the real public domain.
+     * This MUST be called on every URL embedded in outgoing emails.
+     *
+     * Why: Gmail's spam filter flags emails that contain http://localhost/... links
+     * because no real email client can access localhost — it is a textbook phishing signal.
+     */
+    public static function sanitizeUrlForEmail(string $url): string
+    {
+        $url = trim($url);
+        if ($url === '') {
+            return '';
+        }
+
+        $publicBase = self::publicBaseUrl();
+
+        // Replace APP_URL origin if it is a localhost address.
+        if (defined('APP_URL') && APP_URL !== '' && self::isLocalhost((string) APP_URL)) {
+            $localBase = rtrim((string) APP_URL, '/');
+            if (str_starts_with($url, $localBase)) {
+                return $publicBase . substr($url, strlen($localBase));
             }
         }
 
-        return '';
+        // Replace any remaining localhost origin directly.
+        $url = preg_replace(
+            '#^https?://(localhost|127\.0\.0\.1)(:\d+)?#i',
+            $publicBase,
+            $url
+        ) ?? $url;
+
+        return $url;
     }
 
-    private static function logoImgHtml(string $logo, string $brand, int $maxHeightPx, string $marginBottom): string
+    /**
+     * Returns the publicly accessible logo URL safe for use inside email <img> tags.
+     */
+    public static function logoUrl(): string
     {
-        return '<img src="' . $logo . '" alt="' . $brand . '" '
-            . 'width="' . (int) round($maxHeightPx * 2.5) . '" height="' . $maxHeightPx . '" '
-            . 'style="display:block;margin:0 auto ' . $marginBottom . ';max-width:100%;width:auto;height:auto;'
-            . 'max-height:' . $maxHeightPx . 'px;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;">';
+        return self::publicBaseUrl() . '/assets/images/logo.png';
     }
 
     public static function supportEmail(): string
@@ -55,7 +107,7 @@ class EmailTemplate
 
     public static function websiteUrl(): string
     {
-        return defined('APP_URL') ? APP_URL : 'https://www.edulearnwise.com';
+        return self::publicBaseUrl();
     }
 
     /**
@@ -69,12 +121,15 @@ class EmailTemplate
         ?string $ctaUrl = null,
         bool $includeThankYou = true
     ): string {
-        $brand = htmlspecialchars(self::brandName(), ENT_QUOTES, 'UTF-8');
-        $logo = htmlspecialchars(self::logoUrl(), ENT_QUOTES, 'UTF-8');
+        $brand        = htmlspecialchars(self::brandName(), ENT_QUOTES, 'UTF-8');
+        $logo         = htmlspecialchars(self::logoUrl(), ENT_QUOTES, 'UTF-8');
         $supportEmail = htmlspecialchars(self::supportEmail(), ENT_QUOTES, 'UTF-8');
         $supportPhone = htmlspecialchars(self::supportPhone(), ENT_QUOTES, 'UTF-8');
-        $website = htmlspecialchars(self::websiteUrl(), ENT_QUOTES, 'UTF-8');
-        $year = date('Y');
+        $website      = htmlspecialchars(self::websiteUrl(), ENT_QUOTES, 'UTF-8');
+        $year         = date('Y');
+
+        // Sanitize CTA URL — never allow localhost in outgoing email links.
+        $safeCta = ($ctaUrl !== null && $ctaUrl !== '') ? self::sanitizeUrlForEmail($ctaUrl) : '';
 
         $rowsHtml = '';
         foreach ($rows as $label => $value) {
@@ -89,9 +144,9 @@ class EmailTemplate
         }
 
         $ctaHtml = '';
-        if ($ctaLabel !== null && $ctaUrl !== null && $ctaUrl !== '') {
+        if ($ctaLabel !== null && $safeCta !== '') {
             $ctaHtml = '<p style="text-align:center;margin:28px 0 8px;">'
-                . '<a href="' . htmlspecialchars($ctaUrl, ENT_QUOTES, 'UTF-8') . '" '
+                . '<a href="' . htmlspecialchars($safeCta, ENT_QUOTES, 'UTF-8') . '" '
                 . 'style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;'
                 . 'padding:14px 28px;border-radius:8px;font-weight:600;font-size:16px;">'
                 . htmlspecialchars($ctaLabel, ENT_QUOTES, 'UTF-8')
@@ -112,8 +167,8 @@ class EmailTemplate
             . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f3f4f6;padding:24px 12px;">'
             . '<tr><td align="center">'
             . '<table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.07);">'
-            . '<tr><td style="background: linear-gradient(135deg, #111827 0%, #1e40af 100%);padding:24px;text-align:center;">'
-            . ($logo !== '' ? self::logoImgHtml($logo, $brand, 84, '8px') : '')
+            . '<tr><td style="background:linear-gradient(135deg,#111827 0%,#1e40af 100%);padding:24px;text-align:center;">'
+            . '<img src="' . $logo . '" alt="' . $brand . '" width="160" height="54" style="display:block;margin:0 auto 8px;max-width:100%;height:auto;border:0;">'
             . '<p style="margin:0;color:#ffffff;font-size:22px;font-weight:700;">' . $brand . '</p>'
             . '<p style="margin:6px 0 0;color:#bfdbfe;font-size:14px;">' . htmlspecialchars($subjectLine, ENT_QUOTES, 'UTF-8') . '</p>'
             . '</td></tr>'
@@ -124,7 +179,6 @@ class EmailTemplate
             . $thankYou
             . '</td></tr>'
             . '<tr><td style="background:#1f2937;padding:20px 24px;text-align:center;">'
-            . ($logo !== '' ? self::logoImgHtml($logo, $brand, 54, '10px') : '')
             . '<p style="margin:0 0 6px;color:#9ca3af;font-size:13px;">'
             . '<a href="mailto:' . $supportEmail . '" style="color:#93c5fd;text-decoration:none;">' . $supportEmail . '</a>'
             . ' &nbsp;|&nbsp; ' . $supportPhone
@@ -140,12 +194,12 @@ class EmailTemplate
     {
         $brand = self::brandName();
         return match ($type) {
-            'class_scheduled' => $brand . ' | Class Scheduled Successfully',
+            'class_scheduled'     => $brand . ' | Class Scheduled Successfully',
             'recurring_scheduled' => $brand . ' | Recurring Classes Scheduled Successfully',
-            'class_rescheduled' => $brand . ' | Class Rescheduled',
-            'welcome' => 'Welcome to ' . $brand,
-            'password_reset' => $brand . ' | Password Reset',
-            default => $detail !== '' ? ($brand . ' | ' . $detail) : $brand,
+            'class_rescheduled'   => $brand . ' | Class Rescheduled',
+            'welcome'             => $brand . ' | Welcome',
+            'password_reset'      => $brand . ' | Password Reset Request',
+            default               => $detail !== '' ? ($brand . ' | ' . $detail) : $brand,
         };
     }
 
@@ -155,10 +209,19 @@ class EmailTemplate
             return;
         }
         writeStructuredLog('email_credentials.log', [
-            'recipient' => $recipient,
-            'success' => $success,
+            'recipient'     => $recipient,
+            'success'       => $success,
             'smtp_response' => $smtpResponse,
-            'error' => $error,
+            'error'         => $error,
         ]);
+    }
+
+    // ---------------------------------------------------------------------------
+    // Private helpers
+    // ---------------------------------------------------------------------------
+
+    private static function isLocalhost(string $url): bool
+    {
+        return (bool) preg_match('#^https?://(localhost|127\.0\.0\.1)(:\d+)?(/|$)#i', $url);
     }
 }
