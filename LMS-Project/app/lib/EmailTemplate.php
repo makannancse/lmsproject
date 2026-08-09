@@ -81,13 +81,18 @@ class EmailTemplate
     }
 
     /**
-     * Returns the publicly accessible logo URL safe for use inside email <img> tags.
-     * Must be a fully qualified HTTPS URL (never localhost, relative, or filesystem paths).
+     * Public HTTPS logo for email <img> tags (never cid:, localhost, or relative paths).
      */
     public static function logoUrl(): string
     {
-        // Always host-relative path on the public LMS origin (portal), not APP_URL localhost.
-        return self::publicBaseUrl() . '/assets/images/logo.png';
+        if (function_exists('env')) {
+            $explicit = trim((string) env('EMAIL_LOGO_URL', ''));
+            if ($explicit !== '' && preg_match('#^https://#i', $explicit) && !self::isLocalhost($explicit)) {
+                return $explicit;
+            }
+        }
+
+        return 'https://portal.edulearnwise.com/assets/images/logo.png';
     }
 
     public static function supportEmail(): string
@@ -170,7 +175,7 @@ class EmailTemplate
             . '<tr><td align="center">'
             . '<table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.07);">'
             . '<tr><td style="background:linear-gradient(135deg,#111827 0%,#1e40af 100%);padding:24px;text-align:center;">'
-            . '<img src="' . $logo . '" alt="' . $brand . '" width="160" height="54" style="display:block;margin:0 auto 8px;max-width:100%;height:auto;border:0;">'
+            . '<img src="' . $logo . '" alt="' . $brand . '" width="160" height="54" style="display:block;margin:0 auto 8px;max-width:160px;height:auto;border:0;" />'
             . '<p style="margin:0;color:#ffffff;font-size:22px;font-weight:700;">' . $brand . '</p>'
             . '<p style="margin:6px 0 0;color:#bfdbfe;font-size:14px;">' . htmlspecialchars($subjectLine, ENT_QUOTES, 'UTF-8') . '</p>'
             . '</td></tr>'

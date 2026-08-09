@@ -117,6 +117,9 @@ class Mailer
             $mail->CharSet = 'UTF-8';
             $mail->isHTML($isHtml);
             $mail->Subject = $subject;
+            if ($isHtml) {
+                $body = self::ensureBrandedLogoInHtml($body);
+            }
             $mail->Body = $body;
             if ($isHtml) {
                 // Build a human-readable plain-text fallback instead of raw stripped HTML.
@@ -282,5 +285,49 @@ class Mailer
             '[' . $timestamp . '] ' . $message . PHP_EOL,
             FILE_APPEND
         );
+    }
+
+    /**
+     * Gmail and other clients drop <img> tags that use cid: without a MIME part, or omit src entirely.
+     * Force the branded header image to use the public HTTPS logo URL before SMTP send.
+     */
+    private static function ensureBrandedLogoInHtml(string $html): string
+    {
+        $logoSrc = EmailTemplate::logoUrl();
+        if ($logoSrc === '' || !preg_match('#^https://#i', $logoSrc)) {
+            $logoSrc = 'https://portal.edulearnwise.com/assets/images/logo.png';
+        }
+
+        $safeSrc = htmlspecialchars($logoSrc, ENT_QUOTES, 'UTF-8');
+        $safeAlt = htmlspecialchars(EmailTemplate::brandName(), ENT_QUOTES, 'UTF-8');
+
+        // Replace broken cid:, empty, or missing src on the header logo (first branded img).
+        $patterns = [
+            '#<img\s+src="(?:cid:[^"]*|)"\s+alt="' . preg_quote($safeAlt, '#') . '"([^>]*)>#i',
+            '#<img\s+alt="' . preg_quote($safeAlt, '#') . '"([^>]*)>#i',
+            '#<img(?!\s[^>]*\bsrc=)(\s[^>]*?)>#i',
+        ];
+        $replacement = '<img src="' . $safeSrc . '" alt="' . $safeAlt . '"$1>';
+
+        foreach ($patterns as $pattern) {
+            $updated = preg_replace($pattern, $replacement, $html, 1);
+            if ($updated !== null && $updated !== $html) {
+                return $updated;
+            }
+        }
+
+        if (!str_contains($html, 'src="' . $safeSrc . '"')) {
+            $updated = preg_replace(
+                '#<img\s+src="[^"]*"\s+alt="' . preg_quote($safeAlt, '#') . '"([^>]*)>#i',
+                '<img src="' . $safeSrc . '" alt="' . $safeAlt . '"$1>',
+                $html,
+                1
+            );
+            if ($updated !== null) {
+                return $updated;
+            }
+        }
+
+        return $html;
     }
 }
