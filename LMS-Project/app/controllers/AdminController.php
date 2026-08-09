@@ -681,7 +681,6 @@ class AdminController
         $brand     = htmlspecialchars(EmailTemplate::brandName(), ENT_QUOTES, 'UTF-8');
         $safeName  = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
         $safeEmail = htmlspecialchars($email, ENT_QUOTES, 'UTF-8');
-        $safePass  = htmlspecialchars($plainPassword, ENT_QUOTES, 'UTF-8');
         $safeRole  = htmlspecialchars(ucfirst($role), ENT_QUOTES, 'UTF-8');
         $firstName = explode(' ', trim($name))[0];
 
@@ -689,21 +688,19 @@ class AdminController
 
         $intro = '<p>Hi ' . $safeName . ',</p>'
             . '<p>Welcome to ' . $brand . '! Your <strong>' . $safeRole . '</strong> account is ready.</p>'
-            . '<p>Here are your sign-in details. Please log in and change your password after your first session.</p>';
+            . '<p>Use the button below to open the LearnWise portal. Sign in with this email address and the initial password your administrator shared with you separately, then update your password after your first login.</p>';
 
-        // Row labels deliberately avoid "Temporary Password" and "Login URL" —
-        // both are recognised phishing keywords by Gmail's content classifier.
+        // Never email plaintext passwords — Gmail treats them as phishing/credential theft.
         $rows = [
-            'Name'     => $safeName,
-            'Email'    => $safeEmail,
-            'Password' => $safePass,
+            'Name'  => $safeName,
+            'Email' => $safeEmail,
         ];
 
         $body = EmailTemplate::wrap(
             'Welcome to ' . EmailTemplate::brandName(),
             $intro,
             $rows,
-            'Sign In to ' . EmailTemplate::brandName(),
+            'Open LearnWise Portal',
             $loginUrl
         );
 

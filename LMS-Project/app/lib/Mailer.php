@@ -102,23 +102,14 @@ class Mailer
             // Reply-To: ensure replies go to the correct address (prevents spam scoring).
             $mail->addReplyTo($fromEmail, $resolvedFromName);
 
-            // Suppress default "PHPMailer" X-Mailer header that spam filters flag.
-            $mail->XMailer = ' ';
-
-            // Anchor Message-ID to our own domain to avoid being flagged as a forged header.
-            $domain = substr($fromEmail, (int) strpos($fromEmail, '@') + 1);
-            $mail->MessageID = '<' . bin2hex(random_bytes(12)) . '.' . time() . '@' . $domain . '>';
-
-            // Signal normal (non-bulk) priority so inbox filters treat it as transactional.
-            $mail->addCustomHeader('X-Priority', '3');
-            $mail->addCustomHeader('X-Mailer-Version', EmailTemplate::brandName() . '-Mailer-1.0');
+            // Let Gmail/PHPMailer set Message-ID (custom IDs hurt DKIM alignment via SMTP relay).
 
             $mail->addAddress($to);
             $mail->CharSet = 'UTF-8';
             $mail->isHTML($isHtml);
             $mail->Subject = $subject;
             if ($isHtml) {
-                $body = self::ensureBrandedLogoInHtml($body);
+                $body = self::prepareHtmlBody($mail, $body);
             }
             $mail->Body = $body;
             if ($isHtml) {
@@ -288,46 +279,38 @@ class Mailer
     }
 
     /**
-     * Gmail and other clients drop <img> tags that use cid: without a MIME part, or omit src entirely.
-     * Force the branded header image to use the public HTTPS logo URL before SMTP send.
+     * Final HTML pass before SMTP: strip localhost links, embed logo inline (best inbox placement).
      */
-    private static function ensureBrandedLogoInHtml(string $html): string
+    private static function prepareHtmlBody(PHPMailer $mail, string $body): string
     {
-        $logoSrc = EmailTemplate::logoUrl();
-        if ($logoSrc === '' || !preg_match('#^https://#i', $logoSrc)) {
-            $logoSrc = 'https://portal.edulearnwise.com/assets/images/logo.png';
+        $body = EmailTemplate::stripLocalhostFromHtml($body);
+
+        $brand = htmlspecialchars(EmailTemplate::brandName(), ENT_QUOTES, 'UTF-8');
+        $logoPath = self::projectRoot() . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'assets'
+            . DIRECTORY_SEPARATOR . 'images' . DIRECTORY_SEPARATOR . 'logo.png';
+
+        $src = EmailTemplate::logoUrl();
+        if (is_file($logoPath) && is_readable($logoPath)) {
+            $mail->addEmbeddedImage($logoPath, 'learnwise_logo_cid', 'logo.png', 'base64', 'image/png');
+            $src = 'cid:learnwise_logo_cid';
         }
 
-        $safeSrc = htmlspecialchars($logoSrc, ENT_QUOTES, 'UTF-8');
-        $safeAlt = htmlspecialchars(EmailTemplate::brandName(), ENT_QUOTES, 'UTF-8');
+        $safeSrc = htmlspecialchars($src, ENT_QUOTES, 'UTF-8');
+        $quotedBrand = preg_quote($brand, '#');
 
-        // Replace broken cid:, empty, or missing src on the header logo (first branded img).
         $patterns = [
-            '#<img\s+src="(?:cid:[^"]*|)"\s+alt="' . preg_quote($safeAlt, '#') . '"([^>]*)>#i',
-            '#<img\s+alt="' . preg_quote($safeAlt, '#') . '"([^>]*)>#i',
-            '#<img(?!\s[^>]*\bsrc=)(\s[^>]*?)>#i',
+            '#<img\s+src="[^"]*"\s+alt="' . $quotedBrand . '"([^>]*)>#i',
+            '#<img\s+alt="' . $quotedBrand . '"([^>]*)>#i',
         ];
-        $replacement = '<img src="' . $safeSrc . '" alt="' . $safeAlt . '"$1>';
+        $replacement = '<img src="' . $safeSrc . '" alt="' . $brand . '"$1>';
 
         foreach ($patterns as $pattern) {
-            $updated = preg_replace($pattern, $replacement, $html, 1);
-            if ($updated !== null && $updated !== $html) {
+            $updated = preg_replace($pattern, $replacement, $body, 1);
+            if ($updated !== null && $updated !== $body) {
                 return $updated;
             }
         }
 
-        if (!str_contains($html, 'src="' . $safeSrc . '"')) {
-            $updated = preg_replace(
-                '#<img\s+src="[^"]*"\s+alt="' . preg_quote($safeAlt, '#') . '"([^>]*)>#i',
-                '<img src="' . $safeSrc . '" alt="' . $safeAlt . '"$1>',
-                $html,
-                1
-            );
-            if ($updated !== null) {
-                return $updated;
-            }
-        }
-
-        return $html;
+        return $body;
     }
 }

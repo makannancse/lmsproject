@@ -81,6 +81,31 @@ class EmailTemplate
     }
 
     /**
+     * Removes localhost / 127.0.0.1 origins from any URL embedded in HTML email bodies.
+     */
+    public static function stripLocalhostFromHtml(string $html): string
+    {
+        if ($html === '') {
+            return $html;
+        }
+
+        $publicBase = self::publicBaseUrl();
+
+        if (defined('APP_URL') && APP_URL !== '' && self::isLocalhost((string) APP_URL)) {
+            $localBase = rtrim((string) APP_URL, '/');
+            if ($localBase !== '') {
+                $html = str_replace($localBase, $publicBase, $html);
+            }
+        }
+
+        return preg_replace(
+            '#https?://(localhost|127\.0\.0\.1)(:\d+)?#i',
+            $publicBase,
+            $html
+        ) ?? $html;
+    }
+
+    /**
      * Public HTTPS logo for email <img> tags (never cid:, localhost, or relative paths).
      */
     public static function logoUrl(): string
