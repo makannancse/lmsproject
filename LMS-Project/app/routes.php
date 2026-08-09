@@ -29,6 +29,7 @@ require_once __DIR__ . '/controllers/RecordingController.php';
 require_once __DIR__ . '/controllers/TeacherStudentApiController.php';
 require_once __DIR__ . '/controllers/KeepAliveController.php';
 require_once __DIR__ . '/controllers/LogController.php';
+require_once __DIR__ . '/controllers/CredentialTokenController.php';
 
 $router = new Router();
 
@@ -48,6 +49,8 @@ $router->get('/reset-password', [AuthController::class, 'showResetPassword']);
 $router->post('/reset-password', [AuthController::class, 'resetPassword']);
 $router->get('/logout', [AuthController::class, 'logout']);
 $router->get('/ajax/keepalive', [KeepAliveController::class, 'ping']);
+// Secure one-time credential view page — no authentication required
+$router->get('/welcome', [CredentialTokenController::class, 'show']);
 
 $router->get('/dashboard', [DashboardController::class, 'index']);
 $router->get('/admin', [AdminController::class, 'dashboard']);

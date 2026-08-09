@@ -627,38 +627,36 @@ class AdminController
 
     private static function sendAccountCreatedEmail(string $email, string $name, string $plainPassword, string $role): array
     {
-        $brand    = EmailTemplate::brandName();
-        $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
-        $safeRole = htmlspecialchars(ucfirst($role), ENT_QUOTES, 'UTF-8');
+        $brand     = EmailTemplate::brandName();
         $firstName = explode(' ', trim($name))[0];
+        $safeRole  = htmlspecialchars(ucfirst($role), ENT_QUOTES, 'UTF-8');
+        $safeName  = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
 
-        // Build the login URL — use APP_URL which is the correct public domain on the live server.
-        // Table labels like "Temporary Password", "Login URL", "Username" are textbook phishing
-        // keywords that Gmail's classifier flags. Put everything in conversational prose instead.
-        $loginUrl = url('login');
-        $safeLoginUrl = htmlspecialchars($loginUrl, ENT_QUOTES, 'UTF-8');
-        $safeEmail    = htmlspecialchars($email, ENT_QUOTES, 'UTF-8');
-        $safePassword = htmlspecialchars($plainPassword, ENT_QUOTES, 'UTF-8');
+        // Generate a secure one-time token so credentials are NEVER in the email body.
+        // Credentials in email body = Gmail phishing trigger = Spam folder.
+        // The token link opens a branded page on our domain showing the credentials.
+        $rawToken    = CredentialTokenController::create($email, $name, $plainPassword);
+        $credPageUrl = rtrim(url('welcome'), '/') . '?token=' . $rawToken;
+        $safeCredUrl = htmlspecialchars($credPageUrl, ENT_QUOTES, 'UTF-8');
+        $loginUrl    = url('login');
 
         $subject = $brand . ' | Your account is ready, ' . $firstName . '!';
 
-        // Credentials in prose, not in a labelled table — avoids the phishing classifier.
+        // NO credentials in the email body whatsoever.
+        // Gmail flags any email with password content sent to new recipients as phishing.
+        // The secure token link opens a branded page on our own domain with their credentials.
         $intro = '<p>Hi ' . $safeName . ',</p>'
             . '<p>Your <strong>' . $safeRole . '</strong> account on '
-            . htmlspecialchars($brand, ENT_QUOTES, 'UTF-8') . ' has been created and is ready to use.</p>'
-            . '<p>Here are your sign-in details:</p>'
-            . '<ul style="margin:12px 0;padding-left:20px;line-height:2;">'
-            . '<li><strong>Email:</strong> ' . $safeEmail . '</li>'
-            . '<li><strong>Password:</strong> ' . $safePassword . '</li>'
-            . '</ul>'
-            . '<p style="margin-top:8px;">Please sign in and update your password after your first session.</p>';
+            . htmlspecialchars($brand, ENT_QUOTES, 'UTF-8') . ' has been set up and is ready to use.</p>'
+            . '<p>Click the button below to view your sign-in details. '
+            . 'The link is private and valid for <strong>48 hours</strong>.</p>';
 
         $body = EmailTemplate::wrap(
             'Welcome to ' . $brand,
             $intro,
-            [],           // no table rows — avoids phishing label patterns
-            'Sign In to ' . $brand,
-            $loginUrl
+            [],
+            'View My Account Details',
+            $credPageUrl
         );
 
         $result = Mailer::send($email, $subject, $body, true);
