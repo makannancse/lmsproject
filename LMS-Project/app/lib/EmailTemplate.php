@@ -42,8 +42,8 @@ class EmailTemplate
             return rtrim((string) APP_URL, '/');
         }
 
-        // 3. Hardcoded fallback — update if the domain changes.
-        return 'https://www.edulearnwise.com';
+        // 3. Hardcoded fallback — LMS portal (marketing site is www.edulearnwise.com).
+        return 'https://portal.edulearnwise.com';
     }
 
     /**
@@ -86,11 +86,8 @@ class EmailTemplate
      */
     public static function logoUrl(): string
     {
-        if (function_exists('url')) {
-            return self::sanitizeUrlForEmail(url('assets/images/logo.png'));
-        }
-
-        return self::sanitizeUrlForEmail(self::publicBaseUrl() . '/assets/images/logo.png');
+        // Always host-relative path on the public LMS origin (portal), not APP_URL localhost.
+        return self::publicBaseUrl() . '/assets/images/logo.png';
     }
 
     public static function supportEmail(): string
