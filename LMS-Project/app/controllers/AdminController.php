@@ -627,42 +627,37 @@ class AdminController
 
     private static function sendAccountCreatedEmail(string $email, string $name, string $plainPassword, string $role): array
     {
-        $loginUrl = url('login');
+        $brand    = EmailTemplate::brandName();
         $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
-        $safeEmail = htmlspecialchars($email, ENT_QUOTES, 'UTF-8');
-        $safePassword = htmlspecialchars($plainPassword, ENT_QUOTES, 'UTF-8');
         $safeRole = htmlspecialchars(ucfirst($role), ENT_QUOTES, 'UTF-8');
-
         $firstName = explode(' ', trim($name))[0];
-        $subject = 'Welcome to ' . EmailTemplate::brandName() . ', ' . $firstName . '!';
+
+        // Build the login URL — use APP_URL which is the correct public domain on the live server.
+        // Table labels like "Temporary Password", "Login URL", "Username" are textbook phishing
+        // keywords that Gmail's classifier flags. Put everything in conversational prose instead.
+        $loginUrl = url('login');
+        $safeLoginUrl = htmlspecialchars($loginUrl, ENT_QUOTES, 'UTF-8');
+        $safeEmail    = htmlspecialchars($email, ENT_QUOTES, 'UTF-8');
+        $safePassword = htmlspecialchars($plainPassword, ENT_QUOTES, 'UTF-8');
+
+        $subject = $brand . ' | Your account is ready, ' . $firstName . '!';
+
+        // Credentials in prose, not in a labelled table — avoids the phishing classifier.
         $intro = '<p>Hi ' . $safeName . ',</p>'
-            . '<p>Welcome to ' . htmlspecialchars(EmailTemplate::brandName(), ENT_QUOTES, 'UTF-8') . '! '
-            . 'Your ' . $safeRole . ' account has been created.</p>'
-            . '<p>Please sign in and change your password after your first login.</p>';
-        $rows = [
-            'Student Name' => $role === 'student' ? $safeName : '',
-            'Teacher Name' => $role === 'teacher' ? $safeName : '',
-            'Username' => $safeEmail,
-            'Temporary Password' => $safePassword,
-            'Login URL' => '<a href="' . htmlspecialchars($loginUrl, ENT_QUOTES, 'UTF-8') . '">'
-                . htmlspecialchars($loginUrl, ENT_QUOTES, 'UTF-8') . '</a>',
-        ];
-        if ($role === 'admin') {
-            $rows = [
-                'Name' => $safeName,
-                'Username' => $safeEmail,
-                'Temporary Password' => $safePassword,
-                'Login URL' => '<a href="' . htmlspecialchars($loginUrl, ENT_QUOTES, 'UTF-8') . '">'
-                    . htmlspecialchars($loginUrl, ENT_QUOTES, 'UTF-8') . '</a>',
-            ];
-        }
-        $rows = array_filter($rows, static fn(string $v): bool => $v !== '');
+            . '<p>Your <strong>' . $safeRole . '</strong> account on '
+            . htmlspecialchars($brand, ENT_QUOTES, 'UTF-8') . ' has been created and is ready to use.</p>'
+            . '<p>Here are your sign-in details:</p>'
+            . '<ul style="margin:12px 0;padding-left:20px;line-height:2;">'
+            . '<li><strong>Email:</strong> ' . $safeEmail . '</li>'
+            . '<li><strong>Password:</strong> ' . $safePassword . '</li>'
+            . '</ul>'
+            . '<p style="margin-top:8px;">Please sign in and update your password after your first session.</p>';
 
         $body = EmailTemplate::wrap(
-            'Welcome to ' . EmailTemplate::brandName(),
+            'Welcome to ' . $brand,
             $intro,
-            $rows,
-            'Sign In',
+            [],           // no table rows — avoids phishing label patterns
+            'Sign In to ' . $brand,
             $loginUrl
         );
 
