@@ -478,58 +478,11 @@ class AdminController
         }
 
         $mailResult = self::sendAccountCreatedEmail($email, $name, $plainPassword, $role);
-
-        $loginUrl = EmailTemplate::sanitizeUrlForEmail(url('login'));
-        $waText = "Welcome to " . EmailTemplate::brandName() . "!\n"
-            . "Your " . ucfirst($role) . " account is ready.\n\n"
-            . "👤 Name: " . $name . "\n"
-            . "📧 Email: " . $email . "\n"
-            . "🔑 Password: " . $plainPassword . "\n"
-            . "🌐 Login: " . $loginUrl;
-        $waUrl = "https://api.whatsapp.com/send?text=" . urlencode($waText);
-
-        $mailStatusNote = !empty($mailResult['success'])
-            ? '<div class="text-success small mb-2"><i class="fa-solid fa-circle-check me-1"></i> A welcome email was also sent to ' . htmlspecialchars($email, ENT_QUOTES, 'UTF-8') . '</div>'
-            : '<div class="text-warning small mb-2"><i class="fa-solid fa-triangle-exclamation me-1"></i> Welcome email could not be delivered; please share credentials directly below.</div>';
-
-        if (!isset($_SESSION['flash_queue']) || !is_array($_SESSION['flash_queue'])) {
-            $_SESSION['flash_queue'] = [];
+        if (!empty($mailResult['success'])) {
+            $_SESSION['flash_success'] = ucfirst($role) . ' account created and credentials emailed successfully.';
+        } else {
+            $_SESSION['flash_warning'] = ucfirst($role) . ' account created, but the credential email could not be sent. Share the temporary password manually.';
         }
-
-        $_SESSION['flash_queue'][] = [
-            'type' => 'success',
-            'title' => ucfirst($role) . ' Account Created Successfully!',
-            'mode' => 'modal',
-            'html' => '
-                <div class="text-start py-1">
-                    ' . $mailStatusNote . '
-                    <div class="card bg-light border-0 mb-3" style="border-radius:10px;">
-                        <div class="card-body py-2 px-3 fs-6">
-                            <div class="d-flex justify-content-between py-2 border-bottom">
-                                <span class="text-muted">Name:</span>
-                                <span class="fw-bold text-dark">' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '</span>
-                            </div>
-                            <div class="d-flex justify-content-between py-2 border-bottom">
-                                <span class="text-muted">Email / Username:</span>
-                                <span class="fw-bold text-primary">' . htmlspecialchars($email, ENT_QUOTES, 'UTF-8') . '</span>
-                            </div>
-                            <div class="d-flex justify-content-between py-2">
-                                <span class="text-muted">Password:</span>
-                                <span class="fw-bold text-danger font-monospace fs-5">' . htmlspecialchars($plainPassword, ENT_QUOTES, 'UTF-8') . '</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="d-grid gap-2">
-                        <button type="button" class="btn btn-outline-primary btn-sm fw-semibold" onclick="navigator.clipboard.writeText(' . json_encode($waText, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '); if(window.AppAlerts) window.AppAlerts.showToast(\'Credentials copied to clipboard!\', \'success\');">
-                            📋 Copy Credentials
-                        </button>
-                        <a href="' . htmlspecialchars($waUrl, ENT_QUOTES, 'UTF-8') . '" target="_blank" class="btn btn-success btn-sm fw-semibold text-white">
-                            💬 Share via WhatsApp
-                        </a>
-                    </div>
-                </div>
-            ',
-        ];
 
         redirectTo('/admin/users?role=' . urlencode($role));
     }
@@ -674,33 +627,42 @@ class AdminController
 
     private static function sendAccountCreatedEmail(string $email, string $name, string $plainPassword, string $role): array
     {
-        // CRITICAL: Always use EmailTemplate::sanitizeUrlForEmail() for every URL
-        // that goes into an email. url() returns http://localhost/... which is a
-        // hard spam signal for Gmail's content filter on new/unengaged recipients.
-        $loginUrl  = EmailTemplate::sanitizeUrlForEmail(url('login'));
-        $brand     = htmlspecialchars(EmailTemplate::brandName(), ENT_QUOTES, 'UTF-8');
-        $safeName  = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+        $loginUrl = url('login');
+        $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
         $safeEmail = htmlspecialchars($email, ENT_QUOTES, 'UTF-8');
-        $safeRole  = htmlspecialchars(ucfirst($role), ENT_QUOTES, 'UTF-8');
+        $safePassword = htmlspecialchars($plainPassword, ENT_QUOTES, 'UTF-8');
+        $safeRole = htmlspecialchars(ucfirst($role), ENT_QUOTES, 'UTF-8');
+
         $firstName = explode(' ', trim($name))[0];
-
-        $subject = EmailTemplate::subject('welcome') . ', ' . $firstName . '!';
-
+        $subject = 'Welcome to ' . EmailTemplate::brandName() . ', ' . $firstName . '!';
         $intro = '<p>Hi ' . $safeName . ',</p>'
-            . '<p>Welcome to ' . $brand . '! Your <strong>' . $safeRole . '</strong> account is ready.</p>'
-            . '<p>Use the button below to open the LearnWise portal. Sign in with this email address and the initial password your administrator shared with you separately, then update your password after your first login.</p>';
-
-        // Never email plaintext passwords — Gmail treats them as phishing/credential theft.
+            . '<p>Welcome to ' . htmlspecialchars(EmailTemplate::brandName(), ENT_QUOTES, 'UTF-8') . '! '
+            . 'Your ' . $safeRole . ' account has been created.</p>'
+            . '<p>Please sign in and change your password after your first login.</p>';
         $rows = [
-            'Name'  => $safeName,
-            'Email' => $safeEmail,
+            'Student Name' => $role === 'student' ? $safeName : '',
+            'Teacher Name' => $role === 'teacher' ? $safeName : '',
+            'Username' => $safeEmail,
+            'Temporary Password' => $safePassword,
+            'Login URL' => '<a href="' . htmlspecialchars($loginUrl, ENT_QUOTES, 'UTF-8') . '">'
+                . htmlspecialchars($loginUrl, ENT_QUOTES, 'UTF-8') . '</a>',
         ];
+        if ($role === 'admin') {
+            $rows = [
+                'Name' => $safeName,
+                'Username' => $safeEmail,
+                'Temporary Password' => $safePassword,
+                'Login URL' => '<a href="' . htmlspecialchars($loginUrl, ENT_QUOTES, 'UTF-8') . '">'
+                    . htmlspecialchars($loginUrl, ENT_QUOTES, 'UTF-8') . '</a>',
+            ];
+        }
+        $rows = array_filter($rows, static fn(string $v): bool => $v !== '');
 
         $body = EmailTemplate::wrap(
             'Welcome to ' . EmailTemplate::brandName(),
             $intro,
             $rows,
-            'Open LearnWise Portal',
+            'Sign In',
             $loginUrl
         );
 

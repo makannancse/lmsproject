@@ -39,7 +39,7 @@ class PasswordResetService
             'expires' => $expires,
         ]);
 
-        $resetUrl = EmailTemplate::sanitizeUrlForEmail(url('reset-password?token=' . urlencode($token)));
+        $resetUrl = url('reset-password?token=' . urlencode($token));
         $safeName = htmlspecialchars((string) ($user['name'] ?? 'User'), ENT_QUOTES, 'UTF-8');
         $subject = EmailTemplate::subject('password_reset');
         $intro = '<p>Hi ' . $safeName . ',</p>'

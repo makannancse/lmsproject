@@ -156,11 +156,8 @@
                 const type = item && item.type ? item.type : 'info';
                 const title = item && item.title ? item.title : '';
                 const text = item && item.text ? item.text : '';
-                const html = item && item.html ? item.html : '';
                 const mode = item && item.mode ? item.mode : '';
-                if (html) {
-                    AppUI.alert({ icon: type, title: title, html: html });
-                } else if (mode === 'toast' || ((type === 'success' || type === 'info') && mode !== 'modal')) {
+                if (mode === 'toast' || ((type === 'success' || type === 'info') && mode !== 'modal')) {
                     AppUI.toast(type, text, title);
                 } else {
                     AppUI.alert({ icon: type, title: title, text: text });
@@ -178,9 +175,10 @@
         },
         alert(options) {
             const icon = options && options.icon ? options.icon : 'info';
-            const swalOpts = {
+            return fireSwal({
                 icon: icon,
                 title: options && options.title ? options.title : '',
+                text: options && options.text ? options.text : '',
                 confirmButtonColor: '#0d6efd',
                 customClass: {
                     popup: 'app-swal-popup app-swal-popup-' + icon,
@@ -191,13 +189,7 @@
                     actions: 'app-swal-actions',
                 },
                 buttonsStyling: false,
-            };
-            if (options && options.html) {
-                swalOpts.html = options.html;
-            } else {
-                swalOpts.text = options && options.text ? options.text : '';
-            }
-            return fireSwal(swalOpts);
+            });
         },
         success(text, title = 'Success') {
             if (window.Swal && typeof window.Swal.fire === 'function') {

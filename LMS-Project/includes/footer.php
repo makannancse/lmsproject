@@ -60,14 +60,13 @@ if (!empty($flashInfo)) {
 }
 if (is_array($flashSessionQueue)) {
     foreach ($flashSessionQueue as $flashItem) {
-        if (!is_array($flashItem) || (empty($flashItem['text']) && empty($flashItem['html']))) {
+        if (!is_array($flashItem) || empty($flashItem['text'])) {
             continue;
         }
         $flashQueue[] = [
             'type' => (string) ($flashItem['type'] ?? 'info'),
             'title' => (string) ($flashItem['title'] ?? ''),
             'text' => (string) ($flashItem['text'] ?? ''),
-            'html' => (string) ($flashItem['html'] ?? ''),
             'mode' => (string) ($flashItem['mode'] ?? ''),
         ];
     }
