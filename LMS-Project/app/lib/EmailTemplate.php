@@ -81,14 +81,16 @@ class EmailTemplate
     }
 
     /**
-     * Returns the embedded CID image reference for use inside email <img> tags.
-     * Embedded CID images are physically attached inside the email MIME body,
-     * guaranteeing they display in Gmail, Outlook, Yahoo, and mobile clients
-     * without relying on external web hosting or being blocked by image proxies.
+     * Returns the publicly accessible logo URL safe for use inside email <img> tags.
+     * Must be a fully qualified HTTPS URL (never localhost, relative, or filesystem paths).
      */
     public static function logoUrl(): string
     {
-        return 'cid:learnwise_logo_cid';
+        if (function_exists('url')) {
+            return self::sanitizeUrlForEmail(url('assets/images/logo.png'));
+        }
+
+        return self::sanitizeUrlForEmail(self::publicBaseUrl() . '/assets/images/logo.png');
     }
 
     public static function supportEmail(): string

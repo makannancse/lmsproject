@@ -119,12 +119,6 @@ class Mailer
             $mail->Subject = $subject;
             $mail->Body = $body;
             if ($isHtml) {
-                // Embed brand logo as inline CID attachment so it renders in Gmail and all clients reliably
-                $logoFsPath = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'images' . DIRECTORY_SEPARATOR . 'logo.png';
-                if (is_file($logoFsPath) && is_readable($logoFsPath)) {
-                    $mail->addEmbeddedImage($logoFsPath, 'learnwise_logo_cid', 'logo.png', 'base64', 'image/png');
-                }
-
                 // Build a human-readable plain-text fallback instead of raw stripped HTML.
                 $plainText = $body;
                 $plainText = preg_replace('/<br\s*\/?>/i', "\n", $plainText) ?? $plainText;
