@@ -600,6 +600,13 @@ class GoogleMeetLiveTrackingService
      */
     private function ensureTeacherIdentity(int $teacherId): array
     {
+        $pdo = Database::connection();
+        $stmt = $pdo->prepare('SELECT name, email FROM users WHERE id = :id LIMIT 1');
+        $stmt->execute(['id' => $teacherId]);
+        $teacherUser = $stmt->fetch();
+        $teacherName = $teacherUser ? trim((string) ($teacherUser['name'] ?? '')) : null;
+        $teacherEmail = $teacherUser ? trim((string) ($teacherUser['email'] ?? '')) : null;
+
         $account = TeacherGoogleAccount::getCredentialsForTeacher($teacherId);
         $isAdminFallback = false;
         if ($account === null) {
@@ -617,8 +624,12 @@ class GoogleMeetLiveTrackingService
             return [
                 'google_person_resource_name' => $existingResource !== '' ? $existingResource : ($existingPersonId !== '' ? 'people/' . $existingPersonId : null),
                 'google_person_id' => $existingPersonId !== '' ? $existingPersonId : null,
-                'google_user_id' => $existingUserId,
-                'google_email' => $account['google_email'] ?? null,
+                'google_user_id' => $isAdminFallback ? null : $existingUserId,
+                'google_email' => $isAdminFallback ? null : ($account['google_email'] ?? null),
+                'is_admin_fallback' => $isAdminFallback,
+                'admin_google_user_id' => $isAdminFallback ? $existingUserId : null,
+                'display_name' => $teacherName,
+                'teacher_email' => $teacherEmail,
             ];
         }
 
@@ -688,8 +699,12 @@ class GoogleMeetLiveTrackingService
         return [
             'google_person_resource_name' => $resourceName,
             'google_person_id' => $personId,
-            'google_user_id' => $googleUserId,
-            'google_email' => $account['google_email'] ?? null,
+            'google_user_id' => $isAdminFallback ? null : $googleUserId,
+            'google_email' => $isAdminFallback ? null : ($account['google_email'] ?? null),
+            'is_admin_fallback' => $isAdminFallback,
+            'admin_google_user_id' => $isAdminFallback ? $googleUserId : null,
+            'display_name' => $teacherName,
+            'teacher_email' => $teacherEmail,
         ];
     }
 
@@ -969,6 +984,7 @@ class GoogleMeetLiveTrackingService
         $teacherPersonId = trim((string) ($teacherIdentity['google_person_id'] ?? ''));
         $teacherUserResource = $teacherUserId !== '' ? 'users/' . $teacherUserId : '';
         $legacyUserResource = $teacherPersonId !== '' ? 'users/' . $teacherPersonId : '';
+        $teacherDisplayName = trim((string) ($teacherIdentity['display_name'] ?? ''));
 
         foreach ($participants as $participant) {
             $signedInUser = trim((string) ($participant['signed_in_user'] ?? ''));
@@ -987,9 +1003,32 @@ class GoogleMeetLiveTrackingService
             }
         }
 
+        // Display name matching fallback
+        if ($teacherDisplayName !== '') {
+            foreach ($participants as $participant) {
+                $pDisplayName = trim((string) ($participant['display_name'] ?? ''));
+                if ($pDisplayName !== '' && strcasecmp($pDisplayName, $teacherDisplayName) === 0) {
+                    return $participant;
+                }
+            }
+        }
+
+        // Single signed-in host fallback (excluding Admin if admin credentials were used)
+        $adminUserId = trim((string) ($teacherIdentity['admin_google_user_id'] ?? ''));
+        $adminUserResource = $adminUserId !== '' ? 'users/' . $adminUserId : '';
+
         $signedInHosts = array_values(array_filter(
             $participants,
-            static fn (array $participant): bool => trim((string) ($participant['signed_in_user'] ?? '')) !== ''
+            function (array $participant) use ($adminUserResource): bool {
+                $signedInUser = trim((string) ($participant['signed_in_user'] ?? ''));
+                if ($signedInUser === '') {
+                    return false;
+                }
+                if ($adminUserResource !== '' && $signedInUser === $adminUserResource) {
+                    return false; // Exclude admin from teacher identification
+                }
+                return true;
+            }
         ));
         if (count($signedInHosts) === 1) {
             return $signedInHosts[0];

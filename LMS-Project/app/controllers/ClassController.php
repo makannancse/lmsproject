@@ -1119,6 +1119,12 @@ class ClassController
                 );
             }
 
+            $oldStartUtc = (string) (classStartUtcValue($targetClass) ?? $targetClass['start_datetime'] ?? '');
+            $oldEndUtc = (string) (classEndUtcValue($targetClass) ?? $targetClass['end_datetime'] ?? '');
+            $timeChanged = ($oldStartUtc !== $targetStartUtcValue) || ($oldEndUtc !== $targetEndUtcValue);
+            $currStatus = (string) ($targetClass['status'] ?? 'scheduled');
+            $newStatus = ($currStatus === 'completed') ? 'completed' : ($timeChanged ? 'rescheduled' : $currStatus);
+
             $targetMeetingCodeChanged = $targetMeetingCode !== self::extractGoogleMeetCode((string) ($targetClass['meeting_link'] ?? ''));
             $upd = $pdo->prepare(
                 'UPDATE class_sessions
@@ -1145,7 +1151,7 @@ class ClassController
                      actual_duration = CASE WHEN status = "completed" THEN actual_duration ELSE NULL END,
                      actual_duration_minutes = CASE WHEN status = "completed" THEN actual_duration_minutes ELSE NULL END,
                      completed_at = CASE WHEN status = "completed" THEN completed_at ELSE NULL END,
-                     status = IF(status = "completed", "completed", "rescheduled")
+                     status = :new_status
                  WHERE id = :id'
             );
             $upd->execute([
@@ -1165,6 +1171,7 @@ class ClassController
                 'meeting_live_status' => (string) ($targetClass['status'] ?? '') === 'completed'
                     ? (string) ($targetClass['meeting_live_status'] ?? 'ended')
                     : 'pending',
+                'new_status' => $newStatus,
                 'id' => $targetId,
             ]);
 
@@ -1173,12 +1180,13 @@ class ClassController
                     'UPDATE recurring_occurrences 
                      SET scheduled_start_utc = :start_utc,
                          scheduled_end_utc = :end_utc,
-                         status = IF(status = "completed", "completed", "rescheduled")
+                         status = :new_status
                      WHERE id = :oid'
                 );
                 $roUpd->execute([
                     'start_utc' => $targetStartUtcValue,
                     'end_utc' => $targetEndUtcValue,
+                    'new_status' => $newStatus,
                     'oid' => $targetClass['recurring_occurrence_id'],
                 ]);
             }

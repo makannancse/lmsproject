@@ -20,8 +20,7 @@ class CalendarController
     {
         Auth::requireRole(['admin']);
         $teachers = User::allTeachers();
-        $initialTeacherId = $teachers !== [] ? (int) ($teachers[0]['id'] ?? 0) : 0;
-        $students = $initialTeacherId > 0 ? TeacherStudent::studentsForTeacher($initialTeacherId) : [];
+        $students = User::allStudents();
         $classTypes = [];
         try {
             $classTypes = ClassMaster::allActive();

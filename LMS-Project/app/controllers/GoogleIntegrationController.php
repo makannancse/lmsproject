@@ -119,9 +119,9 @@ class GoogleIntegrationController
             $meetTrackingService = new GoogleMeetLiveTrackingService();
             $meeting = $service->createMeeting(
                 $teacherId,
-                utcToTimezoneIso8601($startUtc, 'UTC'),
-                utcToTimezoneIso8601($endUtc, 'UTC'),
-                'UTC',
+                utcToTimezoneIso8601($startUtc, $timezone),
+                utcToTimezoneIso8601($endUtc, $timezone),
+                $timezone,
                 $summary,
                 self::studentEmailsForIds($studentIds)
             );

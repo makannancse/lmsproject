@@ -57,7 +57,7 @@ class RecurringSeriesService
         $recordingEnabled = 1; // Always supported since we use Admin Workspace
 
         // Build an RFC 5545 RRULE so Google Calendar shows all occurrences as a recurring series.
-        $recurrenceRules = self::buildRrule($frequency, $occurrenceCount, $recurrenceEndDate, $occurrenceSlots);
+        $recurrenceRules = self::buildRrule($frequency, $occurrenceCount, $recurrenceEndDate, $occurrenceSlots, $timezone);
 
         $meeting = $meetingService->createMeeting(
             $teacherId,
@@ -192,7 +192,7 @@ class RecurringSeriesService
                     'title' => $title,
                     'description' => $description,
                     'payout' => $teacherRate,
-                    'student_fee' => 0,
+                    'student_fee' => $studentRate,
                     'start_dt' => $slotStartUtc,
                     'scheduled_time_utc' => $slotStartUtc,
                     'start_time_utc' => $slotStartUtc,
@@ -431,7 +431,8 @@ class RecurringSeriesService
         string $frequency,
         ?int $occurrenceCount,
         ?string $recurrenceEndDate,
-        array $occurrenceSlots
+        array $occurrenceSlots,
+        string $timezone = 'UTC'
     ): array {
         $normalized = strtolower(trim($frequency));
 
@@ -440,7 +441,10 @@ class RecurringSeriesService
         $slotDays = [];
         foreach ($occurrenceSlots as $slot) {
             if (isset($slot['start']) && $slot['start'] instanceof \DateTimeInterface) {
-                $slotDays[(int) $slot['start']->format('N')] = true;
+                // Convert to the class's local timezone before reading day-of-week.
+                // Using UTC directly gives the wrong day for classes crossing midnight IST.
+                $localSlot = $slot['start']->setTimezone(new \DateTimeZone($timezone));
+                $slotDays[(int) $localSlot->format('N')] = true;
             }
         }
         $uniqueDays = array_keys($slotDays);

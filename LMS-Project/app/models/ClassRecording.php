@@ -231,13 +231,16 @@ class ClassRecording
 
         $query = trim((string) ($filters['q'] ?? ''));
         if ($query !== '') {
-            $where[] = '(cs.title LIKE :q OR t.name LIKE :q OR EXISTS (
+            $where[] = '(cs.title LIKE :q1 OR t.name LIKE :q2 OR EXISTS (
                 SELECT 1
                 FROM enrollments e2
                 INNER JOIN users u2 ON u2.id = e2.student_id
-                WHERE e2.class_id = cs.id AND u2.name LIKE :q
+                WHERE e2.class_id = cs.id AND (u2.name LIKE :q3 OR u2.email LIKE :q4)
             ))';
-            $params['q'] = '%' . $query . '%';
+            $params['q1'] = '%' . $query . '%';
+            $params['q2'] = '%' . $query . '%';
+            $params['q3'] = '%' . $query . '%';
+            $params['q4'] = '%' . $query . '%';
         }
 
         if (!empty($filters['teacher_id'])) {
