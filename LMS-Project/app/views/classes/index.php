@@ -6,6 +6,8 @@ $base = appWebPath();
 $statusFilter = $statusFilter ?? '';
 $statusOpts = ['' => 'All', 'scheduled' => 'Scheduled', 'ongoing' => 'Ongoing', 'completed' => 'Completed', 'cancelled' => 'Cancelled', 'rescheduled' => 'Rescheduled'];
 $viewerTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
+$filters = $filters ?? ['status' => '', 'teacher_id' => 0, 'date_from' => '', 'date_to' => '', 'q' => ''];
+$teachers = $teachers ?? [];
 ?>
 
 <div class="classes-page">
@@ -17,18 +19,48 @@ $viewerTimezone = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
         <a href="<?= h(path('classes/create')) ?>" class="btn btn-primary btn-sm">Schedule Class</a>
     </div>
 
+    <!-- Filter Bar -->
     <div class="card shadow-sm mb-3">
         <div class="card-body py-2">
-            <form method="get" action="<?= h($base . '/classes') ?>" class="row g-2 align-items-center no-app-loader">
-                <div class="col-auto">
-                    <label class="col-form-label col-form-label-sm" for="statusFilter">Filter by status</label>
+            <form method="get" action="<?= h($base . '/classes') ?>" class="row g-2 align-items-end no-app-loader">
+                <div class="col-12 col-sm-4 col-md-3">
+                    <label for="q" class="form-label form-label-sm fw-semibold mb-1">Search</label>
+                    <input type="text" name="q" id="q" class="form-control form-control-sm" placeholder="Title or teacher..." value="<?= h((string) ($filters['q'] ?? '')) ?>">
                 </div>
-                <div class="col-auto">
-                    <select name="status" id="statusFilter" class="form-select form-select-sm" onchange="this.form.submit()">
+                <div class="col-6 col-sm-3 col-md-2">
+                    <label class="form-label form-label-sm fw-semibold mb-1" for="statusFilter">Status</label>
+                    <select name="status" id="statusFilter" class="form-select form-select-sm">
                         <?php foreach ($statusOpts as $val => $label): ?>
-                            <option value="<?= h($val) ?>" <?= $statusFilter === $val ? 'selected' : '' ?>><?= h($label) ?></option>
+                            <option value="<?= h($val) ?>" <?= ($filters['status'] ?? '') === $val ? 'selected' : '' ?>><?= h($label) ?></option>
                         <?php endforeach; ?>
                     </select>
+                </div>
+                <?php if (!empty($teachers)): ?>
+                    <div class="col-6 col-sm-3 col-md-2">
+                        <label for="teacher_id" class="form-label form-label-sm fw-semibold mb-1">Teacher</label>
+                        <select name="teacher_id" id="teacher_id" class="form-select form-select-sm">
+                            <option value="">All Teachers</option>
+                            <?php foreach ($teachers as $tc): ?>
+                                <option value="<?= (int) $tc['id'] ?>" <?= (int) ($filters['teacher_id'] ?? 0) === (int) $tc['id'] ? 'selected' : '' ?>>
+                                    <?= h((string) $tc['name']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                <?php endif; ?>
+                <div class="col-6 col-sm-3 col-md-2">
+                    <label for="date_from" class="form-label form-label-sm fw-semibold mb-1">From Date</label>
+                    <input type="date" name="date_from" id="date_from" class="form-control form-control-sm" value="<?= h((string) ($filters['date_from'] ?? '')) ?>">
+                </div>
+                <div class="col-6 col-sm-3 col-md-2">
+                    <label for="date_to" class="form-label form-label-sm fw-semibold mb-1">To Date</label>
+                    <input type="date" name="date_to" id="date_to" class="form-control form-control-sm" value="<?= h((string) ($filters['date_to'] ?? '')) ?>">
+                </div>
+                <div class="col-12 col-md-auto ms-auto d-flex gap-2">
+                    <button type="submit" class="btn btn-sm btn-primary">
+                        <i class="fa-solid fa-magnifying-glass me-1"></i>Filter
+                    </button>
+                    <a href="<?= h($base . '/classes') ?>" class="btn btn-sm btn-outline-secondary">Reset</a>
                 </div>
             </form>
         </div>

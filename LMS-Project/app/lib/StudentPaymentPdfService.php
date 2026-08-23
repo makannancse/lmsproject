@@ -221,21 +221,24 @@ class StudentPaymentPdfService
       <th>Student</th>
       <th>Class Title</th>
       <th>Date &amp; Time</th>
+      <th>Class Status</th>
       <th>Teacher</th>
-      <th>Status</th>
+      <th>Payment Status</th>
       <th class="num">Amount</th>
     </tr>
   </thead>
   <tbody>';
 
         if (empty($payments)) {
-            $html .= '<tr><td colspan="7" style="text-align: center; color: #94a3b8; padding: 14px;">No class fee records found for the selected filters.</td></tr>';
+            $html .= '<tr><td colspan="8" style="text-align: center; color: #94a3b8; padding: 14px;">No class fee records found for the selected filters.</td></tr>';
         } else {
             $i = 1;
             foreach ($payments as $p) {
                 $status = strtolower(trim((string) ($p['status'] ?? 'pending')));
                 $badgeCls = $status === 'paid' ? 'badge-paid' : 'badge-pending';
                 $statusText = strtoupper($status);
+                $csStatus = strtolower(trim((string) ($p['class_status'] ?? 'scheduled')));
+                $csStatusText = strtoupper($csStatus);
                 $amount = (float) ($p['amount'] ?? 0);
                 $dt = formatClassScheduledAt($p, 'd M Y h:i A');
 
@@ -247,6 +250,7 @@ class StudentPaymentPdfService
                     </td>
                     <td>' . $esc((string) ($p['class_title'] ?? 'Class Session')) . '</td>
                     <td>' . $esc($dt) . '</td>
+                    <td><span style="font-size: 8.5px; font-weight: bold; color: ' . ($csStatus === 'completed' ? '#166534' : '#1e40af') . ';">' . $esc($csStatusText) . '</span></td>
                     <td>' . $esc((string) ($p['teacher_name'] ?? '—')) . '</td>
                     <td><span class="badge ' . $badgeCls . '">' . $statusText . '</span></td>
                     <td class="num">' . $esc(formatCurrency($amount)) . '</td>

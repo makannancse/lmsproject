@@ -96,11 +96,20 @@ $pdfExportUrl = $base . '/admin/student-payments/export-pdf?' . http_build_query
             </div>
             
             <div class="col-6 col-sm-3 col-md-2">
-                <label for="status" class="form-label form-label-sm fw-semibold mb-1">Status</label>
+                <label for="status" class="form-label form-label-sm fw-semibold mb-1">Payment Status</label>
                 <select name="status" id="status" class="form-select form-select-sm">
                     <option value="" <?= ($filters['status'] ?? '') === '' ? 'selected' : '' ?>>All Statuses</option>
                     <option value="pending" <?= ($filters['status'] ?? '') === 'pending' ? 'selected' : '' ?>>Pending</option>
                     <option value="paid" <?= ($filters['status'] ?? '') === 'paid' ? 'selected' : '' ?>>Paid</option>
+                </select>
+            </div>
+
+            <div class="col-6 col-sm-3 col-md-2">
+                <label for="class_status" class="form-label form-label-sm fw-semibold mb-1">Class Completion</label>
+                <select name="class_status" id="class_status" class="form-select form-select-sm">
+                    <option value="" <?= ($filters['class_status'] ?? '') === '' ? 'selected' : '' ?>>All Classes</option>
+                    <option value="completed" <?= ($filters['class_status'] ?? '') === 'completed' ? 'selected' : '' ?>>Completed</option>
+                    <option value="pending" <?= ($filters['class_status'] ?? '') === 'pending' ? 'selected' : '' ?>>Scheduled / Pending</option>
                 </select>
             </div>
 
@@ -150,16 +159,17 @@ $pdfExportUrl = $base . '/admin/student-payments/export-pdf?' . http_build_query
                 <th>#</th>
                 <th>Student</th>
                 <th>Class Title &amp; Date</th>
+                <th>Class Status</th>
                 <th>Teacher</th>
                 <th>Amount</th>
-                <th>Status</th>
+                <th>Payment Status</th>
                 <th>Payment Date</th>
                 <th>Action</th>
             </tr>
             </thead>
             <tbody>
             <?php if (empty($payments)): ?>
-                <tr><td colspan="8" class="text-muted text-center py-4">No student payment records found matching your filters.</td></tr>
+                <tr><td colspan="9" class="text-muted text-center py-4">No student payment records found matching your filters.</td></tr>
             <?php else: ?>
                 <?php foreach ($payments as $idx => $p): ?>
                     <tr>
@@ -174,6 +184,18 @@ $pdfExportUrl = $base . '/admin/student-payments/export-pdf?' . http_build_query
                         <td>
                             <div class="fw-semibold"><?= h((string) $p['class_title']) ?></div>
                             <div class="small text-muted"><i class="fa-regular fa-clock me-1"></i><?= h(formatClassScheduledAt($p, 'd M Y h:i A T')) ?></div>
+                        </td>
+                        <td>
+                            <?php $csStatus = strtolower(trim((string) ($p['class_status'] ?? 'scheduled'))); ?>
+                            <?php if ($csStatus === 'completed'): ?>
+                                <span class="badge text-bg-success"><i class="fa-solid fa-circle-check me-1"></i>Completed</span>
+                            <?php elseif ($csStatus === 'rescheduled'): ?>
+                                <span class="badge text-bg-warning"><i class="fa-solid fa-clock-rotate-left me-1"></i>Rescheduled</span>
+                            <?php elseif ($csStatus === 'cancelled'): ?>
+                                <span class="badge text-bg-danger"><i class="fa-solid fa-ban me-1"></i>Cancelled</span>
+                            <?php else: ?>
+                                <span class="badge text-bg-info text-white"><i class="fa-regular fa-calendar me-1"></i>Scheduled</span>
+                            <?php endif; ?>
                         </td>
                         <td><?= h((string) ($p['teacher_name'] ?? '—')) ?></td>
                         <td class="fw-bold text-dark"><?= h(formatCurrency((float) ($p['amount'] ?? 0))) ?></td>

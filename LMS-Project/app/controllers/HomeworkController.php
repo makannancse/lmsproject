@@ -24,49 +24,95 @@ class HomeworkController
         $req = Pagination::fromRequest();
         $isAdmin = (($user['role'] ?? '') === 'admin');
 
-        if ($isAdmin) {
-            $total = (int) ($pdo->query('SELECT COUNT(*) FROM homeworks')->fetchColumn() ?: 0);
-            $stmt = $pdo->prepare(
-                'SELECT h.*, u.name AS teacher_name, u.timezone AS teacher_timezone,
-                        (SELECT COUNT(*) FROM homework_assigned_students hs WHERE hs.homework_id = h.id) AS assigned_count,
-                        (SELECT COUNT(*) FROM homework_submissions s WHERE s.homework_id = h.id) AS submitted_count
-                 FROM homeworks h
-                 INNER JOIN users u ON u.id = h.teacher_id
-                 ORDER BY h.created_at DESC
-                 LIMIT :limit OFFSET :offset'
-            );
-            $stmt->bindValue(':limit', $req['per_page'], \PDO::PARAM_INT);
-            $stmt->bindValue(':offset', $req['offset'], \PDO::PARAM_INT);
-            $stmt->execute();
-        } else {
-            $countStmt = $pdo->prepare('SELECT COUNT(*) FROM homeworks WHERE teacher_id = :tid');
-            $countStmt->execute(['tid' => (int) ($user['id'] ?? 0)]);
-            $total = (int) ($countStmt->fetchColumn() ?: 0);
-            $stmt = $pdo->prepare(
-                'SELECT h.*, u.name AS teacher_name, u.timezone AS teacher_timezone,
-                        (SELECT COUNT(*) FROM homework_assigned_students hs WHERE hs.homework_id = h.id) AS assigned_count,
-                        (SELECT COUNT(*) FROM homework_submissions s WHERE s.homework_id = h.id) AS submitted_count
-                 FROM homeworks h
-                 INNER JOIN users u ON u.id = h.teacher_id
-                 WHERE h.teacher_id = :tid
-                 ORDER BY h.created_at DESC
-                 LIMIT :limit OFFSET :offset'
-            );
-            $stmt->bindValue(':tid', (int) ($user['id'] ?? 0), \PDO::PARAM_INT);
-            $stmt->bindValue(':limit', $req['per_page'], \PDO::PARAM_INT);
-            $stmt->bindValue(':offset', $req['offset'], \PDO::PARAM_INT);
-            $stmt->execute();
+        $statusFilter = trim((string) ($_GET['status'] ?? ''));
+        $teacherIdFilter = (int) ($_GET['teacher_id'] ?? 0);
+        $dateFrom = trim((string) ($_GET['date_from'] ?? ''));
+        $dateTo = trim((string) ($_GET['date_to'] ?? ''));
+        $q = trim((string) ($_GET['q'] ?? ''));
+
+        $where = [];
+        $params = [];
+
+        if (!$isAdmin) {
+            $where[] = 'h.teacher_id = :tid';
+            $params['tid'] = (int) ($user['id'] ?? 0);
+        } elseif ($teacherIdFilter > 0) {
+            $where[] = 'h.teacher_id = :tid';
+            $params['tid'] = $teacherIdFilter;
         }
+
+        if (in_array($statusFilter, ['pending', 'completed'], true)) {
+            $where[] = 'h.status = :status';
+            $params['status'] = $statusFilter;
+        }
+
+        if ($dateFrom !== '') {
+            $where[] = 'DATE(COALESCE(h.due_date, h.created_at)) >= :date_from';
+            $params['date_from'] = $dateFrom;
+        }
+
+        if ($dateTo !== '') {
+            $where[] = 'DATE(COALESCE(h.due_date, h.created_at)) <= :date_to';
+            $params['date_to'] = $dateTo;
+        }
+
+        if ($q !== '') {
+            $where[] = '(h.title LIKE :q1 OR h.description LIKE :q2 OR u.name LIKE :q3)';
+            $params['q1'] = '%' . $q . '%';
+            $params['q2'] = '%' . $q . '%';
+            $params['q3'] = '%' . $q . '%';
+        }
+
+        $whereClause = !empty($where) ? (' WHERE ' . implode(' AND ', $where)) : '';
+
+        $countSql = 'SELECT COUNT(*) FROM homeworks h INNER JOIN users u ON u.id = h.teacher_id' . $whereClause;
+        $countStmt = $pdo->prepare($countSql);
+        $countStmt->execute($params);
+        $total = (int) ($countStmt->fetchColumn() ?: 0);
+
+        $sql = 'SELECT h.*, u.name AS teacher_name, u.timezone AS teacher_timezone,
+                (SELECT COUNT(*) FROM homework_assigned_students hs WHERE hs.homework_id = h.id) AS assigned_count,
+                (SELECT COUNT(*) FROM homework_submissions s WHERE s.homework_id = h.id) AS submitted_count
+         FROM homeworks h
+         INNER JOIN users u ON u.id = h.teacher_id'
+         . $whereClause . '
+         ORDER BY h.created_at DESC
+         LIMIT :limit OFFSET :offset';
+
+        $stmt = $pdo->prepare($sql);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+        $stmt->bindValue(':limit', $req['per_page'], \PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $req['offset'], \PDO::PARAM_INT);
+        $stmt->execute();
+
         $homeworks = $stmt->fetchAll() ?: [];
         $pagination = Pagination::meta($total, $req['page'], $req['per_page']);
+
+        $queryParams = array_filter([
+            'status' => $statusFilter !== '' ? $statusFilter : null,
+            'teacher_id' => $teacherIdFilter > 0 ? $teacherIdFilter : null,
+            'date_from' => $dateFrom !== '' ? $dateFrom : null,
+            'date_to' => $dateTo !== '' ? $dateTo : null,
+            'q' => $q !== '' ? $q : null,
+        ]);
 
         View::render('homework/teacher_index_modern', [
             'pageTitle' => 'Homework',
             'homeworks' => $homeworks,
             'attachmentsByHomework' => self::fetchAttachmentsByHomework($pdo, array_map(static fn(array $r): int => (int) $r['id'], $homeworks)),
             'isAdmin' => $isAdmin,
+            'filters' => [
+                'status' => $statusFilter,
+                'teacher_id' => $teacherIdFilter,
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo,
+                'q' => $q,
+            ],
+            'teachers' => $isAdmin ? self::fetchTeachersForAdmin($user) : [],
             'pagination' => $pagination,
-            'queryParams' => [],
+            'queryParams' => $queryParams,
         ]);
     }
 
@@ -490,23 +536,58 @@ class HomeworkController
         $pdo = Database::connection();
         $req = Pagination::fromRequest();
 
-        $countStmt = $pdo->prepare(
-            'SELECT COUNT(*)
+        $statusFilter = trim((string) ($_GET['status'] ?? ''));
+        $dateFrom = trim((string) ($_GET['date_from'] ?? ''));
+        $dateTo = trim((string) ($_GET['date_to'] ?? ''));
+        $q = trim((string) ($_GET['q'] ?? ''));
+
+        $where = ['hass.student_id = :sid'];
+        $params = ['sid' => $studentId];
+
+        if (in_array($statusFilter, ['pending', 'completed'], true)) {
+            $where[] = 'h.status = :status';
+            $params['status'] = $statusFilter;
+        }
+
+        if ($dateFrom !== '') {
+            $where[] = 'DATE(COALESCE(h.due_date, h.created_at)) >= :date_from';
+            $params['date_from'] = $dateFrom;
+        }
+
+        if ($dateTo !== '') {
+            $where[] = 'DATE(COALESCE(h.due_date, h.created_at)) <= :date_to';
+            $params['date_to'] = $dateTo;
+        }
+
+        if ($q !== '') {
+            $where[] = '(h.title LIKE :q1 OR h.description LIKE :q2 OR t.name LIKE :q3)';
+            $params['q1'] = '%' . $q . '%';
+            $params['q2'] = '%' . $q . '%';
+            $params['q3'] = '%' . $q . '%';
+        }
+
+        $whereClause = ' WHERE ' . implode(' AND ', $where);
+
+        $countSql = 'SELECT COUNT(*)
              FROM homeworks h
-             INNER JOIN homework_assigned_students hass ON hass.homework_id = h.id AND hass.student_id = :sid'
-        );
-        $countStmt->execute(['sid' => $studentId]);
+             INNER JOIN homework_assigned_students hass ON hass.homework_id = h.id
+             INNER JOIN users t ON t.id = h.teacher_id' . $whereClause;
+        $countStmt = $pdo->prepare($countSql);
+        $countStmt->execute($params);
         $total = (int) ($countStmt->fetchColumn() ?: 0);
 
-        $stmt = $pdo->prepare(
-            'SELECT h.*, t.name AS teacher_name, t.timezone AS teacher_timezone
+        $sql = 'SELECT h.*, t.name AS teacher_name, t.timezone AS teacher_timezone
              FROM homeworks h
-             INNER JOIN homework_assigned_students hass ON hass.homework_id = h.id AND hass.student_id = :sid
-             INNER JOIN users t ON t.id = h.teacher_id
+             INNER JOIN homework_assigned_students hass ON hass.homework_id = h.id
+             INNER JOIN users t ON t.id = h.teacher_id'
+             . $whereClause . '
              ORDER BY h.due_date IS NULL, h.due_date ASC, h.created_at DESC
-             LIMIT :limit OFFSET :offset'
-        );
-        $stmt->bindValue(':sid', $studentId, \PDO::PARAM_INT);
+             LIMIT :limit OFFSET :offset';
+
+        $stmt = $pdo->prepare($sql);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
         $stmt->bindValue(':limit', $req['per_page'], \PDO::PARAM_INT);
         $stmt->bindValue(':offset', $req['offset'], \PDO::PARAM_INT);
         $stmt->execute();
@@ -514,13 +595,26 @@ class HomeworkController
         $homeworkIds = array_map(static fn(array $r): int => (int) $r['id'], $items);
         $pagination = Pagination::meta($total, $req['page'], $req['per_page']);
 
+        $queryParams = array_filter([
+            'status' => $statusFilter !== '' ? $statusFilter : null,
+            'date_from' => $dateFrom !== '' ? $dateFrom : null,
+            'date_to' => $dateTo !== '' ? $dateTo : null,
+            'q' => $q !== '' ? $q : null,
+        ]);
+
         View::render('homework/student_index_modern', [
             'pageTitle' => 'My Homework',
             'items' => $items,
             'attachmentsByHomework' => self::fetchAttachmentsByHomework($pdo, $homeworkIds),
             'submissionsByHomework' => self::fetchStudentSubmissionRows($pdo, $studentId, $homeworkIds),
+            'filters' => [
+                'status' => $statusFilter,
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo,
+                'q' => $q,
+            ],
             'pagination' => $pagination,
-            'queryParams' => [],
+            'queryParams' => $queryParams,
         ]);
     }
 

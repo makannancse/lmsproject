@@ -43,14 +43,44 @@ $flashCode = (string) ($_GET['success'] ?? '');
     </div>
 </div>
 
-<form class="row g-2 mb-3" method="get" action="<?= h(path('admin/payments')) ?>">
-    <div class="col-md-4">
-        <select class="form-select form-select-sm" name="status" onchange="this.form.submit()">
-            <option value="">All statuses</option>
-            <?php foreach (['paid', 'pending', 'advance', 'partial'] as $s): ?>
-                <option value="<?= h($s) ?>" <?= $statusFilter === $s ? 'selected' : '' ?>><?= h(ucfirst($s)) ?></option>
-            <?php endforeach; ?>
-        </select>
+$filters = $filters ?? ['status' => '', 'teacher_id' => 0, 'q' => ''];
+$teachers = $teachers ?? [];
+?>
+
+<form class="card shadow-sm mb-3 no-app-loader" method="get" action="<?= h(path('admin/payments')) ?>">
+    <div class="card-body py-2">
+        <div class="row g-2 align-items-end">
+            <div class="col-12 col-sm-4 col-md-4">
+                <label for="q" class="form-label form-label-sm fw-semibold mb-1">Search</label>
+                <input type="text" name="q" id="q" class="form-control form-control-sm" placeholder="Teacher name or email..." value="<?= h((string) ($filters['q'] ?? '')) ?>">
+            </div>
+            <div class="col-6 col-sm-4 col-md-3">
+                <label for="teacher_id" class="form-label form-label-sm fw-semibold mb-1">Teacher</label>
+                <select name="teacher_id" id="teacher_id" class="form-select form-select-sm">
+                    <option value="">All Teachers</option>
+                    <?php foreach ($teachers as $tc): ?>
+                        <option value="<?= (int) $tc['id'] ?>" <?= (int) ($filters['teacher_id'] ?? 0) === (int) $tc['id'] ? 'selected' : '' ?>>
+                            <?= h((string) $tc['name']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-6 col-sm-4 col-md-3">
+                <label for="status" class="form-label form-label-sm fw-semibold mb-1">Status</label>
+                <select class="form-select form-select-sm" name="status" id="status">
+                    <option value="">All Statuses</option>
+                    <?php foreach (['paid', 'pending', 'advance', 'partial'] as $s): ?>
+                        <option value="<?= h($s) ?>" <?= ($filters['status'] ?? '') === $s ? 'selected' : '' ?>><?= h(ucfirst($s)) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-12 col-md-auto ms-auto d-flex gap-2">
+                <button type="submit" class="btn btn-sm btn-primary">
+                    <i class="fa-solid fa-magnifying-glass me-1"></i>Filter
+                </button>
+                <a href="<?= h(path('admin/payments')) ?>" class="btn btn-sm btn-outline-secondary">Reset</a>
+            </div>
+        </div>
     </div>
 </form>
 

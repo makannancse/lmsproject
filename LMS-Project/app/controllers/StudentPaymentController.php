@@ -20,8 +20,14 @@ class StudentPaymentController
             $status = '';
         }
 
+        $classStatus = trim((string) ($_GET['class_status'] ?? ''));
+        if (!in_array($classStatus, ['completed', 'pending'], true)) {
+            $classStatus = '';
+        }
+
         return [
             'status' => $status,
+            'class_status' => $classStatus,
             'student_id' => (int) ($_GET['student_id'] ?? 0),
             'teacher_id' => (int) ($_GET['teacher_id'] ?? 0),
             'date_from' => trim((string) ($_GET['date_from'] ?? '')),
@@ -43,6 +49,7 @@ class StudentPaymentController
 
         $queryParams = array_filter([
             'status' => $filters['status'] !== '' ? $filters['status'] : null,
+            'class_status' => $filters['class_status'] !== '' ? $filters['class_status'] : null,
             'student_id' => $filters['student_id'] > 0 ? $filters['student_id'] : null,
             'teacher_id' => $filters['teacher_id'] > 0 ? $filters['teacher_id'] : null,
             'date_from' => $filters['date_from'] !== '' ? $filters['date_from'] : null,

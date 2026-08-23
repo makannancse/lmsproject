@@ -655,28 +655,71 @@ class ClassController
         $role = (string) ($user['role'] ?? '');
         $userId = (int) ($user['id'] ?? 0);
         $pdo = Database::connection();
+
         $statusFilter = trim((string) ($_GET['status'] ?? ''));
+        $teacherIdFilter = (int) ($_GET['teacher_id'] ?? 0);
+        $dateFrom = trim((string) ($_GET['date_from'] ?? ''));
+        $dateTo = trim((string) ($_GET['date_to'] ?? ''));
+        $q = trim((string) ($_GET['q'] ?? ''));
+
         $allowed = ['scheduled', 'ongoing', 'completed', 'cancelled', 'rescheduled'];
         $sql = 'SELECT cs.*, u.name AS teacher_name
              FROM class_sessions cs
              INNER JOIN users u ON u.id = cs.teacher_id';
         $params = [];
         $where = [];
+
         if ($role === 'teacher') {
             $where[] = 'cs.teacher_id = :uid';
             $params['uid'] = $userId;
+        } elseif ($teacherIdFilter > 0) {
+            $where[] = 'cs.teacher_id = :tid';
+            $params['tid'] = $teacherIdFilter;
         }
+
         if (in_array($statusFilter, $allowed, true)) {
             $where[] = 'cs.status = :st';
             $params['st'] = $statusFilter;
         }
+
+        if ($dateFrom !== '' || $dateTo !== '') {
+            $userTz = resolveUserTimezone($user, APP_TIMEZONE);
+            $df = $dateFrom !== '' ? $dateFrom : '1970-01-01';
+            $dt = $dateTo !== '' ? $dateTo : '2099-12-31';
+            try {
+                $tz = new DateTimeZone($userTz);
+                $utcFrom = (new DateTimeImmutable($df . ' 00:00:00', $tz))->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H:i:s');
+                $utcTo = (new DateTimeImmutable($dt . ' 23:59:59', $tz))->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H:i:s');
+                $where[] = '(COALESCE(cs.scheduled_time_utc, cs.start_time_utc, cs.start_datetime) >= :utc_from AND COALESCE(cs.scheduled_time_utc, cs.start_time_utc, cs.start_datetime) <= :utc_to)';
+                $params['utc_from'] = $utcFrom;
+                $params['utc_to'] = $utcTo;
+            } catch (\Throwable $e) {
+                if ($dateFrom !== '') {
+                    $where[] = 'DATE(COALESCE(cs.scheduled_time_utc, cs.start_time_utc, cs.start_datetime)) >= :date_from';
+                    $params['date_from'] = $dateFrom;
+                }
+                if ($dateTo !== '') {
+                    $where[] = 'DATE(COALESCE(cs.scheduled_time_utc, cs.start_time_utc, cs.start_datetime)) <= :date_to';
+                    $params['date_to'] = $dateTo;
+                }
+            }
+        }
+
+        if ($q !== '') {
+            $where[] = '(cs.title LIKE :q1 OR u.name LIKE :q2)';
+            $params['q1'] = '%' . $q . '%';
+            $params['q2'] = '%' . $q . '%';
+        }
+
         if (!empty($where)) {
             $sql .= ' WHERE ' . implode(' AND ', $where);
         }
+
         $countSql = 'SELECT COUNT(*) FROM class_sessions cs INNER JOIN users u ON u.id = cs.teacher_id';
         if (!empty($where)) {
             $countSql .= ' WHERE ' . implode(' AND ', $where);
         }
+
         $countStmt = $pdo->prepare($countSql);
         $countStmt->execute($params);
         $total = (int) ($countStmt->fetchColumn() ?: 0);
@@ -693,12 +736,28 @@ class ClassController
         $classes = $stmt->fetchAll() ?: [];
         $pagination = Pagination::meta($total, $req['page'], $req['per_page']);
 
+        $queryParams = array_filter([
+            'status' => $statusFilter !== '' ? $statusFilter : null,
+            'teacher_id' => $teacherIdFilter > 0 ? $teacherIdFilter : null,
+            'date_from' => $dateFrom !== '' ? $dateFrom : null,
+            'date_to' => $dateTo !== '' ? $dateTo : null,
+            'q' => $q !== '' ? $q : null,
+        ]);
+
         View::render('classes/index', [
             'pageTitle' => 'Classes',
             'classes' => $classes,
             'statusFilter' => $statusFilter,
+            'filters' => [
+                'status' => $statusFilter,
+                'teacher_id' => $teacherIdFilter,
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo,
+                'q' => $q,
+            ],
+            'teachers' => $role === 'admin' ? User::allTeachers() : [],
             'pagination' => $pagination,
-            'queryParams' => array_filter(['status' => $statusFilter !== '' ? $statusFilter : null]),
+            'queryParams' => $queryParams,
         ]);
     }
 
@@ -873,30 +932,91 @@ class ClassController
     {
         Auth::requireRole(['admin']);
         $pdo = Database::connection();
-        $total = (int) ($pdo->query(
-            'SELECT COUNT(*) FROM class_sessions cs WHERE cs.status = "completed"'
-        )->fetchColumn() ?: 0);
+
+        $teacherIdFilter = (int) ($_GET['teacher_id'] ?? 0);
+        $dateFrom = trim((string) ($_GET['date_from'] ?? ''));
+        $dateTo = trim((string) ($_GET['date_to'] ?? ''));
+        $q = trim((string) ($_GET['q'] ?? ''));
+
+        $where = ['cs.status = "completed"'];
+        $params = [];
+
+        if ($teacherIdFilter > 0) {
+            $where[] = 'cs.teacher_id = :tid';
+            $params['tid'] = $teacherIdFilter;
+        }
+
+        if ($dateFrom !== '' || $dateTo !== '') {
+            $userTz = resolveUserTimezone(Auth::user() ?: null, APP_TIMEZONE);
+            $df = $dateFrom !== '' ? $dateFrom : '1970-01-01';
+            $dt = $dateTo !== '' ? $dateTo : '2099-12-31';
+            try {
+                $tz = new DateTimeZone($userTz);
+                $utcFrom = (new DateTimeImmutable($df . ' 00:00:00', $tz))->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H:i:s');
+                $utcTo = (new DateTimeImmutable($dt . ' 23:59:59', $tz))->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H:i:s');
+                $where[] = '(COALESCE(cs.scheduled_time_utc, cs.start_time_utc, cs.start_datetime) >= :utc_from AND COALESCE(cs.scheduled_time_utc, cs.start_time_utc, cs.start_datetime) <= :utc_to)';
+                $params['utc_from'] = $utcFrom;
+                $params['utc_to'] = $utcTo;
+            } catch (\Throwable $e) {
+                if ($dateFrom !== '') {
+                    $where[] = 'DATE(COALESCE(cs.scheduled_time_utc, cs.start_time_utc, cs.start_datetime)) >= :date_from';
+                    $params['date_from'] = $dateFrom;
+                }
+                if ($dateTo !== '') {
+                    $where[] = 'DATE(COALESCE(cs.scheduled_time_utc, cs.start_time_utc, cs.start_datetime)) <= :date_to';
+                    $params['date_to'] = $dateTo;
+                }
+            }
+        }
+
+        if ($q !== '') {
+            $where[] = '(cs.title LIKE :q1 OR u.name LIKE :q2)';
+            $params['q1'] = '%' . $q . '%';
+            $params['q2'] = '%' . $q . '%';
+        }
+
+        $countSql = 'SELECT COUNT(*) FROM class_sessions cs INNER JOIN users u ON u.id = cs.teacher_id WHERE ' . implode(' AND ', $where);
+        $countStmt = $pdo->prepare($countSql);
+        $countStmt->execute($params);
+        $total = (int) ($countStmt->fetchColumn() ?: 0);
 
         $req = Pagination::fromRequest();
-        $stmt = $pdo->prepare(
-            'SELECT cs.*, u.name AS teacher_name
+        $sql = 'SELECT cs.*, u.name AS teacher_name
              FROM class_sessions cs
              INNER JOIN users u ON u.id = cs.teacher_id
-             WHERE cs.status = "completed"
+             WHERE ' . implode(' AND ', $where) . '
              ORDER BY cs.completed_at DESC, cs.start_datetime DESC
-             LIMIT :limit OFFSET :offset'
-        );
+             LIMIT :limit OFFSET :offset';
+
+        $stmt = $pdo->prepare($sql);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
         $stmt->bindValue(':limit', $req['per_page'], \PDO::PARAM_INT);
         $stmt->bindValue(':offset', $req['offset'], \PDO::PARAM_INT);
         $stmt->execute();
         $classes = $stmt->fetchAll() ?: [];
         $pagination = Pagination::meta($total, $req['page'], $req['per_page']);
 
+        $queryParams = array_filter([
+            'teacher_id' => $teacherIdFilter > 0 ? $teacherIdFilter : null,
+            'date_from' => $dateFrom !== '' ? $dateFrom : null,
+            'date_to' => $dateTo !== '' ? $dateTo : null,
+            'q' => $q !== '' ? $q : null,
+        ]);
+
         View::render('classes/completed', [
             'pageTitle' => 'Completed Classes',
             'classes' => $classes,
+            'filters' => [
+                'teacher_id' => $teacherIdFilter,
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo,
+                'q' => $q,
+            ],
+            'teachers' => User::allTeachers(),
             'pagination' => $pagination,
-            'queryParams' => [],
+            'queryParams' => $queryParams,
         ]);
     }
 
@@ -1011,12 +1131,16 @@ class ClassController
         }
 
         $startRaw = trim((string) ($_POST['start_datetime'] ?? ''));
+        $newTitle = trim((string) ($_POST['title'] ?? ($class['title'] ?? '')));
         $durationMin = (int) ($_POST['duration_minutes'] ?? 0);
         $payoutAmount = parseInrAmount($_POST['payout_amount'] ?? $class['payout_amount']);
         $studentFee = parseInrAmount($_POST['student_fee'] ?? ($class['student_fee'] ?? 0));
         $meetingLink = trim((string) ($_POST['meeting_link'] ?? ''));
         $timezone = classScheduledTimezone($class, APP_TIMEZONE);
         $errors = [];
+        if ($newTitle === '' && (string) ($class['status'] ?? '') !== 'completed') {
+            $errors[] = 'Title cannot be empty.';
+        }
         if ($startRaw === '') {
             $errors[] = 'Start date/time is required.';
         }
@@ -1118,6 +1242,10 @@ class ClassController
                 $targetMeetingCode = self::extractGoogleMeetCode($targetMeetingLink);
             }
 
+            $targetTitle = ((string) ($targetClass['status'] ?? '') === 'completed')
+                ? (string) ($targetClass['title'] ?? 'Class')
+                : ($newTitle !== '' ? $newTitle : (string) ($targetClass['title'] ?? 'Class'));
+
             if (!empty($targetClass['google_event_id']) && !empty($targetClass['teacher_id'])) {
                 $meetingService->updateMeeting(
                     (int) $targetClass['teacher_id'],
@@ -1125,7 +1253,7 @@ class ClassController
                     utcToTimezoneIso8601($targetStartUtcValue, 'UTC'),
                     utcToTimezoneIso8601($targetEndUtcValue, 'UTC'),
                     'UTC',
-                    (string) ($targetClass['title'] ?? '')
+                    $targetTitle
                 );
             }
 
@@ -1138,7 +1266,8 @@ class ClassController
             $targetMeetingCodeChanged = $targetMeetingCode !== self::extractGoogleMeetCode((string) ($targetClass['meeting_link'] ?? ''));
             $upd = $pdo->prepare(
                 'UPDATE class_sessions
-                 SET start_datetime = :start_dt,
+                 SET title = :title,
+                     start_datetime = :start_dt,
                      scheduled_time_utc = :scheduled_time_utc,
                      start_time_utc = :start_time_utc,
                      end_datetime = :end_dt,
@@ -1165,6 +1294,7 @@ class ClassController
                  WHERE id = :id'
             );
             $upd->execute([
+                'title' => $targetTitle,
                 'start_dt' => $targetStartUtcValue,
                 'scheduled_time_utc' => $targetStartUtcValue,
                 'start_time_utc' => $targetStartUtcValue,
@@ -1183,6 +1313,15 @@ class ClassController
                     : 'pending',
                 'new_status' => $newStatus,
                 'id' => $targetId,
+            ]);
+
+            // Sync student_payments amount for pending payments on this class
+            $updPayments = $pdo->prepare(
+                'UPDATE student_payments SET amount = :amount WHERE class_id = :class_id AND status = "pending"'
+            );
+            $updPayments->execute([
+                'amount' => $studentFee,
+                'class_id' => $targetId,
             ]);
 
             if (!empty($targetClass['recurring_occurrence_id'])) {

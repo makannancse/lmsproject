@@ -5,7 +5,8 @@ use function htmlspecialchars as h;
 $base = appWebPath();
 $homeworks = $homeworks ?? [];
 $attachmentsByHomework = $attachmentsByHomework ?? [];
-$isAdmin = !empty($isAdmin);
+$filters = $filters ?? ['status' => '', 'teacher_id' => 0, 'date_from' => '', 'date_to' => '', 'q' => ''];
+$teachers = $teachers ?? [];
 ?>
 
 <div class="row g-3">
@@ -17,7 +18,54 @@ $isAdmin = !empty($isAdmin);
         <a href="<?= h($base . '/teacher/homework/create') ?>" class="btn btn-primary btn-sm">Assign Homework</a>
     </div>
 
+    <!-- Filter Bar -->
     <div class="col-12">
+        <div class="card shadow-sm mb-1">
+            <div class="card-body py-2">
+                <form method="get" action="<?= h($base . '/teacher/homework') ?>" class="row g-2 align-items-end no-app-loader">
+                    <div class="col-12 col-sm-4 col-md-3">
+                        <label for="q" class="form-label form-label-sm fw-semibold mb-1">Search</label>
+                        <input type="text" name="q" id="q" class="form-control form-control-sm" placeholder="Title, description, teacher..." value="<?= h((string) ($filters['q'] ?? '')) ?>">
+                    </div>
+                    <div class="col-6 col-sm-3 col-md-2">
+                        <label for="status" class="form-label form-label-sm fw-semibold mb-1">Status</label>
+                        <select name="status" id="status" class="form-select form-select-sm">
+                            <option value="" <?= ($filters['status'] ?? '') === '' ? 'selected' : '' ?>>All Statuses</option>
+                            <option value="pending" <?= ($filters['status'] ?? '') === 'pending' ? 'selected' : '' ?>>Pending</option>
+                            <option value="completed" <?= ($filters['status'] ?? '') === 'completed' ? 'selected' : '' ?>>Completed</option>
+                        </select>
+                    </div>
+                    <?php if ($isAdmin && !empty($teachers)): ?>
+                        <div class="col-6 col-sm-3 col-md-2">
+                            <label for="teacher_id" class="form-label form-label-sm fw-semibold mb-1">Teacher</label>
+                            <select name="teacher_id" id="teacher_id" class="form-select form-select-sm">
+                                <option value="">All Teachers</option>
+                                <?php foreach ($teachers as $tc): ?>
+                                    <option value="<?= (int) $tc['id'] ?>" <?= (int) ($filters['teacher_id'] ?? 0) === (int) $tc['id'] ? 'selected' : '' ?>>
+                                        <?= h((string) $tc['name']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    <?php endif; ?>
+                    <div class="col-6 col-sm-3 col-md-2">
+                        <label for="date_from" class="form-label form-label-sm fw-semibold mb-1">From Date</label>
+                        <input type="date" name="date_from" id="date_from" class="form-control form-control-sm" value="<?= h((string) ($filters['date_from'] ?? '')) ?>">
+                    </div>
+                    <div class="col-6 col-sm-3 col-md-2">
+                        <label for="date_to" class="form-label form-label-sm fw-semibold mb-1">To Date</label>
+                        <input type="date" name="date_to" id="date_to" class="form-control form-control-sm" value="<?= h((string) ($filters['date_to'] ?? '')) ?>">
+                    </div>
+                    <div class="col-12 col-md-auto ms-auto d-flex gap-2">
+                        <button type="submit" class="btn btn-sm btn-primary">
+                            <i class="fa-solid fa-magnifying-glass me-1"></i>Filter
+                        </button>
+                        <a href="<?= h($base . '/teacher/homework') ?>" class="btn btn-sm btn-outline-secondary">Reset</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
         <div class="card shadow-sm">
             <div class="card-body p-0">
                 <div class="table-responsive">

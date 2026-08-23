@@ -492,12 +492,15 @@ class AdminController
         Auth::requireRole(['admin']);
 
         $statusFilter = (string) ($_GET['status'] ?? '');
+        $teacherIdFilter = (int) ($_GET['teacher_id'] ?? 0);
+        $q = trim((string) ($_GET['q'] ?? ''));
+
         $teacherRows = Database::connection()->query('SELECT id FROM users WHERE role = "teacher"')->fetchAll() ?: [];
         foreach ($teacherRows as $tr) {
             refreshTeacherPaymentLogs((int) ($tr['id'] ?? 0));
         }
 
-        $rows = getAllTeacherPayoutSummaries($statusFilter);
+        $rows = getAllTeacherPayoutSummaries($statusFilter, $teacherIdFilter, $q);
         $req = Pagination::fromRequest();
         $total = count($rows);
         $pagedRows = array_slice($rows, $req['offset'], $req['per_page']);
@@ -511,15 +514,27 @@ class AdminController
             $totalPending += (float) ($row['pending_amount'] ?? 0);
         }
 
+        $queryParams = array_filter([
+            'status' => $statusFilter !== '' ? $statusFilter : null,
+            'teacher_id' => $teacherIdFilter > 0 ? $teacherIdFilter : null,
+            'q' => $q !== '' ? $q : null,
+        ]);
+
         View::render('admin/payments/index', [
             'pageTitle' => 'Teacher Payments',
             'rows' => $pagedRows,
             'statusFilter' => $statusFilter,
+            'filters' => [
+                'status' => $statusFilter,
+                'teacher_id' => $teacherIdFilter,
+                'q' => $q,
+            ],
+            'teachers' => User::allTeachers(),
             'totalPayout' => $totalPayout,
             'totalPaid' => $totalPaid,
             'totalPending' => $totalPending,
             'pagination' => $pagination,
-            'queryParams' => array_filter(['status' => $statusFilter !== '' ? $statusFilter : null]),
+            'queryParams' => $queryParams,
         ]);
     }
 

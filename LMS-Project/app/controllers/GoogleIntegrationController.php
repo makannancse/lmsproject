@@ -112,6 +112,9 @@ class GoogleIntegrationController
             return;
         }
 
+        $studentFee = parseInrAmount($payload['student_fee'] ?? 0);
+        $payoutAmount = parseInrAmount($payload['payout_amount'] ?? 0);
+
         try {
             $startUtc = localToUtcString($startTime, $timezone);
             $endUtc = localToUtcString($endTime, $timezone);
@@ -142,7 +145,9 @@ class GoogleIntegrationController
                 $meeting['event_id'],
                 (string) ($meeting['organizer_email'] ?? ($account['google_email'] ?? '')),
                 is_array($spaceMeta) ? (string) ($spaceMeta['name'] ?? '') : '',
-                $studentIds
+                $studentIds,
+                $studentFee,
+                $payoutAmount
             );
             $mail = ClassController::sendClassNotification($classId);
 
@@ -170,7 +175,9 @@ class GoogleIntegrationController
         string $eventId,
         string $teacherGoogleEmail,
         string $googleMeetSpaceName = '',
-        array $studentIds = []
+        array $studentIds = [],
+        float $studentFee = 0.00,
+        float $payoutAmount = 0.00
     ): int {
         $start = new DateTimeImmutable($startTime, new DateTimeZone($timezone));
         $end = new DateTimeImmutable($endTime, new DateTimeZone($timezone));
@@ -186,7 +193,7 @@ class GoogleIntegrationController
                 'INSERT INTO class_sessions
                     (teacher_id, title, start_datetime, scheduled_time_utc, start_time_utc, end_datetime, end_time_utc, timezone, scheduled_timezone, meeting_link, google_event_id, teacher_google_email, google_meet_space_name, google_meeting_code, meeting_live_status, status, recording_enabled, payout_amount, student_fee)
                  VALUES
-                    (:teacher_id, :title, :start_datetime, :scheduled_time_utc, :start_time_utc, :end_datetime, :end_time_utc, :timezone, :scheduled_timezone, :meeting_link, :google_event_id, :teacher_google_email, :google_meet_space_name, :google_meeting_code, "pending", "scheduled", :recording_enabled, 0.00, 0.00)'
+                    (:teacher_id, :title, :start_datetime, :scheduled_time_utc, :start_time_utc, :end_datetime, :end_time_utc, :timezone, :scheduled_timezone, :meeting_link, :google_event_id, :teacher_google_email, :google_meet_space_name, :google_meeting_code, "pending", "scheduled", :recording_enabled, :payout_amount, :student_fee)'
             );
             $stmt->execute([
                 'teacher_id' => $teacherId,
@@ -204,6 +211,8 @@ class GoogleIntegrationController
                 'google_meet_space_name' => $googleMeetSpaceName !== '' ? $googleMeetSpaceName : null,
                 'google_meeting_code' => $googleMeetingCode,
                 'recording_enabled' => $recordingEnabledInsert,
+                'payout_amount' => $payoutAmount,
+                'student_fee' => $studentFee,
             ]);
             $classId = (int) $pdo->lastInsertId();
 
@@ -217,7 +226,7 @@ class GoogleIntegrationController
                         'class_id' => $classId,
                         'student_id' => $studentId,
                     ]);
-                    StudentPayment::createPendingForEnrollment($classId, $studentId, 0.00);
+                    StudentPayment::createPendingForEnrollment($classId, $studentId, $studentFee);
                 }
             }
 

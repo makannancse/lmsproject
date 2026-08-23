@@ -58,11 +58,24 @@ function getTeacherPayoutSummary(int $teacherId): array
     ];
 }
 
-function getAllTeacherPayoutSummaries(string $statusFilter = ''): array
+function getAllTeacherPayoutSummaries(string $statusFilter = '', int $teacherIdFilter = 0, string $q = ''): array
 {
     $pdo = db();
-    $stmt = $pdo->query(
-        'SELECT
+    $where = ['u.role = "teacher"'];
+    $params = [];
+
+    if ($teacherIdFilter > 0) {
+        $where[] = 'u.id = :tid';
+        $params['tid'] = $teacherIdFilter;
+    }
+
+    if (trim($q) !== '') {
+        $where[] = '(u.name LIKE :q1 OR u.email LIKE :q2)';
+        $params['q1'] = '%' . trim($q) . '%';
+        $params['q2'] = '%' . trim($q) . '%';
+    }
+
+    $sql = 'SELECT
             u.id AS teacher_id,
             u.name AS teacher_name,
             u.email AS teacher_email,
@@ -81,9 +94,11 @@ function getAllTeacherPayoutSummaries(string $statusFilter = ''): array
             WHERE status = "paid"
             GROUP BY teacher_id
          ) p ON p.teacher_id = u.id
-         WHERE u.role = "teacher"
-         ORDER BY u.name'
-    );
+         WHERE ' . implode(' AND ', $where) . '
+         ORDER BY u.name';
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
     $rows = $stmt->fetchAll() ?: [];
     $items = [];
     foreach ($rows as $row) {

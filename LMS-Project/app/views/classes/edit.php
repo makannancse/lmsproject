@@ -44,8 +44,13 @@ if (!empty($class['start_datetime'])) {
                     <input type="hidden" name="class_id" value="<?= (int) ($class['id'] ?? 0) ?>">
 
                     <div class="mb-3">
-                        <label class="form-label">Title</label>
-                        <input type="text" class="form-control" value="<?= h((string) ($class['title'] ?? '')) ?>" disabled>
+                        <label class="form-label" for="title">Title</label>
+                        <?php if ((string) ($class['status'] ?? '') === 'completed'): ?>
+                            <input type="text" class="form-control" value="<?= h((string) ($class['title'] ?? '')) ?>" disabled>
+                            <div class="form-text text-muted">Title cannot be edited for completed classes.</div>
+                        <?php else: ?>
+                            <input type="text" class="form-control" name="title" id="title" value="<?= h((string) ($class['title'] ?? '')) ?>" required>
+                        <?php endif; ?>
                     </div>
 
                     <div class="row">
