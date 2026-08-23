@@ -103,6 +103,7 @@ $router->get('/admin/payments/details', function (): void {
     require_once dirname(__DIR__) . '/payments/payment_details.php';
 });
 $router->get('/admin/student-payments', [StudentPaymentController::class, 'adminIndex']);
+$router->get('/admin/student-payments/export-pdf', [StudentPaymentController::class, 'exportPdf']);
 $router->post('/admin/student-payments/mark-paid', [StudentPaymentController::class, 'markPaid']);
 $router->get('/student/payments', [StudentPaymentController::class, 'studentIndex']);
 $router->get('/admin/recordings', [RecordingController::class, 'adminIndex']);

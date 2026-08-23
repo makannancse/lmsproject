@@ -72,6 +72,16 @@ class ClassController
             return;
         }
 
+        if ($role === 'student' && !isJoinAllowedForStudent($class)) {
+            View::render('classes/student_waiting', [
+                'pageTitle' => 'Class Join Available Soon',
+                'class' => $class,
+                'displayTimezone' => $displayTimezone,
+                'earlyNotice' => 'Class join link will be available 3 hours before the scheduled class time.',
+            ]);
+            return;
+        }
+
         try {
             $liveService = new GoogleMeetLiveTrackingService();
             $liveService->syncClass($classId, 'student_join_check');

@@ -229,7 +229,7 @@ class CalendarController
                 'student_names' => $students,
                 'description' => (string) ($row['description'] ?? ''),
                 'tooltip' => $tooltip,
-                'join_student' => $trackJoin,
+                'join_student' => ($viewerRole === 'student' && !isJoinAllowedForStudent($row)) ? '' : $trackJoin,
                 'join_teacher' => $trackJoin,
                 'join_track' => $trackJoin,
                 'direct_meet_link' => $directMeetLink,

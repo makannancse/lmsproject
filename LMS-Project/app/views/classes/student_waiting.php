@@ -38,9 +38,15 @@ $endLabel = formatUtcForTimezone(classEndUtcValue($class), $displayTimezone, 'd 
                     </div>
                 </div>
 
-                <div class="alert alert-info mb-0">
-                    LearnWise checks Google Meet for the teacher host join in real time. Once the teacher is in the meeting, you will be redirected automatically. Use the same Google account email that is registered in this LMS.
-                </div>
+                <?php if (!empty($earlyNotice)): ?>
+                    <div class="alert alert-warning mb-0">
+                        <i class="fa-solid fa-clock me-2"></i><?= h($earlyNotice) ?>
+                    </div>
+                <?php else: ?>
+                    <div class="alert alert-info mb-0">
+                        LearnWise checks Google Meet for the teacher host join in real time. Once the teacher is in the meeting, you will be redirected automatically. Use the same Google account email that is registered in this LMS.
+                    </div>
+                <?php endif; ?>
 
                 <div class="d-flex flex-wrap gap-2">
                     <a href="<?= h($base . '/join-class?class_id=' . (int) ($class['id'] ?? 0)) ?>" class="btn btn-primary">Check Again</a>

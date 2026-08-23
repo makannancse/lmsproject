@@ -32,9 +32,16 @@ class StudentPayment
         $stmt->execute(['id' => $paymentId]);
     }
 
-    public static function listForAdmin(?string $status = null, ?int $studentId = null, ?int $limit = null, ?int $offset = null): array
+    /**
+     * @param array<string, mixed>|string|null $filtersOrStatus
+     */
+    public static function listForAdmin(mixed $filtersOrStatus = null, ?int $studentId = null, ?int $limit = null, ?int $offset = null): array
     {
-        [$sql, $params] = self::buildAdminListQuery($status, $studentId);
+        $filters = is_array($filtersOrStatus)
+            ? $filtersOrStatus
+            : array_filter(['status' => $filtersOrStatus, 'student_id' => $studentId]);
+
+        [$sql, $params] = self::buildAdminListQuery($filters);
         $sql .= ' ORDER BY sp.created_at DESC, sp.id DESC';
         if ($limit !== null) {
             $sql .= ' LIMIT :limit OFFSET :offset';
@@ -54,9 +61,16 @@ class StudentPayment
         return $stmt->fetchAll() ?: [];
     }
 
-    public static function countForAdmin(?string $status = null, ?int $studentId = null): int
+    /**
+     * @param array<string, mixed>|string|null $filtersOrStatus
+     */
+    public static function countForAdmin(mixed $filtersOrStatus = null, ?int $studentId = null): int
     {
-        [$sql, $params] = self::buildAdminListQuery($status, $studentId, true);
+        $filters = is_array($filtersOrStatus)
+            ? $filtersOrStatus
+            : array_filter(['status' => $filtersOrStatus, 'student_id' => $studentId]);
+
+        [$sql, $params] = self::buildAdminListQuery($filters, 'count');
         $pdo = Database::connection();
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
@@ -65,28 +79,99 @@ class StudentPayment
     }
 
     /**
+     * Calculate total, pending, and paid amounts for the current filter scope.
+     *
+     * @param array<string, mixed> $filters
+     * @return array{total_amount: float, pending_amount: float, paid_amount: float, total_count: int}
+     */
+    public static function sumForAdmin(array $filters = []): array
+    {
+        [$sql, $params] = self::buildAdminListQuery($filters, 'sum');
+        $pdo = Database::connection();
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC) ?: [];
+
+        return [
+            'total_amount' => (float) ($row['total_amount'] ?? 0),
+            'pending_amount' => (float) ($row['pending_amount'] ?? 0),
+            'paid_amount' => (float) ($row['paid_amount'] ?? 0),
+            'total_count' => (int) ($row['total_count'] ?? 0),
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $filters
      * @return array{0: string, 1: array<string, scalar>}
      */
-    private static function buildAdminListQuery(?string $status, ?int $studentId, bool $countOnly = false): array
+    private static function buildAdminListQuery(array $filters, string $mode = 'select'): array
     {
-        $sql = $countOnly
-            ? 'SELECT COUNT(*) FROM student_payments sp INNER JOIN users s ON s.id = sp.student_id INNER JOIN class_sessions cs ON cs.id = sp.class_id'
-            : 'SELECT sp.*, s.name AS student_name, s.email AS student_email, cs.title AS class_title, cs.start_datetime
-                FROM student_payments sp
-                INNER JOIN users s ON s.id = sp.student_id
-                INNER JOIN class_sessions cs ON cs.id = sp.class_id';
+        if ($mode === 'count') {
+            $select = 'SELECT COUNT(*)';
+        } elseif ($mode === 'sum') {
+            $select = 'SELECT 
+                SUM(sp.amount) AS total_amount,
+                SUM(CASE WHEN sp.status = "pending" THEN sp.amount ELSE 0 END) AS pending_amount,
+                SUM(CASE WHEN sp.status = "paid" THEN sp.amount ELSE 0 END) AS paid_amount,
+                COUNT(*) AS total_count';
+        } else {
+            $select = 'SELECT sp.*, 
+                s.name AS student_name, s.email AS student_email,
+                st.parent_email,
+                cs.title AS class_title, cs.start_datetime, cs.start_time_utc, cs.timezone, cs.scheduled_timezone,
+                t.name AS teacher_name';
+        }
+
+        $sql = $select . '
+            FROM student_payments sp
+            INNER JOIN users s ON s.id = sp.student_id
+            LEFT JOIN students st ON st.user_id = s.id
+            INNER JOIN class_sessions cs ON cs.id = sp.class_id
+            LEFT JOIN users t ON t.id = cs.teacher_id';
+
         $where = [];
         $params = [];
 
-        if ($status !== null && in_array($status, ['pending', 'paid'], true)) {
+        $status = trim((string) ($filters['status'] ?? ''));
+        if ($status !== '' && in_array($status, ['pending', 'paid'], true)) {
             $where[] = 'sp.status = :status';
             $params['status'] = $status;
         }
-        if ($studentId !== null && $studentId > 0) {
+
+        $studentId = (int) ($filters['student_id'] ?? 0);
+        if ($studentId > 0) {
             $where[] = 'sp.student_id = :student_id';
             $params['student_id'] = $studentId;
         }
-        if (!empty($where)) {
+
+        $teacherId = (int) ($filters['teacher_id'] ?? 0);
+        if ($teacherId > 0) {
+            $where[] = 'cs.teacher_id = :teacher_id';
+            $params['teacher_id'] = $teacherId;
+        }
+
+        $dateFrom = trim((string) ($filters['date_from'] ?? ''));
+        if ($dateFrom !== '') {
+            $where[] = 'DATE(COALESCE(cs.start_time_utc, cs.start_datetime, sp.created_at)) >= :date_from';
+            $params['date_from'] = $dateFrom;
+        }
+
+        $dateTo = trim((string) ($filters['date_to'] ?? ''));
+        if ($dateTo !== '') {
+            $where[] = 'DATE(COALESCE(cs.start_time_utc, cs.start_datetime, sp.created_at)) <= :date_to';
+            $params['date_to'] = $dateTo;
+        }
+
+        $query = trim((string) ($filters['q'] ?? ''));
+        if ($query !== '') {
+            $where[] = '(cs.title LIKE :q1 OR s.name LIKE :q2 OR s.email LIKE :q3 OR st.parent_email LIKE :q4)';
+            $params['q1'] = '%' . $query . '%';
+            $params['q2'] = '%' . $query . '%';
+            $params['q3'] = '%' . $query . '%';
+            $params['q4'] = '%' . $query . '%';
+        }
+
+        if ($where !== []) {
             $sql .= ' WHERE ' . implode(' AND ', $where);
         }
 

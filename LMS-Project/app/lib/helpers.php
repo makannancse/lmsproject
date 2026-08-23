@@ -1242,3 +1242,41 @@ if (!function_exists('renderPagination')) {
         require dirname(__DIR__) . '/views/partials/pagination.php';
     }
 }
+
+if (!function_exists('isJoinAllowedForStudent')) {
+    /**
+     * Checks whether a student is allowed to see/click the Join Class button.
+     * Allowed starting 3 hours (10,800 seconds) before the scheduled start time up until class completion.
+     *
+     * @param array<string, mixed>|null $classRow
+     */
+    function isJoinAllowedForStudent(?array $classRow): bool
+    {
+        if (empty($classRow)) {
+            return false;
+        }
+
+        $status = strtolower(trim((string) ($classRow['status'] ?? 'scheduled')));
+        if ($status === 'completed' || $status === 'cancelled') {
+            return false;
+        }
+        if ($status === 'ongoing') {
+            return true;
+        }
+
+        $startUtc = classStartUtcValue($classRow);
+        if ($startUtc === null || $startUtc === '') {
+            return true;
+        }
+
+        $startTs = strtotime($startUtc . ' UTC');
+        if ($startTs === false) {
+            return true;
+        }
+
+        $nowTs = time();
+        $allowedStartTs = $startTs - (3 * 3600); // 3 hours (10,800 seconds) before start time
+
+        return $nowTs >= $allowedStartTs;
+    }
+}

@@ -126,9 +126,9 @@ class GoogleDriveRecordingService
             throw new RuntimeException('Google Drive search failed: ' . $queryErrors[0]);
         }
 
-        // Require a minimum confidence score to prevent weak mis-assignments.
+        // Require a minimum confidence score of 25 to prevent weak mis-assignments.
         $topCandidate = $candidates[0] ?? null;
-        $matched = ($topCandidate !== null && (int) ($topCandidate['score'] ?? 0) >= 10) ? $topCandidate : null;
+        $matched = ($topCandidate !== null && (int) ($topCandidate['score'] ?? 0) >= 25) ? $topCandidate : null;
 
         return [
             'recording' => $matched['recording'] ?? null,
@@ -444,10 +444,20 @@ class GoogleDriveRecordingService
             }
         }
 
+        $titleWords = preg_split('/[^\w]+/', strtolower((string) ($classRow['title'] ?? '')), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $distinctTitleWords = array_values(array_filter($titleWords, static fn($w) => strlen($w) >= 3 && !in_array($w, self::$genericStopWords, true)));
+
         $titleHits = $this->countTitleWordHits((string) ($classRow['title'] ?? ''), $nameLower);
         if ($titleHits > 0) {
-            $score += min(20, $titleHits * 5);
+            $score += min(30, $titleHits * 15);
             $signals[] = 'title_hits:' . $titleHits;
+        } elseif (!empty($distinctTitleWords)) {
+            // Class title has specific distinct words (e.g. "talia", "884"), but NONE appear in this candidate filename.
+            // Reject unless there is an exact meeting code match.
+            $hasCodeMatch = $targetCode !== null && (str_contains($nameLower, $targetCode) || str_contains($nameLower, str_replace('-', '', $targetCode)));
+            if (!$hasCodeMatch) {
+                return null;
+            }
         }
 
         $timeDeltaSeconds = null;
@@ -574,6 +584,14 @@ class GoogleDriveRecordingService
         }
     }
 
+    private static array $genericStopWords = [
+        'class', 'classes', 'session', 'sessions', 'lesson', 'lessons', 'test', 'demo',
+        'meeting', 'online', 'grade', 'course', 'batch', 'regular', 'english', 'maths',
+        'math', 'science', 'physics', 'chemistry', 'biology', 'tamil', 'hindi', 'french',
+        'spanish', 'group', 'private', 'student', 'teacher', 'lms', 'learnwise', 'recorded',
+        'recording', 'appt', 'appointment', 'scheduled', 'rescheduled', 'recurrent', 'recurring'
+    ];
+
     private function countTitleWordHits(string $title, string $haystackLower): int
     {
         $title = strtolower(trim($title));
@@ -581,14 +599,13 @@ class GoogleDriveRecordingService
             return 0;
         }
 
-        if (str_contains($haystackLower, $title)) {
-            return max(1, count(preg_split('/\s+/', $title, -1, PREG_SPLIT_NO_EMPTY) ?: []));
-        }
-
         $hits = 0;
-        $words = preg_split('/\s+/', $title, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $words = preg_split('/[^\w]+/', $title, -1, PREG_SPLIT_NO_EMPTY) ?: [];
         foreach ($words as $word) {
             if (strlen($word) < 3) {
+                continue;
+            }
+            if (in_array($word, self::$genericStopWords, true)) {
                 continue;
             }
             if (str_contains($haystackLower, $word)) {

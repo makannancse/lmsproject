@@ -78,7 +78,7 @@ $primaryTeacher = $assignedTeachers[0] ?? null;
                                     <div class="small mt-2">Teacher: <?= h((string) ($nextClass['teacher_name'] ?? '')) ?></div>
                                     <?= teacherLateJoinNoticeHtml($nextClass, '', 'student') ?>
                                 </div>
-                                <?php if (!empty($nextClass['meeting_link'])): ?>
+                                <?php if (!empty($nextClass['meeting_link']) && isJoinAllowedForStudent($nextClass)): ?>
                                     <a href="<?= h(path('join-class?class_id=' . (int) ($nextClass['id'] ?? 0))) ?>" class="btn btn-student-primary btn-lg px-4" target="_blank" rel="noopener">
                                         <i class="fa-solid fa-play me-2"></i>Join Class
                                     </a>
