@@ -6,6 +6,8 @@ $base = appWebPath();
 $rows = $rows ?? [];
 $statusFilter = $statusFilter ?? '';
 $flashCode = (string) ($_GET['success'] ?? '');
+$filters = $filters ?? ['status' => '', 'teacher_id' => 0, 'q' => ''];
+$teachers = $teachers ?? [];
 ?>
 
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
@@ -42,10 +44,6 @@ $flashCode = (string) ($_GET['success'] ?? '');
         </div>
     </div>
 </div>
-
-$filters = $filters ?? ['status' => '', 'teacher_id' => 0, 'q' => ''];
-$teachers = $teachers ?? [];
-?>
 
 <form class="card shadow-sm mb-3 no-app-loader" method="get" action="<?= h(path('admin/payments')) ?>">
     <div class="card-body py-2">
