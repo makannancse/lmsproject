@@ -409,8 +409,8 @@ class MeetingTrackingService
             $recording = $search['recording'] ?? null;
             $driveDebug = (array) ($search['debug'] ?? []);
             if ($recording === null) {
-                if ($this->hasRecordingSyncTimedOut($class)) {
-                    $message = 'Recording not found in Google Drive within 60 minutes of class completion.';
+                if (!$force && $this->hasRecordingSyncTimedOut($class, 1440)) {
+                    $message = 'Recording not found in Google Drive within 24 hours of class completion.';
                     $this->setClassRecordingSyncState($classId, 'failed', $message);
                     MeetingTrackingLog::write('recording_sync_failed_timeout', [
                         'class_id' => $classId,
@@ -429,7 +429,9 @@ class MeetingTrackingService
                     return ['status' => 'failed', 'message' => $message, 'recording' => null];
                 }
 
-                $message = 'Recording processing in progress';
+                $message = $force
+                    ? 'Recording not yet found in Google Drive. It may still be processing by Google or not recorded.'
+                    : 'Recording processing in progress';
                 $this->setClassRecordingSyncState($classId, 'processing', $message);
                 MeetingTrackingLog::write('recording_sync_pending', [
                     'class_id' => $classId,
@@ -922,7 +924,7 @@ class MeetingTrackingService
     /**
      * @param array<string, mixed> $class
      */
-    private function hasRecordingSyncTimedOut(array $class, int $graceMinutes = 60): bool
+    private function hasRecordingSyncTimedOut(array $class, int $graceMinutes = 1440): bool
     {
         $completedAt = $this->resolveRecordingCompletionReferenceUtc($class);
         $completedTs = $this->parseUtcTimestamp($completedAt);

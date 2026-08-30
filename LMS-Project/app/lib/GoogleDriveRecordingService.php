@@ -49,9 +49,9 @@ class GoogleDriveRecordingService
             'end_datetime',
         ]);
 
-        // ±90 minutes: narrower window reduces cross-class recording collisions.
-        $windowStart = $this->offsetRfc3339($meetingStartUtc ?? $meetingEndUtc ?? 'now', '-90 minutes');
-        $windowEnd = $this->offsetRfc3339($meetingEndUtc ?? $meetingStartUtc ?? 'now', '+90 minutes');
+        // Window around meeting time (allows late-rendered Google Drive videos to be discovered)
+        $windowStart = $this->offsetRfc3339($meetingStartUtc ?? $meetingEndUtc ?? 'now', '-4 hours');
+        $windowEnd = $this->offsetRfc3339($meetingEndUtc ?? $meetingStartUtc ?? 'now', '+24 hours');
         $meetingStartTs = $this->parseTimestamp($meetingStartUtc);
         $meetingEndTs = $this->parseTimestamp($meetingEndUtc);
         $windowStartTs = $this->parseTimestamp($windowStart);

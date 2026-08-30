@@ -96,7 +96,7 @@ $dueTimezoneValue = normalizeTimezone((string) ($old['due_timezone'] ?? (Auth::u
                     <div class="mb-3">
                         <label class="form-label" for="attachments">Attachments (multiple)</label>
                         <input type="file" class="form-control" name="attachments[]" id="attachments" multiple>
-                        <div class="form-text">Allowed: PDF, DOC, DOCX, TXT, JPG, PNG (max 5MB each)</div>
+                        <div class="form-text">Allowed: PDF, DOC, DOCX, TXT, JPG, PNG (max 50MB each)</div>
                     </div>
 
                     <button type="submit" class="btn btn-primary" <?= $students === [] ? 'disabled' : '' ?>>Save and notify students</button>

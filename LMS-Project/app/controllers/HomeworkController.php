@@ -11,7 +11,7 @@ require_once dirname(__DIR__) . '/lib/Pagination.php';
 
 class HomeworkController
 {
-    private const UPLOAD_MAX_BYTES = 5 * 1024 * 1024;
+    private const UPLOAD_MAX_BYTES = 50 * 1024 * 1024;
     private const ALLOWED_EXT = ['pdf', 'doc', 'docx', 'txt', 'png', 'jpg', 'jpeg'];
     private const HOMEWORK_UPLOAD_SUBDIR = 'uploads/homework';
     private const SUBMISSION_UPLOAD_SUBDIR = 'uploads/homework_submissions';
@@ -1031,7 +1031,7 @@ class HomeworkController
             }
             $size = (int) ($sizes[$i] ?? 0);
             if ($size <= 0 || $size > self::UPLOAD_MAX_BYTES) {
-                $result['errors'][] = ucfirst($label) . ': ' . $name . ' exceeds max 5MB.';
+                $result['errors'][] = ucfirst($label) . ': ' . $name . ' exceeds max 50MB.';
                 continue;
             }
             $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));

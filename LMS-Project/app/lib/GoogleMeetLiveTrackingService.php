@@ -753,6 +753,22 @@ class GoogleMeetLiveTrackingService
     private function resolveConferenceRecord(int $teacherId, array $class, array $space): ?array
     {
         $meet = $this->meetServiceForTeacher($teacherId);
+
+        // 1. Always prioritize the active conference if Google Meet indicates a conference is live right now
+        $activeConferenceRecord = trim((string) ($space['active_conference_record'] ?? ''));
+        if ($activeConferenceRecord !== '') {
+            try {
+                $record = $meet->conferenceRecords->get($activeConferenceRecord);
+                $array = $this->conferenceRecordToArray($record);
+                if ($array !== null) {
+                    return $array;
+                }
+            } catch (\Throwable $ignored) {
+                // Fall through to stored/list lookup.
+            }
+        }
+
+        // 2. Check stored conference ID if not stale
         $storedConferenceId = trim((string) ($class['google_conference_id'] ?? ''));
         if ($storedConferenceId !== '') {
             try {
@@ -770,16 +786,6 @@ class GoogleMeetLiveTrackingService
                 ]);
             } catch (\Throwable $ignored) {
                 // Fall through to live lookup.
-            }
-        }
-
-        $activeConferenceRecord = trim((string) ($space['active_conference_record'] ?? ''));
-        if ($activeConferenceRecord !== '') {
-            try {
-                $record = $meet->conferenceRecords->get($activeConferenceRecord);
-                return $this->conferenceRecordToArray($record);
-            } catch (\Throwable $ignored) {
-                // Fall through to list lookup.
             }
         }
 
@@ -883,23 +889,34 @@ class GoogleMeetLiveTrackingService
         $scheduledStartTs = $this->parseUtcTimestamp(
             $this->normalizeUtcValue((string) ($class['start_time_utc'] ?? $class['start_datetime'] ?? ''))
         );
+        $scheduledEndTs = $this->parseUtcTimestamp(
+            $this->normalizeUtcValue((string) ($class['end_time_utc'] ?? $class['end_datetime'] ?? ''))
+        );
         $startTs = $this->parseUtcTimestamp((string) ($conference['start_time'] ?? ''));
         $endTs = $this->parseUtcTimestamp((string) ($conference['end_time'] ?? ''));
-        $teacherJoined = trim((string) ($class['teacher_joined_at'] ?? '')) !== '';
 
-        if ($scheduledStartTs === null || $endTs === null) {
+        if ($endTs === null) {
+            // Still active/ongoing -> definitely not a stale ended ghost
             return false;
         }
 
+        if ($scheduledStartTs === null) {
+            return false;
+        }
+
+        // Ended before the scheduled start time -> definitely stale ghost
         if ($endTs < $scheduledStartTs) {
             return true;
         }
 
-        if ($teacherJoined) {
-            return false;
+        // If conference duration was under 2 minutes (120s), it was a brief preview or test join
+        if ($startTs !== null && ($endTs - $startTs) < 120) {
+            return true;
         }
 
-        if ($startTs !== null && ($endTs - $startTs) < 120) {
+        // If the conference ended, but the scheduled class window is still active right now and duration was < 5 minutes
+        $nowTs = time();
+        if ($scheduledEndTs !== null && $nowTs < $scheduledEndTs && $startTs !== null && ($endTs - $startTs) < 300) {
             return true;
         }
 
@@ -1137,15 +1154,23 @@ class GoogleMeetLiveTrackingService
         $previousStatus = (string) ($class['status'] ?? 'scheduled');
         $status = $previousStatus;
         $hostJoinEvidence = $mergedTeacherJoin !== null || $existingTeacherJoin !== null;
-        if ($mergedEnd !== null && $liveStatus === 'ended' && $hostJoinEvidence) {
+
+        $scheduledEndTs = $this->parseUtcTimestamp(
+            $this->normalizeUtcValue((string) ($class['end_time_utc'] ?? $class['end_datetime'] ?? ''))
+        );
+        $isWithinSchedule = $scheduledEndTs !== null && time() < ($scheduledEndTs - 60);
+        $validCompletionDuration = $durationMinutes !== null && $durationMinutes >= 2;
+
+        if ($mergedEnd !== null && $liveStatus === 'ended' && $hostJoinEvidence && (!$isWithinSchedule || $validCompletionDuration)) {
             $status = 'completed';
-        } elseif ($mergedTeacherJoin !== null && $liveStatus === 'active') {
+        } elseif (($mergedTeacherJoin !== null || $hostJoinEvidence) && ($liveStatus === 'active' || $isWithinSchedule)) {
             $status = 'ongoing';
         } elseif (
             $mergedEnd !== null
             && $liveStatus === 'ended'
             && $previousStatus === 'ongoing'
             && $mergedStart !== null
+            && (!$isWithinSchedule || $validCompletionDuration)
         ) {
             $status = 'completed';
         }
@@ -1630,6 +1655,14 @@ class GoogleMeetLiveTrackingService
         $hasHostEnd = trim((string) ($sync['actual_end_time'] ?? ($class['actual_end_time'] ?? ''))) !== '';
 
         if ($liveStatus !== 'ended' && !$hasHostEnd) {
+            return (string) ($sync['status'] ?? 'unchanged');
+        }
+
+        $scheduledEndTs = $this->parseUtcTimestamp(
+            $this->normalizeUtcValue((string) ($class['end_time_utc'] ?? $class['end_datetime'] ?? ''))
+        );
+        $isWithinSchedule = $scheduledEndTs !== null && time() < ($scheduledEndTs - 60);
+        if ($isWithinSchedule && (int) ($class['actual_duration_minutes'] ?? 0) < 2) {
             return (string) ($sync['status'] ?? 'unchanged');
         }
 
